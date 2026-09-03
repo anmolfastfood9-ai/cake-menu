@@ -76,17 +76,37 @@ export default function AdminLayout({
         <div className="space-y-6">
           {/* Brand Header */}
           <div className="flex items-center space-x-3 px-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gold-500/20 text-gold-400 border border-gold-500/30">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold-500/20 text-gold-400 border border-gold-500/30 shadow-gold-sm">
               <Sparkles className="h-5 w-5" />
             </div>
             <div>
-              <span className="font-serif text-base font-bold text-cream-50 block">Sweet Delights</span>
-              <span className="text-[10px] uppercase tracking-widest text-gold-400 font-semibold">CMS Panel</span>
+              <span className="font-serif text-base font-bold text-cream-50 block leading-tight">Raman Sweet</span>
+              <span className="text-[9px] uppercase tracking-widest text-gold-400 font-bold">Luxury CMS Panel</span>
             </div>
           </div>
 
+          {/* User Profile Pill */}
+          {adminUser && (
+            <Link
+              href="/admin/profile"
+              className="flex items-center space-x-2.5 rounded-xl border border-luxury-800 bg-[#161411] px-3 py-2 text-xs hover:border-gold-500/40 transition-colors"
+            >
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gold-500/20 text-gold-400 font-bold text-xs">
+                {adminUser.name ? adminUser.name.charAt(0).toUpperCase() : "A"}
+              </div>
+              <div className="overflow-hidden">
+                <span className="font-semibold text-cream-100 block truncate text-[11px] leading-tight">
+                  {adminUser.name || "Chef Admin"}
+                </span>
+                <span className="text-[9.5px] text-luxury-400 truncate block">
+                  {adminUser.email}
+                </span>
+              </div>
+            </Link>
+          )}
+
           {/* Navigation */}
-          <nav className="space-y-1 pt-2">
+          <nav className="space-y-1 pt-1">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href || (item.href !== "/admin" && pathname?.startsWith(item.href));
@@ -109,7 +129,7 @@ export default function AdminLayout({
         </div>
 
         {/* Bottom Actions */}
-        <div className="space-y-3 pt-6 border-t border-luxury-800">
+        <div className="space-y-3 pt-4 border-t border-luxury-800">
           <Link
             href="/menu"
             target="_blank"
@@ -133,7 +153,7 @@ export default function AdminLayout({
       <header className="flex md:hidden items-center justify-between border-b border-gold-500/15 bg-[#12100e] px-4 py-3">
         <div className="flex items-center space-x-2">
           <Sparkles className="h-5 w-5 text-gold-400" />
-          <span className="font-serif text-base font-bold text-cream-50">Sweet Delights Admin</span>
+          <span className="font-serif text-base font-bold text-cream-50">Raman Sweet Admin</span>
         </div>
 
         <button
@@ -146,7 +166,7 @@ export default function AdminLayout({
 
       {/* Mobile Nav Drawer */}
       {mobileNavOpen && (
-        <div className="border-b border-luxury-800 bg-[#12100e] p-4 md:hidden">
+        <div className="border-b border-luxury-800 bg-[#12100e] p-4 md:hidden animate-fadeIn">
           <nav className="space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -165,13 +185,14 @@ export default function AdminLayout({
                 </Link>
               );
             })}
-            <div className="pt-3 flex flex-col space-y-2">
+
+            <div className="pt-3 flex flex-col space-y-2 border-t border-luxury-800 mt-2">
               <Link
                 href="/menu"
                 target="_blank"
                 className="flex items-center justify-center space-x-1.5 rounded-xl bg-gold-500/10 py-2 text-xs font-semibold text-gold-300 border border-gold-500/30"
               >
-                <span>Preview Website</span>
+                <span>Preview Live Menu</span>
                 <ExternalLink className="h-3 w-3" />
               </Link>
               <button
