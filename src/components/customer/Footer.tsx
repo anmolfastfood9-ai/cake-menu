@@ -23,15 +23,21 @@ interface FooterProps {
 }
 
 export default function Footer({
-  restaurantName = "Sweet Delights",
+  restaurantName = "Raman Sweet & Luxury Pâtisserie",
   phone = "+91 98765 43210",
   whatsapp = "919876543210",
   address = "123, Bakery Street, Patna, Bihar 800001",
   openingHours = "10:00 AM – 10:00 PM (All Days)",
-  instagram = "https://instagram.com/sweetdelights.cakes",
-  footerText = "© 2026 Sweet Delights. All rights reserved.",
+  instagram,
+  facebook,
+  footerText = "© 2026 Raman Sweet & Luxury Pâtisserie. All rights reserved.",
 }: FooterProps) {
   const waLink = generateGeneralWhatsAppLink(whatsapp, restaurantName);
+
+  // Extract Instagram handle if a full URL is provided
+  const instagramHandle = instagram
+    ? instagram.replace(/^https?:\/\/(www\.)?instagram\.com\//i, "@").replace(/\/$/, "")
+    : "@ramansweetcake";
 
   return (
     <footer className="border-t border-gold-500/15 bg-[#080706] text-[#EDE4D3] py-8">
@@ -58,6 +64,9 @@ export default function Footer({
             </Link>
             <Link href="/menu/cakes" className="hover:text-gold-400 transition-colors">
               All Cakes
+            </Link>
+            <Link href="/menu/order" className="hover:text-gold-400 transition-colors">
+              Enquire / Order
             </Link>
           </div>
         </div>
@@ -97,17 +106,21 @@ export default function Footer({
             </a>
           </div>
 
-          {/* Instagram */}
+          {/* Instagram / Social */}
           <div className="flex items-center space-x-2">
             <Instagram className="h-3.5 w-3.5 text-gold-400 shrink-0" />
-            <a
-              href={instagram}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[11px] text-luxury-300 hover:text-gold-400"
-            >
-              @sweetdelights.cakes
-            </a>
+            {instagram ? (
+              <a
+                href={instagram.startsWith("http") ? instagram : `https://${instagram}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] text-luxury-300 hover:text-gold-400 transition-colors"
+              >
+                {instagramHandle}
+              </a>
+            ) : (
+              <span className="text-[11px] text-luxury-400">{restaurantName}</span>
+            )}
           </div>
         </div>
 
