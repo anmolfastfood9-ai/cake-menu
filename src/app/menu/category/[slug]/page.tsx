@@ -114,6 +114,9 @@ export default async function CategoryPage({ params }: { params: { slug: string 
         whatsapp={whatsappNumber}
         address={settings?.address}
         openingHours={settings?.openingHours}
+        instagram={settings?.instagram}
+        facebook={settings?.facebook}
+        footerText={settings?.footerText}
       />
 
       {/* Mobile Bottom Navigation Bar */}

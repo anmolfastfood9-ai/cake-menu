@@ -290,6 +290,9 @@ export default async function OccasionPage({
         whatsapp={whatsappNumber}
         address={settings?.address}
         openingHours={settings?.openingHours}
+        instagram={settings?.instagram}
+        facebook={settings?.facebook}
+        footerText={settings?.footerText}
       />
 
       {/* Mobile Bottom Navigation Bar */}
