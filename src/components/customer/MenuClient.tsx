@@ -314,11 +314,6 @@ export default function MenuClient({
                       </span>
                     </div>
                   )}
-
-                  {/* Top-Right Heart Icon */}
-                  <div className="absolute top-1.5 right-1.5 z-10 flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full bg-black/40 text-luxury-300 group-hover:text-red-400 transition-colors">
-                    <Heart className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                  </div>
                 </div>
 
                 {/* Cake Details */}

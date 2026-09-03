@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 export interface CakePriceItem {
   id?: string;
@@ -44,7 +43,6 @@ interface CakeCardProps {
 export default function CakeCard({
   cake,
 }: CakeCardProps) {
-  const [isFav, setIsFav] = useState(false);
   const sortedPrices = [...(cake.prices || [])].sort((a, b) => a.price - b.price);
   const lowestPrice = sortedPrices[0]?.price || 799;
 
@@ -84,20 +82,6 @@ export default function CakeCard({
             </span>
           )}
         </div>
-
-        {/* Favorite Heart Button on Top-Right */}
-        <button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setIsFav(!isFav);
-          }}
-          className="absolute top-2.5 right-2.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md transition-colors hover:text-red-400 active:scale-90"
-          title="Favorite"
-        >
-          <Heart className={`h-3.5 w-3.5 ${isFav ? "fill-red-500 text-red-500" : ""}`} />
-        </button>
       </Link>
 
       {/* Content Details */}
