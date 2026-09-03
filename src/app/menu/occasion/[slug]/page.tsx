@@ -257,7 +257,7 @@ export default async function OccasionPage({
             </div>
 
             {cakes.length > 0 ? (
-              <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
                 {cakes.map((cake: any) => (
                   <CakeCard
                     key={cake.id}
@@ -283,12 +283,6 @@ export default async function OccasionPage({
         </div>
       </main>
 
-      <FloatingContact
-        whatsappNumber={whatsappNumber}
-        phoneNumber={phoneNumber}
-        restaurantName={restaurantName}
-      />
-
       <Footer
         restaurantName={restaurantName}
         phone={phoneNumber}
@@ -296,6 +290,33 @@ export default async function OccasionPage({
         address={settings?.address}
         openingHours={settings?.openingHours}
       />
+
+      {/* Mobile Bottom Navigation Bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around border-t border-gold-500/20 bg-[#0d0c0a]/95 py-2 backdrop-blur-xl md:hidden">
+        <Link
+          href="/menu"
+          className="flex flex-col items-center space-y-0.5 px-4 py-1 text-luxury-400 hover:text-cream-100 transition-colors"
+        >
+          <Sparkles className="h-4 w-4" />
+          <span className="text-[9.5px] font-medium">Menu</span>
+        </Link>
+
+        <Link
+          href="/menu/cakes"
+          className="relative flex flex-col items-center space-y-0.5 px-4 py-1 rounded-xl bg-gold-500/10 text-gold-400"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span className="text-[9.5px] font-bold">All Cakes</span>
+        </Link>
+
+        <Link
+          href="/menu/order"
+          className="flex flex-col items-center space-y-0.5 px-4 py-1 text-luxury-400 hover:text-cream-100 transition-colors"
+        >
+          <MessageCircle className="h-4 w-4" />
+          <span className="text-[9.5px] font-medium">Order</span>
+        </Link>
+      </div>
     </div>
   );
 }

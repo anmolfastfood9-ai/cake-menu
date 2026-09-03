@@ -87,9 +87,9 @@ export default async function CategoryPage({ params }: { params: { slug: string 
           </div>
 
           {/* Cake Grid */}
-          <div className="mt-10">
+          <div className="mt-8 sm:mt-10">
             {category.cakes.length > 0 ? (
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
                 {category.cakes.map((cake) => (
                   <CakeCard
                     key={cake.id}
@@ -108,12 +108,6 @@ export default async function CategoryPage({ params }: { params: { slug: string 
         </div>
       </main>
 
-      <FloatingContact
-        whatsappNumber={whatsappNumber}
-        phoneNumber={phoneNumber}
-        restaurantName={restaurantName}
-      />
-
       <Footer
         restaurantName={restaurantName}
         phone={phoneNumber}
@@ -121,6 +115,33 @@ export default async function CategoryPage({ params }: { params: { slug: string 
         address={settings?.address}
         openingHours={settings?.openingHours}
       />
+
+      {/* Mobile Bottom Navigation Bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around border-t border-gold-500/20 bg-[#0d0c0a]/95 py-2 backdrop-blur-xl md:hidden">
+        <Link
+          href="/menu"
+          className="flex flex-col items-center space-y-0.5 px-4 py-1 text-luxury-400 hover:text-cream-100 transition-colors"
+        >
+          <Sparkles className="h-4 w-4" />
+          <span className="text-[9.5px] font-medium">Menu</span>
+        </Link>
+
+        <Link
+          href="/menu/cakes"
+          className="relative flex flex-col items-center space-y-0.5 px-4 py-1 rounded-xl bg-gold-500/10 text-gold-400"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span className="text-[9.5px] font-bold">All Cakes</span>
+        </Link>
+
+        <Link
+          href="/menu/order"
+          className="flex flex-col items-center space-y-0.5 px-4 py-1 text-luxury-400 hover:text-cream-100 transition-colors"
+        >
+          <span className="text-xs">💬</span>
+          <span className="text-[9.5px] font-medium">Order</span>
+        </Link>
+      </div>
     </div>
   );
 }
