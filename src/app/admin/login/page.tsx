@@ -3,13 +3,14 @@
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Sparkles, Lock, Mail, ArrowRight, ShieldCheck, AlertCircle } from "lucide-react";
+import { Sparkles, Lock, Mail, ArrowRight, ShieldCheck, AlertCircle, Eye, EyeOff } from "lucide-react";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [email, setEmail] = useState("admin@bakery.com");
-  const [password, setPassword] = useState("admin123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -22,7 +23,7 @@ function LoginForm() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email.trim(), password }),
       });
 
       const data = await res.json();
@@ -88,7 +89,8 @@ function LoginForm() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@bakery.com"
+                placeholder="Enter your admin email"
+                autoComplete="email"
                 className="w-full rounded-xl border border-luxury-700 bg-luxury-950/80 py-2.5 pl-10 pr-4 text-xs text-cream-100 placeholder-luxury-500 focus:border-gold-500 focus:outline-none focus:ring-1 focus:ring-gold-500"
               />
             </div>
@@ -101,22 +103,22 @@ function LoginForm() {
             <div className="relative">
               <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-luxury-400" />
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full rounded-xl border border-luxury-700 bg-luxury-950/80 py-2.5 pl-10 pr-4 text-xs text-cream-100 placeholder-luxury-500 focus:border-gold-500 focus:outline-none focus:ring-1 focus:ring-gold-500"
+                placeholder="Enter your secure password"
+                autoComplete="current-password"
+                className="w-full rounded-xl border border-luxury-700 bg-luxury-950/80 py-2.5 pl-10 pr-10 text-xs text-cream-100 placeholder-luxury-500 focus:border-gold-500 focus:outline-none focus:ring-1 focus:ring-gold-500"
               />
-            </div>
-          </div>
-
-          {/* Quick Demo Credentials Hint */}
-          <div className="rounded-xl border border-gold-500/15 bg-luxury-950/60 p-3 text-[11px] text-luxury-400">
-            <span className="font-semibold text-gold-400">Default Admin Credentials:</span>
-            <div className="mt-1 flex items-center justify-between">
-              <span>Email: <code className="text-cream-200">admin@bakery.com</code></span>
-              <span>Pass: <code className="text-cream-200">admin123</code></span>
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-luxury-400 hover:text-cream-200"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
             </div>
           </div>
 
