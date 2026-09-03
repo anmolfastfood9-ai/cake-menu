@@ -159,7 +159,7 @@ export async function getCachedOccasion(slug: string) {
   if (cached && now - cached.timestamp < DEFAULT_TTL_MS) {
     return cached.data;
   }
-  const occasion = await prisma.occasion.findFirst({
+  const occasion = await (prisma as any).occasion.findFirst({
     where: {
       slug,
       active: true,
