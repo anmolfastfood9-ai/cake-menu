@@ -1,0 +1,81 @@
+import { NextRequest, NextResponse } from "next/server";
+import prisma from "@/lib/db";
+import { getSessionAdminFromRequest } from "@/lib/auth";
+
+// GET /api/settings - Fetch current website settings
+export async function GET() {
+  try {
+    let settings = await prisma.websiteSetting.findUnique({
+      where: { id: "default" },
+    });
+
+    if (!settings) {
+      settings = await prisma.websiteSetting.create({
+        data: { id: "default" },
+      });
+    }
+
+    return NextResponse.json({ success: true, settings });
+  } catch (error: any) {
+    console.error("Fetch settings error:", error);
+    return NextResponse.json({ error: error.message || "Failed to fetch settings" }, { status: 500 });
+  }
+}
+
+// PUT /api/settings - Update website settings (Admin only)
+export async function PUT(req: NextRequest) {
+  try {
+    const session = getSessionAdminFromRequest(req);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await req.json();
+    if (!body || typeof body !== "object") {
+      return NextResponse.json({ error: "Invalid request payload" }, { status: 400 });
+    }
+
+    // Explicitly whitelist permitted writable fields
+    const allowedFields = [
+      "restaurantName",
+      "tagline",
+      "logo",
+      "heroTitle",
+      "heroSubtitle",
+      "heroImage",
+      "about",
+      "phone",
+      "whatsapp",
+      "address",
+      "openingHours",
+      "instagram",
+      "facebook",
+      "footerText",
+    ];
+
+    if (body.id && body.id !== "default") {
+      return NextResponse.json({ error: "Cannot modify protected ID field" }, { status: 400 });
+    }
+
+    const sanitizedData: Record<string, any> = {};
+    for (const key of allowedFields) {
+      if (key in body && body[key] !== undefined) {
+        sanitizedData[key] = typeof body[key] === "string" ? body[key].trim() : body[key];
+      }
+    }
+
+    const settings = await prisma.websiteSetting.upsert({
+      where: { id: "default" },
+      update: sanitizedData,
+      create: {
+        id: "default",
+        ...sanitizedData,
+      },
+    });
+
+    return NextResponse.json({ success: true, settings });
+  } catch (error: any) {
+    console.error("Update settings error:", error);
+    return NextResponse.json({ error: error.message || "Failed to update settings" }, { status: 500 });
+  }
+}

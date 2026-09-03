@@ -1,0 +1,434 @@
+"use client";
+
+import { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import Footer from "@/components/customer/Footer";
+import {
+  ArrowLeft,
+  MessageCircle,
+  Phone,
+  Sparkles,
+  ShieldCheck,
+  Heart,
+  Cake as CakeIcon,
+  Crown,
+  Camera,
+} from "lucide-react";
+import { generateWhatsAppLink, generateGeneralWhatsAppLink } from "@/lib/whatsapp";
+
+interface CakeDetailClientProps {
+  cake: any;
+  relatedCakes?: any[];
+  settings?: any;
+  whatsappSetting?: any;
+}
+
+export default function CakeDetailClient({
+  cake,
+  relatedCakes = [],
+  settings,
+  whatsappSetting,
+}: CakeDetailClientProps) {
+  // Prices and selected weight
+  const sortedPrices = [...(cake.prices || [])].sort((a, b) => a.price - b.price);
+  const defaultIndex = sortedPrices.findIndex((p) => p.isDefault);
+  const [selectedWeightIndex, setSelectedWeightIndex] = useState<number>(
+    defaultIndex !== -1 ? defaultIndex : 0
+  );
+
+  const activePriceObj = sortedPrices[selectedWeightIndex] || {
+    weight: "1 kg",
+    price: 1399,
+  };
+
+  let galleryImages: string[] = [];
+  try {
+    galleryImages = typeof cake.images === "string" ? JSON.parse(cake.images) : cake.images || [];
+  } catch (e) {
+    galleryImages = [];
+  }
+
+  // Tier-specific photos from prices
+  const tierImages = sortedPrices.map((p) => p.image).filter(Boolean) as string[];
+  const allImages = Array.from(new Set([cake.coverImage, ...tierImages, ...galleryImages])).filter(Boolean);
+
+  // Manual hero image selection (if user clicks thumbnail directly)
+  const [selectedHeroImage, setSelectedHeroImage] = useState<string | null>(null);
+  const [customMessage, setCustomMessage] = useState<string>("");
+
+  // Active hero image:
+  // If user clicked thumbnail directly, use selectedHeroImage.
+  // Else if current weight tier has its own photo, display that tier's photo!
+  // Else fallback to cake.coverImage.
+  const activeImage = selectedHeroImage || activePriceObj.image || cake.coverImage;
+  const currentDisplayIndex = allImages.indexOf(activeImage);
+  const displayIndex = currentDisplayIndex !== -1 ? currentDisplayIndex : 0;
+
+  const restaurantName = settings?.restaurantName || "Sweet Delights";
+  const whatsappNumber = whatsappSetting?.whatsappNumber || settings?.whatsapp || "919876543210";
+  const phoneNumber = whatsappSetting?.callNumber || settings?.phone || "+91 98765 43210";
+
+  const waLink = generateWhatsAppLink({
+    cakeName: cake.name,
+    weight: activePriceObj.weight,
+    price: activePriceObj.price,
+    restaurantName,
+    template: whatsappSetting?.defaultMessageTemplate,
+    whatsappNumber,
+    customMessage,
+  });
+
+  const generalWaLink = generateGeneralWhatsAppLink(whatsappNumber, restaurantName);
+
+  return (
+    <div className="min-h-screen flex flex-col bg-[#090807] text-[#FBF7EE] selection:bg-gold-500 selection:text-luxury-950 pb-20 md:pb-0">
+      {/* Top Header matching Screen 3 */}
+      <header className="sticky top-0 z-40 border-b border-gold-500/15 bg-[#090807]/95 backdrop-blur-md px-4 py-3">
+        <div className="mx-auto flex max-w-7xl items-center justify-between">
+          <Link
+            href="/menu"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-cream-200 hover:text-gold-400"
+            aria-label="Back to Menu"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Link>
+
+          <h1 className="font-serif text-lg font-bold text-[#FBF7EE] truncate max-w-[200px] sm:max-w-md">
+            {cake.name}
+          </h1>
+
+          <a
+            href={waLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-[#25D366] text-white shadow-md"
+            aria-label="Chat on WhatsApp"
+          >
+            <MessageCircle className="h-4 w-4 fill-white text-white" />
+          </a>
+        </div>
+      </header>
+
+      <main className="flex-1 py-4 sm:py-6">
+        <div className="mx-auto max-w-2xl px-4 sm:px-6 space-y-5">
+          {/* Main Hero Image on Pedestal + Pagination Badge */}
+          <div className="relative aspect-square w-full overflow-hidden rounded-3xl border border-gold-500/25 bg-[#14120f] shadow-2xl">
+            <Image
+              key={activeImage}
+              src={activeImage}
+              alt={`${cake.name} - ${activePriceObj.weight}`}
+              fill
+              priority
+              sizes="(max-width: 768px) 100vw, 600px"
+              className="object-cover transition-all duration-300"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#14120f]/60 via-transparent to-transparent pointer-events-none" />
+
+            {/* Pagination badge on top right */}
+            <div className="absolute top-3.5 right-3.5 rounded-md bg-black/75 px-2 py-0.5 text-[10px] font-bold text-cream-100 backdrop-blur-md">
+              {displayIndex + 1}/{allImages.length || 1}
+            </div>
+
+            {/* Visual confirmation badge for weight-specific photo */}
+            {activePriceObj.image && activeImage === activePriceObj.image && (
+              <div className="absolute bottom-3.5 left-3.5 rounded-full bg-black/85 border border-gold-500/50 px-3 py-1 text-[11px] font-semibold text-gold-300 backdrop-blur-md flex items-center gap-1.5 shadow-lg animate-fadeIn">
+                <Camera className="h-3.5 w-3.5 text-gold-400" />
+                <span>{activePriceObj.weight} Size Visual</span>
+              </div>
+            )}
+          </div>
+
+          {/* Thumbnail Strip */}
+          {allImages.length > 1 && (
+            <div className="flex items-center space-x-2.5 overflow-x-auto pb-1 scrollbar-none">
+              {allImages.slice(0, 6).map((imgUrl, idx) => {
+                const isCurrent = activeImage === imgUrl;
+                const matchedTier = sortedPrices.find((p) => p.image === imgUrl);
+
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setSelectedHeroImage(imgUrl);
+                      if (matchedTier) {
+                        const tierIdx = sortedPrices.indexOf(matchedTier);
+                        if (tierIdx !== -1) setSelectedWeightIndex(tierIdx);
+                      }
+                    }}
+                    className={`relative aspect-square h-14 w-14 shrink-0 overflow-hidden rounded-xl border-2 transition-all ${
+                      isCurrent
+                        ? "border-gold-400 scale-105 shadow-gold-sm"
+                        : "border-luxury-800 opacity-60 hover:opacity-100"
+                    }`}
+                  >
+                    <Image src={imgUrl} alt="Thumbnail" fill sizes="56px" className="object-cover" />
+                    {matchedTier && (
+                      <span className="absolute bottom-0 inset-x-0 bg-black/85 text-[8px] font-bold text-gold-400 text-center py-0.5 truncate">
+                        {matchedTier.weight}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Cake Details Card */}
+          <div className="space-y-4 pt-1">
+            {/* Badge */}
+            {cake.bestseller && (
+              <span className="inline-block rounded bg-[#C59B27] px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider text-luxury-950">
+                Bestseller
+              </span>
+            )}
+            {cake.featured && !cake.bestseller && (
+              <span className="inline-block rounded bg-[#D97706] px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider text-white">
+                Signature
+              </span>
+            )}
+
+            {/* Title */}
+            <div>
+              <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#FBF7EE]">
+                {cake.name}
+              </h1>
+              <div className="mt-1 flex items-center space-x-2 text-xs text-emerald-400">
+                <span>100% Eggless • Pure Vegetarian</span>
+                <span>🌿</span>
+              </div>
+            </div>
+
+            {/* Description */}
+            <p className="text-xs text-luxury-300 leading-relaxed font-light">
+              {cake.description}
+            </p>
+
+            {/* Select Weight Section */}
+            <div className="space-y-2 pt-2 border-t border-luxury-800">
+              <div className="flex items-baseline justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-cream-100">
+                  Select Weight
+                </span>
+                <span className="text-[10px] text-luxury-400">Prices are inclusive of all taxes</span>
+              </div>
+
+              {/* 4 Weight Cards Grid */}
+              <div className="grid grid-cols-4 gap-2">
+                {sortedPrices.map((p, idx) => {
+                  const isSelected = selectedWeightIndex === idx;
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setSelectedWeightIndex(idx);
+                        setSelectedHeroImage(p.image || null);
+                      }}
+                      className={`flex flex-col items-center justify-center rounded-xl p-2.5 text-center transition-all active:scale-95 ${
+                        isSelected
+                          ? "border border-gold-400 bg-[#C59B27]/15 text-gold-300 font-bold shadow-gold-sm"
+                          : "border border-luxury-800 bg-[#14120f] text-cream-200 hover:border-gold-500/40"
+                      }`}
+                    >
+                      {p.image && (
+                        <div className="relative mb-1 h-5 w-5 overflow-hidden rounded-full border border-gold-400/50 shrink-0">
+                          <Image src={p.image} alt={p.weight} fill sizes="20px" className="object-cover" />
+                        </div>
+                      )}
+                      <span className="text-[11px] font-semibold">{p.weight}</span>
+                      <span className={`mt-0.5 text-xs font-bold ${isSelected ? "text-gold-400" : "text-cream-100"}`}>
+                        ₹{p.price.toLocaleString("en-IN")}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Dynamic Serving & Portion Size Guide */}
+              <div className="flex items-center justify-between rounded-xl border border-gold-500/25 bg-gold-500/10 px-3 py-2 text-xs animate-fadeIn mt-2">
+                <div className="flex items-center space-x-2">
+                  <Sparkles className="h-3.5 w-3.5 text-gold-400 shrink-0" />
+                  <span className="text-cream-100 text-[11px] font-medium">
+                    {activePriceObj.weight === "0.5 kg" && "Serves 3–4 Guests • 6″ Standard Cake"}
+                    {activePriceObj.weight === "1 kg" && "Serves 6–8 Guests • 8″ Standard Cake (Most Popular)"}
+                    {activePriceObj.weight === "1.5 kg" && "Serves 10–14 Guests • 9″ Medium Tier Cake"}
+                    {activePriceObj.weight === "2 kg" && "Serves 16–20 Guests • 10″ Celebration Double Layer"}
+                    {activePriceObj.weight === "3 kg" && "Serves 24–30 Guests • Grand 2-Tier Cake"}
+                    {activePriceObj.weight === "4 kg" && "Serves 35–45 Guests • Grand 3-Tier Luxury Cake"}
+                    {!["0.5 kg", "1 kg", "1.5 kg", "2 kg", "3 kg", "4 kg"].includes(activePriceObj.weight) && `Portion: ${activePriceObj.weight}`}
+                  </span>
+                </div>
+                <span className="text-[9.5px] font-bold text-gold-400 uppercase tracking-wider shrink-0">
+                  100% Eggless
+                </span>
+              </div>
+            </div>
+
+            {/* Ingredients */}
+            <div className="space-y-1 pt-2 border-t border-luxury-800 text-xs">
+              <span className="block font-bold text-cream-200 text-[11px]">
+                Ingredients
+              </span>
+              <p className="text-luxury-400 leading-relaxed text-[11px] font-light">
+                {cake.ingredients || "Cocoa Powder, Dark Chocolate, Fresh Cream, Milk, Sugar, Refined Flour, Chocolate Truffle & more."}
+              </p>
+            </div>
+
+            {/* Note */}
+            <div className="space-y-1 text-xs">
+              <span className="block font-bold text-cream-200 text-[11px]">
+                Note
+              </span>
+              <p className="text-luxury-400 leading-relaxed text-[11px] font-light">
+                {cake.preparationNotes || "Keep refrigerated. Best enjoyed within 2 days."}
+              </p>
+            </div>
+
+            {/* Optional Name / Message on Cake */}
+            <div className="space-y-1.5 pt-2 border-t border-luxury-800">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-bold text-cream-200 flex items-center gap-1.5">
+                  <span>✍️ Name / Message on Cake (Optional)</span>
+                </label>
+                <span className="text-[10px] text-gold-400 font-medium">Free Custom Plaque</span>
+              </div>
+              <input
+                type="text"
+                value={customMessage}
+                onChange={(e) => setCustomMessage(e.target.value)}
+                placeholder="e.g. Happy Birthday Riya 🎂 / Happy 10th Anniversary"
+                maxLength={60}
+                className="w-full rounded-xl border border-luxury-700 bg-luxury-950 px-3.5 py-2.5 text-xs text-cream-100 placeholder-luxury-500 focus:border-gold-500 focus:outline-none transition-colors"
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-2.5 pt-2">
+              <a
+                href={waLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-full items-center justify-center space-x-2 rounded-xl bg-[#25D366] py-3.5 text-center text-xs font-bold text-white shadow-lg transition-all hover:bg-emerald-500"
+              >
+                <MessageCircle className="h-4 w-4 fill-white text-white" />
+                <span>Enquire on WhatsApp</span>
+              </a>
+
+              <a
+                href={`tel:${phoneNumber.replace(/\s+/g, "")}`}
+                className="flex w-full items-center justify-center space-x-2 rounded-xl border border-gold-500/30 bg-[#161411] py-3 text-center text-xs font-semibold text-gold-300 hover:border-gold-500 transition-colors"
+              >
+                <Phone className="h-3.5 w-3.5 text-gold-400" />
+                <span>Call Us Now</span>
+              </a>
+            </div>
+
+            {/* 4 Trust Badges */}
+            <div className="grid grid-cols-4 gap-2 pt-4 border-t border-luxury-800 text-center">
+              <div className="flex flex-col items-center space-y-1">
+                <Sparkles className="h-4 w-4 text-gold-400" />
+                <span className="text-[9.5px] text-luxury-300">Freshly Crafted</span>
+              </div>
+              <div className="flex flex-col items-center space-y-1">
+                <Crown className="h-4 w-4 text-gold-400" />
+                <span className="text-[9.5px] text-luxury-300">Premium Ingredients</span>
+              </div>
+              <div className="flex flex-col items-center space-y-1">
+                <ShieldCheck className="h-4 w-4 text-gold-400" />
+                <span className="text-[9.5px] text-luxury-300">Hygienic Kitchen</span>
+              </div>
+              <div className="flex flex-col items-center space-y-1">
+                <Heart className="h-4 w-4 text-gold-400" />
+                <span className="text-[9.5px] text-luxury-300">Made with Love</span>
+              </div>
+            </div>
+
+            {/* You May Also Like Section */}
+            {relatedCakes && relatedCakes.length > 0 && (
+              <div className="pt-6 border-t border-luxury-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-serif text-base font-bold text-[#FBF7EE]">
+                    You May Also Like
+                  </h3>
+                  <Link href="/menu/cakes" className="text-xs font-semibold text-gold-400 hover:text-gold-300">
+                    View all
+                  </Link>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2.5">
+                  {relatedCakes.slice(0, 3).map((rel) => {
+                    const price = rel.prices[0]?.price || 799;
+                    return (
+                      <Link
+                        key={rel.id}
+                        href={`/menu/cake/${rel.slug}`}
+                        className="group flex flex-col overflow-hidden rounded-xl border border-luxury-800 bg-[#14120f] p-2 transition-all hover:border-gold-500/40"
+                      >
+                        <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-luxury-950">
+                          <Image
+                            src={rel.coverImage}
+                            alt={rel.name}
+                            fill
+                            sizes="120px"
+                            className="object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        </div>
+                        <span className="mt-1.5 font-serif text-[11px] font-bold text-cream-100 truncate">
+                          {rel.name}
+                        </span>
+                        <span className="text-[10px] text-gold-400 font-bold">
+                          From ₹{price}
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
+
+      {/* Global Footer */}
+      <Footer
+        restaurantName={restaurantName}
+        phone={phoneNumber}
+        whatsapp={whatsappNumber}
+        address={settings?.address}
+        openingHours={settings?.openingHours}
+        instagram={settings?.instagram}
+        facebook={settings?.facebook}
+        footerText={settings?.footerText}
+      />
+
+      {/* Mobile Bottom Navigation Bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around border-t border-gold-500/20 bg-[#0d0c0a]/95 py-2 backdrop-blur-xl md:hidden">
+        <Link
+          href="/menu"
+          className="flex flex-col items-center space-y-0.5 px-4 py-1 text-luxury-400 hover:text-cream-100 transition-colors"
+        >
+          <CakeIcon className="h-4 w-4" />
+          <span className="text-[9.5px] font-medium">Menu</span>
+        </Link>
+
+        <Link
+          href="/menu/cakes"
+          className="flex flex-col items-center space-y-0.5 px-4 py-1 text-luxury-400 hover:text-cream-100 transition-colors"
+        >
+          <Sparkles className="h-4 w-4" />
+          <span className="text-[9.5px] font-medium">All Cakes</span>
+        </Link>
+
+        <Link
+          href="/menu/order"
+          className="flex flex-col items-center space-y-0.5 px-4 py-1 text-luxury-400 hover:text-cream-100 transition-colors"
+        >
+          <MessageCircle className="h-4 w-4" />
+          <span className="text-[9.5px] font-medium">Order</span>
+        </Link>
+      </div>
+    </div>
+  );
+}

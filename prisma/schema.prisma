@@ -1,0 +1,169 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String   @default("Admin")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Category {
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  description  String?
+  image        String?
+  icon         String?  // Lucide icon name or emoji
+  displayOrder Int      @default(0)
+  active       Boolean  @default(true)
+  cakes        Cake[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([displayOrder])
+  @@index([active])
+}
+
+model Cake {
+  id                String         @id @default(cuid())
+  name              String
+  slug              String         @unique
+  categoryId        String
+  category          Category       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  description       String
+  coverImage        String
+  images            String         @default("[]") // JSON array of string URLs
+  ingredients       String?        // Artisanal ingredients list
+  preparationNotes  String?        // Preparation and notice time
+  featured          Boolean        @default(false)
+  bestseller        Boolean        @default(false)
+  isNew             Boolean        @default(false)
+  available         Boolean        @default(true)
+  rating            Float          @default(4.9)
+  customizationInfo String?        @default("Custom message on chocolate plaque, shape customization & tiered sizing available on request.")
+  prices            CakePrice[]
+  occasions         CakeOccasion[]
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([categoryId])
+  @@index([available])
+  @@index([available, featured, bestseller])
+}
+
+model CakePrice {
+  id            String   @id @default(cuid())
+  cakeId        String
+  cake          Cake     @relation(fields: [cakeId], references: [id], onDelete: Cascade)
+  weight        String   // e.g. "0.5 kg", "1 kg", "1.5 kg", "2 kg"
+  price         Float    // Price in ₹
+  originalPrice Float?   // Strike-through original price
+  isDefault     Boolean  @default(false)
+  image         String?  // Visual representation for this specific weight/tier (e.g. mini bento, 1kg classic, 2kg two-tier)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([cakeId])
+}
+
+model Occasion {
+  id           String               @id @default(cuid())
+  name         String               // e.g. "Diwali", "Valentine's Day"
+  slug         String               @unique // e.g. "diwali"
+  type         String               @default("FESTIVAL") // "FESTIVAL" | "CELEBRATION" | "SEASONAL"
+  description  String?              // Promotional subtitle
+  badgeText    String?              // e.g. "DIWALI SPECIAL"
+  bannerImage  String?              // Optional decorative banner
+  accentColor  String?              @default("#D4AF37") // Hex styling color
+  priority     Int                  @default(50) // Higher = priority over overlapping events
+  active       Boolean              @default(true) // Admin master content toggle
+  calendarKey  String               @unique // e.g. "diwali", "holi", "mango_season"
+  daysBefore   Int                  @default(7) // Window start: X days before eventDate
+  daysAfter    Int                  @default(2) // Window end: Y days after eventDate
+  cakes        CakeOccasion[]
+  occurrences  FestivalOccurrence[]
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  @@index([active])
+  @@index([priority])
+}
+
+model FestivalOccurrence {
+  id           String   @id @default(cuid())
+  occasionId   String
+  occasion     Occasion @relation(fields: [occasionId], references: [id], onDelete: Cascade)
+  year         Int
+  eventDate    DateTime // The actual festival date in this year
+  displayStart DateTime // Calculated: eventDate - daysBefore
+  displayEnd   DateTime // Calculated: eventDate + daysAfter
+  source       String   @default("CALENDAR_ENGINE") // "CALENDAR_ENGINE" | "MANUAL_OVERRIDE"
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([occasionId, year])
+  @@index([year])
+  @@index([displayStart, displayEnd])
+}
+
+model CakeOccasion {
+  id         String   @id @default(cuid())
+  cakeId     String
+  cake       Cake     @relation(fields: [cakeId], references: [id], onDelete: Cascade)
+  occasionId String
+  occasion   Occasion @relation(fields: [occasionId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([cakeId, occasionId])
+  @@index([cakeId])
+  @@index([occasionId])
+}
+
+model ImageMedia {
+  id        String   @id @default(cuid())
+  url       String
+  publicId  String?  // Stores ImageKit fileId
+  filename  String
+  size      Int?     @default(0)
+  mimeType  String?  @default("image/jpeg")
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model WebsiteSetting {
+  id             String   @id @default("default")
+  restaurantName String   @default("Sweet Delights")
+  tagline        String   @default("HAUTE PÂTISSERIE • 100% EGGLESS")
+  logo           String?  @default("https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=200&auto=format&fit=crop")
+  heroTitle      String   @default("Every Celebration Deserves Something Beautiful.")
+  heroSubtitle   String   @default("Handcrafted eggless cakes, made fresh for your special moments. Browse our curated digital collection and order directly on WhatsApp.")
+  heroImage      String   @default("https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=1200&auto=format&fit=crop")
+  about          String   @default("At Sweet Delights, every creation is an edible work of art. We are strictly 100% Eggless & Pure Vegetarian, combining age-old French confectionery techniques with the finest Belgian cocoa, pure Madagascar vanilla, and fresh dairy butter.")
+  phone          String   @default("+91 98765 43210")
+  whatsapp       String   @default("919876543210")
+  address        String   @default("123, Bakery Promenade, Haute Pâtisserie District, Patna, Bihar, India")
+  openingHours   String   @default("Monday - Sunday: 10:00 AM – 10:00 PM")
+  instagram      String?  @default("https://instagram.com/sweetdelightscakes")
+  facebook       String?  @default("https://facebook.com/sweetdelightscakes")
+  footerText     String   @default("© 2026 Sweet Delights. 100% Eggless • Pure Vegetarian Confectionery.")
+  updatedAt      DateTime @updatedAt
+}
+
+model WhatsAppSetting {
+  id                     String   @id @default("default")
+  whatsappNumber         String   @default("919876543210")
+  defaultMessageTemplate String   @default("Hello Sweet Delights, I would like to enquire about:\n\n🍰 *Cake:* {cake_name}\n⚖️ *Weight:* {weight}\n💰 *Price:* ₹{price}\n\nPlease confirm availability and preparation time.")
+  callNumber             String   @default("+919876543210")
+  isEnabled              Boolean  @default(true)
+  updatedAt              DateTime @updatedAt
+}

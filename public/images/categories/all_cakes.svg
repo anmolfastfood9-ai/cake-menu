@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <defs>
+    <filter id="gold-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="1.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Candle flame -->
+  <path d="M24 6.5C24 6.5 22 9.5 22 11C22 12.1 22.9 13 24 13C25.1 13 26 12.1 26 11C26 9.5 24 6.5 24 6.5Z" fill="#F5C443" filter="url(#gold-glow)"/>
+
+  <!-- Candle body -->
+  <line x1="24" y1="13" x2="24" y2="17" stroke="#E5A93C" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Top tier -->
+  <path d="M17 24V19C17 18 17.8 17.2 18.8 17.2H29.2C30.2 17.2 31 18 31 19V24" stroke="#E5A93C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Top tier wavy frosting -->
+  <path d="M17 23.5C18 25.5 20.5 25.5 21.5 23.5C22.5 25.5 25.5 25.5 26.5 23.5C27.5 25.5 30 25.5 31 23.5" stroke="#E5A93C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Bottom tier -->
+  <path d="M11 36V26C11 25 11.8 24.2 12.8 24.2H35.2C36.2 24.2 37 25 37 26V36" stroke="#E5A93C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Bottom tier wavy frosting -->
+  <path d="M11 30C12.5 32 14.5 32 16 30C17.5 32 20.5 32 22 30C23.5 32 26.5 32 28 30C29.5 32 32.5 32 34 30C35.5 32 36.5 31.5 37 30" stroke="#E5A93C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Cake plate base -->
+  <line x1="9" y1="36" x2="39" y2="36" stroke="#E5A93C" stroke-width="2.2" stroke-linecap="round"/>
+</svg>
