@@ -22,7 +22,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-export const revalidate = 60; // Instant Static + Stale-While-Revalidate
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function generateMetadata({
   params,

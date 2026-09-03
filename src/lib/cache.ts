@@ -108,32 +108,22 @@ export async function getCachedAllCakes() {
 }
 
 /**
- * Superfast in-memory cached website settings
+ * Authoritative database website settings (Always 100% fresh from DB across serverless instances)
  */
 export async function getCachedWebsiteSettings() {
-  const now = Date.now();
-  if (memoryStore.settings && now - memoryStore.settings.timestamp < DEFAULT_TTL_MS) {
-    return memoryStore.settings.data;
-  }
   const settings = await prisma.websiteSetting.findUnique({
     where: { id: "default" },
   });
-  memoryStore.settings = { data: settings, timestamp: now };
   return settings;
 }
 
 /**
- * Superfast in-memory cached whatsapp settings
+ * Authoritative database whatsapp settings (Always 100% fresh from DB across serverless instances)
  */
 export async function getCachedWhatsAppSetting() {
-  const now = Date.now();
-  if (memoryStore.whatsappSetting && now - memoryStore.whatsappSetting.timestamp < DEFAULT_TTL_MS) {
-    return memoryStore.whatsappSetting.data;
-  }
   const whatsappSetting = await prisma.whatsAppSetting.findUnique({
     where: { id: "default" },
   });
-  memoryStore.whatsappSetting = { data: whatsappSetting, timestamp: now };
   return whatsappSetting;
 }
 

@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { getSessionAdminFromRequest } from "@/lib/auth";
+import { invalidateAppCache } from "@/lib/cache";
+import { revalidatePath } from "next/cache";
+
+export const dynamic = "force-dynamic";
 
 // GET /api/whatsapp - Fetch current whatsapp settings
 export async function GET() {
@@ -70,9 +74,41 @@ export async function PUT(req: NextRequest) {
       },
     });
 
+    // Dual-sync into WebsiteSetting table
+    if (sanitizedData.whatsappNumber !== undefined || sanitizedData.callNumber !== undefined) {
+      const webUpdate: Record<string, any> = {};
+      if (sanitizedData.whatsappNumber !== undefined) webUpdate.whatsapp = sanitizedData.whatsappNumber;
+      if (sanitizedData.callNumber !== undefined) webUpdate.phone = sanitizedData.callNumber;
+
+      await prisma.websiteSetting.upsert({
+        where: { id: "default" },
+        update: webUpdate,
+        create: {
+          id: "default",
+          ...webUpdate,
+        },
+      });
+    }
+
+    // Invalidate cache
+    invalidateAppCache();
+    try {
+      revalidatePath("/", "layout");
+      revalidatePath("/menu");
+      revalidatePath("/menu/cakes");
+      revalidatePath("/menu/order");
+      revalidatePath("/admin/settings");
+      revalidatePath("/admin/whatsapp");
+    } catch (_) {}
+
     return NextResponse.json({ success: true, settings });
   } catch (error: any) {
     console.error("Update WhatsApp settings error:", error);
     return NextResponse.json({ error: error.message || "Failed to update WhatsApp settings" }, { status: 500 });
   }
 }
+
+export async function POST(req: NextRequest) {
+  return PUT(req);
+}
+

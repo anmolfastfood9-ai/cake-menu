@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Sparkles, Check, Settings, Store, Clock, MapPin, Phone, MessageCircle, Globe, AlertCircle } from "lucide-react";
 
@@ -54,6 +54,25 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Sync state whenever initialSettings prop changes or after page refresh
+  useEffect(() => {
+    if (initialSettings) {
+      if (initialSettings.restaurantName) setRestaurantName(initialSettings.restaurantName);
+      if (initialSettings.tagline !== undefined) setTagline(initialSettings.tagline || "");
+      if (initialSettings.heroTitle !== undefined) setHeroTitle(initialSettings.heroTitle || "");
+      if (initialSettings.heroSubtitle !== undefined) setHeroSubtitle(initialSettings.heroSubtitle || "");
+      if (initialSettings.heroImage !== undefined) setHeroImage(initialSettings.heroImage || "");
+      if (initialSettings.about !== undefined) setAbout(initialSettings.about || "");
+      if (initialSettings.phone !== undefined) setPhone(initialSettings.phone || "");
+      if (initialSettings.whatsapp !== undefined) setWhatsapp(initialSettings.whatsapp || "");
+      if (initialSettings.address !== undefined) setAddress(initialSettings.address || "");
+      if (initialSettings.openingHours !== undefined) setOpeningHours(initialSettings.openingHours || "");
+      if (initialSettings.instagram !== undefined) setInstagram(initialSettings.instagram || "");
+      if (initialSettings.facebook !== undefined) setFacebook(initialSettings.facebook || "");
+      if (initialSettings.footerText !== undefined) setFooterText(initialSettings.footerText || "");
+    }
+  }, [initialSettings]);
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -61,34 +80,53 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
     setSuccess(false);
 
     try {
+      const payload = {
+        restaurantName: restaurantName.trim(),
+        tagline: tagline.trim(),
+        heroTitle: heroTitle.trim(),
+        heroSubtitle: heroSubtitle.trim(),
+        heroImage: heroImage.trim(),
+        about: about.trim(),
+        phone: phone.trim(),
+        whatsapp: whatsapp.trim(),
+        address: address.trim(),
+        openingHours: openingHours.trim(),
+        instagram: instagram.trim(),
+        facebook: facebook.trim(),
+        footerText: footerText.trim(),
+      };
+
       const res = await fetch("/api/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          restaurantName,
-          tagline,
-          heroTitle,
-          heroSubtitle,
-          heroImage,
-          about,
-          phone,
-          whatsapp,
-          address,
-          openingHours,
-          instagram,
-          facebook,
-          footerText,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json().catch(() => ({}));
 
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to update settings");
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to update settings in database");
+      }
+
+      // Update state directly from authoritative database record
+      if (data.settings) {
+        setRestaurantName(data.settings.restaurantName || "");
+        setTagline(data.settings.tagline || "");
+        setHeroTitle(data.settings.heroTitle || "");
+        setHeroSubtitle(data.settings.heroSubtitle || "");
+        setHeroImage(data.settings.heroImage || "");
+        setAbout(data.settings.about || "");
+        setPhone(data.settings.phone || "");
+        setWhatsapp(data.settings.whatsapp || "");
+        setAddress(data.settings.address || "");
+        setOpeningHours(data.settings.openingHours || "");
+        setInstagram(data.settings.instagram || "");
+        setFacebook(data.settings.facebook || "");
+        setFooterText(data.settings.footerText || "");
       }
 
       setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
+      setTimeout(() => setSuccess(false), 4000);
       router.refresh();
     } catch (err: any) {
       setError(err.message || "Error saving settings");

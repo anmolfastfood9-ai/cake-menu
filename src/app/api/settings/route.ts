@@ -68,6 +68,7 @@ async function handleUpdateSettings(req: NextRequest) {
       }
     }
 
+    // 1. Primary write to WebsiteSetting table
     const settings = await prisma.websiteSetting.upsert({
       where: { id: "default" },
       update: sanitizedData,
@@ -77,7 +78,24 @@ async function handleUpdateSettings(req: NextRequest) {
       },
     });
 
-    // Invalidate in-memory cache and trigger Next.js cache revalidation
+    // 2. Dual-sync phone & whatsapp into WhatsAppSetting table to ensure complete system-wide sync
+    if (sanitizedData.whatsapp !== undefined || sanitizedData.phone !== undefined) {
+      const waUpdate: Record<string, any> = {};
+      if (sanitizedData.whatsapp !== undefined) waUpdate.whatsappNumber = sanitizedData.whatsapp;
+      if (sanitizedData.phone !== undefined) waUpdate.callNumber = sanitizedData.phone;
+
+      await prisma.whatsAppSetting.upsert({
+        where: { id: "default" },
+        update: waUpdate,
+        create: {
+          id: "default",
+          whatsappNumber: sanitizedData.whatsapp || "919876543210",
+          callNumber: sanitizedData.phone || "+91 98765 43210",
+        },
+      });
+    }
+
+    // 3. Invalidate in-memory cache and trigger Next.js cache revalidation
     invalidateAppCache();
     try {
       revalidatePath("/", "layout");
@@ -85,6 +103,7 @@ async function handleUpdateSettings(req: NextRequest) {
       revalidatePath("/menu/cakes");
       revalidatePath("/menu/order");
       revalidatePath("/admin/settings");
+      revalidatePath("/admin/whatsapp");
     } catch (_) {}
 
     return NextResponse.json({ success: true, settings });
