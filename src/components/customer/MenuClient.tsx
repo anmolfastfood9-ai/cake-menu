@@ -31,7 +31,13 @@ export default function MenuClient({
   whatsappSetting,
   activeOccasion,
 }: MenuClientProps) {
-  const restaurantName = settings?.restaurantName || "Sweet Delights";
+  const restaurantName = settings?.restaurantName || "Raman Sweet & Luxury Pâtisserie";
+  const tagline = settings?.tagline || "Artisanal Luxury Pâtisserie";
+  const heroTitle = settings?.heroTitle || "Every Celebration Deserves a Perfect Cake";
+  const heroSubtitle =
+    settings?.heroSubtitle ||
+    "Freshly baked daily. Beautifully handcrafted with 100% pure vegetarian & eggless gourmet ingredients.";
+  const heroImage = settings?.heroImage || "/images/celebration_hero_cake_clean.png";
   const whatsappNumber = whatsappSetting?.whatsappNumber || settings?.whatsapp || "919876543210";
   const phoneNumber = whatsappSetting?.callNumber || settings?.phone || "+91 98765 43210";
 
@@ -101,28 +107,16 @@ export default function MenuClient({
       image: "/images/categories/fruit_berry.png",
     },
     {
-      id: "birthday",
-      name: "Birthday",
-      slug: "birthday",
-      image: "/images/categories/birthday.png",
+      id: "exotic-premium",
+      name: "Exotic & Premium",
+      slug: "exotic-premium",
+      image: "/images/categories/exotic.png",
     },
     {
-      id: "premium",
-      name: "Premium",
-      slug: "premium",
-      image: "/images/categories/premium.png",
-    },
-    {
-      id: "photo-cakes",
-      name: "Photo Cakes",
-      slug: "photo-cakes",
-      image: "/images/categories/photo_cakes.png",
-    },
-    {
-      id: "designer-cakes",
-      name: "Designer Cakes",
-      slug: "designer-cakes",
-      image: "/images/categories/designer_cakes.png",
+      id: "bento",
+      name: "Bento Cakes",
+      slug: "bento-cakes",
+      image: "/images/categories/bento.png",
     },
     {
       id: "anniversary",
@@ -130,13 +124,25 @@ export default function MenuClient({
       slug: "anniversary",
       image: "/images/categories/anniversary.png",
     },
+    {
+      id: "birthday",
+      name: "Birthday",
+      slug: "birthday",
+      image: "/images/categories/birthday.png",
+    },
+    {
+      id: "photo-designer",
+      name: "Photo & Designer",
+      slug: "designer-cakes",
+      image: "/images/categories/designer.png",
+    },
   ];
 
   const waLink = generateGeneralWhatsAppLink(whatsappNumber, restaurantName);
 
   return (
-    <div className="min-h-screen bg-[#090807] text-[#FBF7EE] selection:bg-gold-500 selection:text-luxury-950 pb-20 md:pb-0 font-sans flex flex-col justify-between">
-      {/* 1. RESPONSIVE HEADER */}
+    <div className="min-h-screen flex flex-col bg-[#090807] text-[#FBF7EE] selection:bg-gold-500 selection:text-luxury-950 font-sans pb-20 md:pb-0">
+      {/* 1. TOP HEADER BRAND NAVBAR */}
       <Navbar
         restaurantName={restaurantName}
         whatsappNumber={whatsappNumber}
@@ -153,20 +159,15 @@ export default function MenuClient({
             <div className="md:col-span-7 space-y-1.5 md:space-y-4">
               <div className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[9.5px] md:text-xs font-bold tracking-wider uppercase border border-gold-500/30 bg-gold-500/10 text-gold-400">
                 <Sparkles className="h-3 w-3 shrink-0" />
-                <span>Artisanal Luxury Pâtisserie</span>
+                <span>{tagline}</span>
               </div>
 
               <h1 className="font-serif text-[26px] xs:text-[28px] sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-[#FBF7EE] leading-[1.12]">
-                Every Celebration <br className="hidden sm:inline" />
-                Deserves a <br />
-                <span className="text-[#D4AF37] inline-flex items-center gap-1.5">
-                  Perfect Cake
-                  <Heart className="inline-block h-5 w-5 sm:h-6 sm:w-6 text-[#D4AF37] stroke-[1.8] fill-none -rotate-12 translate-y-0.5" />
-                </span>
+                {heroTitle}
               </h1>
 
               <p className="text-[11px] sm:text-xs md:text-sm text-[#A69B8D] font-normal leading-relaxed max-w-lg">
-                Freshly baked daily. Beautifully handcrafted with 100% pure vegetarian & eggless gourmet ingredients.
+                {heroSubtitle}
               </p>
 
               {/* Desktop Quick Action CTA Buttons */}
@@ -192,8 +193,8 @@ export default function MenuClient({
             {/* Right Hero Chocolate Cake on Pedestal Stand */}
             <div className="md:col-span-5 relative w-full aspect-[282/215] max-w-[320px] sm:max-w-[360px] md:max-w-none mx-auto mt-0.5 md:mt-0">
               <Image
-                src="/images/celebration_hero_cake_clean.png"
-                alt="Every Celebration Deserves a Perfect Cake"
+                src={heroImage}
+                alt={heroTitle}
                 fill
                 priority
                 sizes="(max-width: 768px) 100vw, 450px"

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { getSessionAdminFromRequest } from "@/lib/auth";
+import { invalidateAppCache } from "@/lib/cache";
 import { revalidatePath } from "next/cache";
 
 export const dynamic = "force-dynamic";
@@ -76,8 +77,10 @@ async function handleUpdateSettings(req: NextRequest) {
       },
     });
 
-    // Revalidate public routes
+    // Invalidate in-memory cache and trigger Next.js cache revalidation
+    invalidateAppCache();
     try {
+      revalidatePath("/", "layout");
       revalidatePath("/menu");
       revalidatePath("/menu/cakes");
       revalidatePath("/menu/order");
