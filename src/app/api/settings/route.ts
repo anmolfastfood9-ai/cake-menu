@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { getSessionAdminFromRequest } from "@/lib/auth";
+import { revalidatePath } from "next/cache";
+
+export const dynamic = "force-dynamic";
 
 // GET /api/settings - Fetch current website settings
 export async function GET() {
@@ -22,12 +25,12 @@ export async function GET() {
   }
 }
 
-// PUT /api/settings - Update website settings (Admin only)
-export async function PUT(req: NextRequest) {
+// Common update logic for PUT / POST / PATCH
+async function handleUpdateSettings(req: NextRequest) {
   try {
     const session = getSessionAdminFromRequest(req);
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized. Please log in as admin." }, { status: 401 });
     }
 
     const body = await req.json();
@@ -73,9 +76,33 @@ export async function PUT(req: NextRequest) {
       },
     });
 
+    // Revalidate public routes
+    try {
+      revalidatePath("/menu");
+      revalidatePath("/menu/cakes");
+      revalidatePath("/menu/order");
+      revalidatePath("/admin/settings");
+    } catch (_) {}
+
     return NextResponse.json({ success: true, settings });
   } catch (error: any) {
     console.error("Update settings error:", error);
     return NextResponse.json({ error: error.message || "Failed to update settings" }, { status: 500 });
   }
 }
+
+// PUT /api/settings - Update website settings (Admin only)
+export async function PUT(req: NextRequest) {
+  return handleUpdateSettings(req);
+}
+
+// POST /api/settings - Fallback for proxies/hosts that restrict PUT
+export async function POST(req: NextRequest) {
+  return handleUpdateSettings(req);
+}
+
+// PATCH /api/settings - Partial update
+export async function PATCH(req: NextRequest) {
+  return handleUpdateSettings(req);
+}
+

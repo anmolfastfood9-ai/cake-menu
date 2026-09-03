@@ -81,7 +81,11 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
         }),
       });
 
-      if (!res.ok) throw new Error("Failed to update settings");
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to update settings");
+      }
 
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
