@@ -16,6 +16,8 @@ import {
 import { generateGeneralWhatsAppLink } from "@/lib/whatsapp";
 import OccasionShowcase from "@/components/customer/OccasionShowcase";
 
+import Footer from "@/components/customer/Footer";
+
 interface MenuClientProps {
   initialCategories?: any[];
   initialCakes?: any[];
@@ -133,89 +135,113 @@ export default function MenuClient({
   const waLink = generateGeneralWhatsAppLink(whatsappNumber, restaurantName);
 
   return (
-    <div className="min-h-screen bg-[#090807] text-[#FBF7EE] selection:bg-gold-500 selection:text-luxury-950 pb-20 font-sans">
-      {/* 1. COMPACT HEADER */}
+    <div className="min-h-screen bg-[#090807] text-[#FBF7EE] selection:bg-gold-500 selection:text-luxury-950 pb-20 md:pb-0 font-sans flex flex-col justify-between">
+      {/* 1. RESPONSIVE HEADER */}
       <Navbar
         restaurantName={restaurantName}
         whatsappNumber={whatsappNumber}
         phoneNumber={phoneNumber}
       />
 
-      {/* MOBILE CONTENT CONTAINER (390px - 430px) */}
-      <div className="max-w-[430px] mx-auto px-3 pt-2 pb-6 space-y-3.5">
+      {/* RESPONSIVE MAIN CONTENT CONTAINER */}
+      <main className="w-full max-w-md md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-2 sm:pt-4 pb-8 space-y-4 md:space-y-8 flex-1">
         
-        {/* 2. CELEBRATION HERO SECTION (EXACT REFERENCE MATCH) */}
-        <section className="relative w-full pt-1 pb-0 text-left">
-          <div className="px-1 space-y-1">
-            <h1 className="font-serif text-[27px] xs:text-[29px] sm:text-[31px] font-bold tracking-tight text-[#FBF7EE] leading-[1.12]">
-              Every Celebration <br />
-              Deserves a <br />
-              <span className="text-[#D4AF37] inline-flex items-center gap-1.5">
-                Perfect Cake
-                <Heart className="inline-block h-5 w-5 text-[#D4AF37] stroke-[1.8] fill-none -rotate-12 translate-y-0.5" />
-              </span>
-            </h1>
+        {/* 2. CELEBRATION HERO SECTION (RESPONSIVE SPLIT ON TABLET/DESKTOP) */}
+        <section className="relative w-full rounded-2xl md:rounded-3xl border border-gold-500/15 bg-gradient-to-b md:bg-gradient-to-r from-[#14120f] via-[#100e0c] to-[#0a0908] p-3.5 sm:p-6 md:p-8 lg:p-10 shadow-2xl overflow-hidden text-left">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-8 items-center">
+            {/* Left Content */}
+            <div className="md:col-span-7 space-y-1.5 md:space-y-4">
+              <div className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[9.5px] md:text-xs font-bold tracking-wider uppercase border border-gold-500/30 bg-gold-500/10 text-gold-400">
+                <Sparkles className="h-3 w-3 shrink-0" />
+                <span>Artisanal Luxury Pâtisserie</span>
+              </div>
 
-            <p className="text-[11px] sm:text-[11.5px] text-[#A69B8D] font-normal leading-snug pt-1">
-              Freshly baked. Beautifully crafted. <br />
-              Made just for you.
-            </p>
-          </div>
+              <h1 className="font-serif text-[26px] xs:text-[28px] sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-[#FBF7EE] leading-[1.12]">
+                Every Celebration <br className="hidden sm:inline" />
+                Deserves a <br />
+                <span className="text-[#D4AF37] inline-flex items-center gap-1.5">
+                  Perfect Cake
+                  <Heart className="inline-block h-5 w-5 sm:h-6 sm:w-6 text-[#D4AF37] stroke-[1.8] fill-none -rotate-12 translate-y-0.5" />
+                </span>
+              </h1>
 
-          {/* Hero Chocolate Cake on Pedestal Stand */}
-          <div className="relative w-full aspect-[282/215] max-w-[340px] mx-auto mt-0.5">
-            <Image
-              src="/images/celebration_hero_cake_clean.png"
-              alt="Every Celebration Deserves a Perfect Cake"
-              fill
-              priority
-              sizes="(max-width: 430px) 100vw, 340px"
-              className="object-contain"
-            />
-            {/* Seamless Vignette Fades to blend into background */}
-            <div className="absolute inset-y-0 left-0 w-5 bg-gradient-to-r from-[#080706] to-transparent pointer-events-none" />
-            <div className="absolute inset-y-0 right-0 w-5 bg-gradient-to-l from-[#080706] to-transparent pointer-events-none" />
-            <div className="absolute bottom-0 inset-x-0 h-4 bg-gradient-to-t from-[#080706] to-transparent pointer-events-none" />
-            <div className="absolute top-0 inset-x-0 h-4 bg-gradient-to-b from-[#080706] to-transparent pointer-events-none" />
+              <p className="text-[11px] sm:text-xs md:text-sm text-[#A69B8D] font-normal leading-relaxed max-w-lg">
+                Freshly baked daily. Beautifully handcrafted with 100% pure vegetarian & eggless gourmet ingredients.
+              </p>
+
+              {/* Desktop Quick Action CTA Buttons */}
+              <div className="pt-1 md:pt-2 hidden sm:flex items-center gap-3">
+                <Link
+                  href="/menu/cakes"
+                  className="rounded-xl bg-gold-gradient px-5 py-2.5 text-xs font-bold text-luxury-950 shadow-gold-sm hover:opacity-95 transition-opacity"
+                >
+                  Explore All Cakes →
+                </Link>
+                <a
+                  href={waLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-xl border border-gold-500/30 bg-gold-500/10 px-4 py-2.5 text-xs font-semibold text-gold-300 hover:bg-gold-500/20 transition-all flex items-center gap-1.5"
+                >
+                  <MessageCircle className="h-3.5 w-3.5 text-emerald-400" />
+                  <span>WhatsApp Enquiry</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Right Hero Chocolate Cake on Pedestal Stand */}
+            <div className="md:col-span-5 relative w-full aspect-[282/215] max-w-[320px] sm:max-w-[360px] md:max-w-none mx-auto mt-0.5 md:mt-0">
+              <Image
+                src="/images/celebration_hero_cake_clean.png"
+                alt="Every Celebration Deserves a Perfect Cake"
+                fill
+                priority
+                sizes="(max-width: 768px) 100vw, 450px"
+                className="object-contain hover:scale-103 transition-transform duration-500"
+              />
+              {/* Seamless Vignettes */}
+              <div className="absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-[#14120f]/80 to-transparent pointer-events-none hidden md:block" />
+              <div className="absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-[#0a0908]/80 to-transparent pointer-events-none hidden md:block" />
+            </div>
           </div>
         </section>
 
         {/* 3. DYNAMIC OCCASION SHOWCASE (AUTOMATIC FESTIVAL & OCCASION ENGINE) */}
         <OccasionShowcase occasionData={activeOccasion} />
 
-        {/* 4. POPULAR CATEGORIES (4 per row on mobile, 2 rows of 4 - EXACT TARGET MATCH) */}
-        <section className="space-y-2 pt-1">
+        {/* 4. POPULAR CATEGORIES (4 columns on mobile, 8 columns on desktop) */}
+        <section className="space-y-2.5 sm:space-y-3.5 pt-1">
           <div className="flex items-center justify-between px-1">
-            <h2 className="font-serif text-[15px] sm:text-base font-bold text-[#FBF7EE] tracking-tight">
+            <h2 className="font-serif text-[15px] sm:text-lg md:text-xl font-bold text-[#FBF7EE] tracking-tight">
               Popular Categories
             </h2>
             <Link
               href="/menu/cakes"
-              className="text-[11px] font-semibold text-gold-400 hover:text-gold-300 transition-colors"
+              className="text-[11px] sm:text-xs md:text-sm font-semibold text-gold-400 hover:text-gold-300 transition-colors"
             >
-              View all
+              View all →
             </Link>
           </div>
 
-          <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
+          <div className="grid grid-cols-4 md:grid-cols-8 gap-1.5 sm:gap-2.5 md:gap-3">
             {categoriesList.map((cat) => (
               <Link
                 key={cat.id}
                 href={cat.isAll ? "/menu/cakes" : `/menu/cakes?category=${cat.slug}`}
-                className={`group flex flex-col items-center justify-center rounded-2xl py-2 px-1 sm:p-2.5 text-center transition-all duration-300 ${
+                className={`group flex flex-col items-center justify-center rounded-2xl py-2 px-1 sm:p-3 text-center transition-all duration-300 ${
                   cat.isAll
                     ? "border border-[#C59B27] bg-[#161310] shadow-[0_0_12px_rgba(197,155,39,0.18)]"
                     : "border border-white/5 bg-[#14120f] hover:border-gold-500/40 hover:bg-[#181512]"
                 }`}
               >
-                <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-[#0d0b09] border border-white/5 shadow-inner">
+                <div className="relative flex h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 items-center justify-center overflow-hidden rounded-full bg-[#0d0b09] border border-white/5 shadow-inner">
                   {cat.isAll ? (
-                    <div className="relative flex h-full w-full items-center justify-center p-1.5">
+                    <div className="relative flex h-full w-full items-center justify-center p-1.5 sm:p-2">
                       <Image
                         src={cat.image}
                         alt={cat.name}
-                        width={30}
-                        height={30}
+                        width={36}
+                        height={36}
                         className="object-contain"
                       />
                     </div>
@@ -224,13 +250,13 @@ export default function MenuClient({
                       src={cat.image}
                       alt={cat.name}
                       fill
-                      sizes="48px"
+                      sizes="(max-width: 640px) 48px, 64px"
                       className="object-cover group-hover:scale-108 transition-transform duration-300"
                     />
                   )}
                 </div>
                 <span
-                  className={`mt-1.5 text-[9.5px] sm:text-[10px] font-medium leading-tight tracking-tight truncate w-full text-center ${
+                  className={`mt-1.5 text-[9.5px] sm:text-[11px] md:text-xs font-medium leading-tight tracking-tight truncate w-full text-center ${
                     cat.isAll
                       ? "text-[#FBF7EE] font-semibold"
                       : "text-cream-100 group-hover:text-gold-400"
@@ -243,39 +269,39 @@ export default function MenuClient({
           </div>
         </section>
 
-        {/* 5. SIGNATURE CAKES (Strictly 4 Cakes in 2-Column Grid) */}
-        <section className="space-y-1.5 pt-0.5">
+        {/* 5. SIGNATURE CAKES (2-Column on Mobile, 4-Column on Desktop) */}
+        <section className="space-y-2 sm:space-y-3.5 pt-1">
           <div className="flex items-center justify-between px-1">
             <div>
-              <h2 className="font-serif text-sm font-bold text-[#FBF7EE]">
+              <h2 className="font-serif text-sm sm:text-lg md:text-xl font-bold text-[#FBF7EE]">
                 Signature Cakes
               </h2>
-              <p className="text-[9.5px] text-luxury-400">
-                Handpicked favorites for you.
+              <p className="text-[9.5px] sm:text-xs text-luxury-400">
+                Handpicked favorites for every special moment.
               </p>
             </div>
             <Link
               href="/menu/cakes"
-              className="text-[10.5px] font-semibold text-gold-400 hover:text-gold-300"
+              className="text-[10.5px] sm:text-xs md:text-sm font-semibold text-gold-400 hover:text-gold-300"
             >
-              View all
+              View all →
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3.5 md:gap-4 lg:gap-5">
             {signatureCakes.map((cake) => (
               <Link
                 key={cake.id}
                 href={`/menu/cake/${cake.slug}`}
-                className="group relative flex flex-col overflow-hidden rounded-xl border border-luxury-800/80 bg-[#14120f] p-2 transition-all hover:border-gold-500/40"
+                className="group relative flex flex-col overflow-hidden rounded-xl md:rounded-2xl border border-luxury-800/80 bg-[#14120f] p-2 sm:p-3 md:p-3.5 transition-all hover:border-gold-500/40 hover:shadow-gold-md"
               >
                 {/* Cake Image & Badges */}
-                <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-luxury-950">
+                <div className="relative aspect-square w-full overflow-hidden rounded-lg md:rounded-xl bg-luxury-950">
                   <Image
                     src={cake.image}
                     alt={cake.name}
                     fill
-                    sizes="180px"
+                    sizes="(max-width: 640px) 180px, (max-width: 1024px) 240px, 300px"
                     className="object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
@@ -283,31 +309,31 @@ export default function MenuClient({
                   {/* Top-Left Badge */}
                   {cake.badge && (
                     <div className="absolute top-1.5 left-1.5 z-10">
-                      <span className={`rounded px-1.5 py-0.5 text-[8px] uppercase tracking-wider ${cake.badgeClass}`}>
+                      <span className={`rounded px-1.5 py-0.5 text-[8px] sm:text-[9px] uppercase tracking-wider ${cake.badgeClass}`}>
                         {cake.badge}
                       </span>
                     </div>
                   )}
 
                   {/* Top-Right Heart Icon */}
-                  <div className="absolute top-1.5 right-1.5 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-black/40 text-luxury-300">
-                    <Heart className="h-3 w-3" />
+                  <div className="absolute top-1.5 right-1.5 z-10 flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full bg-black/40 text-luxury-300 group-hover:text-red-400 transition-colors">
+                    <Heart className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                   </div>
                 </div>
 
                 {/* Cake Details */}
-                <div className="mt-2 space-y-1">
-                  <h3 className="font-serif text-xs font-bold text-[#FBF7EE] group-hover:text-gold-400 transition-colors truncate">
+                <div className="mt-2 sm:mt-2.5 space-y-1">
+                  <h3 className="font-serif text-xs sm:text-sm md:text-base font-bold text-[#FBF7EE] group-hover:text-gold-400 transition-colors truncate">
                     {cake.name}
                   </h3>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between pt-0.5">
                     <div className="flex items-baseline space-x-1">
-                      <span className="text-[9.5px] text-luxury-400">From</span>
-                      <span className="text-xs font-bold text-gold-400">
+                      <span className="text-[9.5px] sm:text-xs text-luxury-400">From</span>
+                      <span className="text-xs sm:text-sm md:text-base font-bold text-gold-400">
                         ₹{cake.price}
                       </span>
                     </div>
-                    <span className="text-[9px] font-semibold text-gold-400 group-hover:translate-x-0.5 transition-transform">
+                    <span className="text-[9px] sm:text-xs font-semibold text-gold-400 group-hover:translate-x-0.5 transition-transform">
                       View Cake →
                     </span>
                   </div>
@@ -317,61 +343,78 @@ export default function MenuClient({
           </div>
         </section>
 
-        {/* 6. SMALL CUSTOM CAKE CTA (COMPACT BANNER) */}
-        <section className="rounded-2xl border border-gold-500/20 bg-[#14120f] p-3.5 shadow-lg">
-          <div className="flex items-center justify-between gap-3">
+        {/* 6. CUSTOM CAKE CTA (RESPONSIVE BANNER) */}
+        <section className="rounded-2xl md:rounded-3xl border border-gold-500/20 bg-[#14120f] p-3.5 sm:p-6 md:p-8 shadow-xl">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 md:gap-8">
             {/* Left Content */}
-            <div className="space-y-1.5 text-left max-w-[60%]">
-              <h3 className="font-serif text-sm font-bold text-[#FBF7EE]">
+            <div className="space-y-2 text-left sm:max-w-xl">
+              <div className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[9px] sm:text-xs font-bold uppercase tracking-wider bg-gold-500/10 text-gold-400 border border-gold-500/20">
+                <Sparkles className="h-3 w-3" />
+                <span>Bespoke Confectionery</span>
+              </div>
+              <h3 className="font-serif text-base sm:text-xl md:text-2xl font-bold text-[#FBF7EE]">
                 Looking for a Custom Cake?
               </h3>
-              <p className="text-[10px] text-luxury-300 font-light leading-snug">
-                Personalised eggless cakes for birthdays, weddings, anniversaries and special moments.
+              <p className="text-[10.5px] sm:text-xs md:text-sm text-luxury-300 font-light leading-relaxed">
+                Personalised eggless cakes for birthdays, weddings, anniversaries, corporate milestones and special celebrations. Handcrafted to your exact vision.
               </p>
-              <div className="pt-0.5">
+              <div className="pt-1 sm:pt-2">
                 <a
                   href={waLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center space-x-1.5 rounded-xl bg-[#25D366] px-3 py-1.5 text-[10.5px] font-bold text-white shadow-md hover:bg-emerald-500 transition-colors"
+                  className="inline-flex items-center space-x-2 rounded-xl bg-[#25D366] px-4 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-bold text-white shadow-lg hover:bg-emerald-500 transition-colors"
                 >
-                  <MessageCircle className="h-3 w-3 fill-white text-white" />
-                  <span>Chat on WhatsApp</span>
+                  <MessageCircle className="h-4 w-4 fill-white text-white" />
+                  <span>Chat with Pastry Chef on WhatsApp</span>
                 </a>
               </div>
             </div>
 
             {/* Right Bespoke Cake Image */}
-            <div className="relative aspect-square w-24 shrink-0 overflow-hidden rounded-xl border border-gold-500/20 bg-luxury-950">
+            <div className="relative aspect-square w-28 sm:w-36 md:w-44 lg:w-48 shrink-0 overflow-hidden rounded-2xl border border-gold-500/25 bg-luxury-950 shadow-md">
               <Image
                 src="/images/custom_cake.jpg"
                 alt="Custom Celebration Cake"
                 fill
-                sizes="100px"
+                sizes="(max-width: 640px) 120px, 200px"
                 className="object-cover"
               />
             </div>
           </div>
 
-          {/* Bottom 3 Mini Badges */}
-          <div className="mt-2.5 pt-2 border-t border-luxury-800/80 grid grid-cols-3 gap-1 text-center text-[8.5px] text-cream-200">
-            <div className="flex items-center justify-center space-x-1">
-              <Leaf className="h-2.5 w-2.5 text-gold-400 shrink-0" />
-              <span className="truncate">Fresh Ingredients Top Quality</span>
+          {/* Bottom 3 Trust Badges */}
+          <div className="mt-3 sm:mt-5 pt-3 border-t border-luxury-800/80 grid grid-cols-3 gap-2 text-center text-[9px] sm:text-xs text-cream-200">
+            <div className="flex items-center justify-center space-x-1.5">
+              <Leaf className="h-3.5 w-3.5 text-gold-400 shrink-0" />
+              <span className="truncate font-medium">100% Pure Veg & Eggless</span>
             </div>
-            <div className="flex items-center justify-center space-x-1">
-              <ShieldCheck className="h-2.5 w-2.5 text-gold-400 shrink-0" />
-              <span className="truncate">Hygienic Kitchen</span>
+            <div className="flex items-center justify-center space-x-1.5">
+              <ShieldCheck className="h-3.5 w-3.5 text-gold-400 shrink-0" />
+              <span className="truncate font-medium">Hygienic Artisan Kitchen</span>
             </div>
-            <div className="flex items-center justify-center space-x-1">
-              <Clock className="h-2.5 w-2.5 text-gold-400 shrink-0" />
-              <span className="truncate">On-time Everytime</span>
+            <div className="flex items-center justify-center space-x-1.5">
+              <Clock className="h-3.5 w-3.5 text-gold-400 shrink-0" />
+              <span className="truncate font-medium">Fresh Daily On-Time Delivery</span>
             </div>
           </div>
         </section>
+      </main>
+
+      {/* 7. DESKTOP FOOTER */}
+      <div className="hidden md:block">
+        <Footer
+          restaurantName={restaurantName}
+          phone={phoneNumber}
+          whatsapp={whatsappNumber}
+          address={settings?.address}
+          openingHours={settings?.openingHours}
+          instagram={settings?.instagram}
+          footerText={settings?.footerText}
+        />
       </div>
 
-      {/* 7. FIXED MOBILE BOTTOM NAVIGATION BAR */}
+      {/* 8. FIXED MOBILE BOTTOM NAVIGATION BAR */}
       <div className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around border-t border-gold-500/20 bg-[#0d0c0a]/95 py-2 backdrop-blur-xl md:hidden">
         {/* Menu (Active Tab with Gold Glow) */}
         <Link
