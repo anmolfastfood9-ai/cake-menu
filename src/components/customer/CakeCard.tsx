@@ -61,36 +61,38 @@ export default function CakeCard({
         <div className="absolute inset-0 bg-gradient-to-t from-[#12100e] via-transparent to-transparent opacity-80" />
 
         {/* Badges on Top-Left */}
-        <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1.5 flex-wrap">
-          <span className="inline-flex items-center gap-1 rounded-md bg-[#0a120e] px-1.5 py-0.5 text-[9.5px] font-bold text-emerald-400 border border-emerald-500/50 shadow-md">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0 animate-pulse" />
-            <span>Pure Veg</span>
-          </span>
-          {cake.bestseller && (
-            <span className="rounded-md bg-[#C59B27] px-2 py-0.5 text-[9.5px] font-bold text-luxury-950 uppercase tracking-wide shadow-md">
-              Bestseller
-            </span>
-          )}
-          {cake.featured && !cake.bestseller && (
-            <span className="rounded-md bg-[#D97706] px-2 py-0.5 text-[9.5px] font-bold text-white uppercase tracking-wide shadow-md">
-              Signature
-            </span>
-          )}
-          {cake.isNew && (
-            <span className="rounded-md bg-[#059669] px-2 py-0.5 text-[9.5px] font-bold text-white uppercase tracking-wide shadow-md">
-              New
-            </span>
-          )}
-        </div>
+        {(cake.bestseller || cake.featured || cake.isNew) && (
+          <div className="absolute top-2 left-2 z-10 flex items-center gap-1 flex-wrap">
+            {cake.bestseller ? (
+              <span className="rounded-md bg-[#C59B27] px-2 py-0.5 text-[9px] font-bold text-luxury-950 uppercase tracking-wide shadow-md">
+                Bestseller
+              </span>
+            ) : cake.featured ? (
+              <span className="rounded-md bg-[#D97706] px-2 py-0.5 text-[9px] font-bold text-white uppercase tracking-wide shadow-md">
+                Signature
+              </span>
+            ) : cake.isNew ? (
+              <span className="rounded-md bg-[#059669] px-2 py-0.5 text-[9px] font-bold text-white uppercase tracking-wide shadow-md">
+                New
+              </span>
+            ) : null}
+          </div>
+        )}
       </Link>
 
       {/* Content Details */}
-      <div className="flex flex-1 flex-col justify-between p-3.5 sm:p-4 space-y-2.5">
+      <div className="flex flex-1 flex-col justify-between p-3 sm:p-4 space-y-2">
         <div>
           <Link href={`/menu/cake/${cake.slug}`} className="block">
-            <h3 className="font-serif text-sm sm:text-base font-bold text-[#FBF7EE] transition-colors group-hover:text-gold-400 line-clamp-1">
-              {cake.name}
-            </h3>
+            <div className="flex items-center gap-1.5">
+              {/* Standard Indian Pure Veg Icon (Green Circle in Green Square) */}
+              <span className="flex h-3 w-3 shrink-0 items-center justify-center rounded-[2px] border border-emerald-500 p-[1px]" title="100% Pure Veg">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              </span>
+              <h3 className="font-serif text-sm sm:text-base font-bold text-[#FBF7EE] transition-colors group-hover:text-gold-400 line-clamp-1">
+                {cake.name}
+              </h3>
+            </div>
           </Link>
           <p className="mt-0.5 text-[11px] text-luxury-400 leading-snug line-clamp-1 font-light">
             {cake.description}
