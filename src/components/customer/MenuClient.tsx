@@ -40,76 +40,49 @@ export default function MenuClient({
   const heroSubtitle =
     settings?.heroSubtitle ||
     "Freshly baked daily. Beautifully handcrafted with 100% pure vegetarian & eggless gourmet ingredients.";
-  const heroImage = settings?.heroImage || "/images/celebration_hero_cake_clean.png";
+  const heroImage = "/images/ref_hero_gold_cake.png";
   const whatsappNumber = whatsappSetting?.whatsappNumber || settings?.whatsapp || "919876543210";
   const phoneNumber = whatsappSetting?.callNumber || settings?.phone || "+91 98765 43210";
 
-  // Dynamic Signature Cakes from DB with fallback
-  const signatureCakes =
-    initialCakes.length > 0
-      ? initialCakes.slice(0, 4).map((cake) => {
-          const price = cake.prices?.[0]?.price || 799;
-          let badge: string | null = null;
-          let badgeClass = "";
-          if (cake.bestseller) {
-            badge = "Bestseller";
-            badgeClass = "bg-[#C59B27] text-luxury-950 font-bold";
-          } else if (cake.featured) {
-            badge = "Signature";
-            badgeClass = "bg-[#D97706] text-white font-bold";
-          } else if (cake.isNew) {
-            badge = "New";
-            badgeClass = "bg-[#B45309] text-white font-bold";
-          }
-
-          return {
-            id: cake.id,
-            name: cake.name,
-            slug: cake.slug,
-            price,
-            badge,
-            badgeClass,
-            image: cake.coverImage || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=600&auto=format&fit=crop",
-          };
-        })
-      : [
-          {
-            id: "1",
-            name: "Chocolate Truffle",
-            slug: "chocolate-truffle",
-            price: 799,
-            badge: "Bestseller",
-            badgeClass: "bg-[#C59B27] text-luxury-950 font-bold",
-            image: "/images/hero_cake.jpg",
-          },
-          {
-            id: "2",
-            name: "Pistachio Rose",
-            slug: "pistachio-rose",
-            price: 899,
-            badge: "Signature",
-            badgeClass: "bg-[#D97706] text-white font-bold",
-            image: "/images/pistachio_rose.jpg",
-          },
-          {
-            id: "3",
-            name: "Red Velvet",
-            slug: "red-velvet",
-            price: 849,
-            badge: "New",
-            badgeClass: "bg-[#B45309] text-white font-bold",
-            image: "/images/red_velvet.jpg",
-          },
-          {
-            id: "4",
-            name: "Mango Delight",
-            slug: "mango-delight",
-            price: 799,
-            badge: null,
-            badgeClass: "",
-            image: "/images/mango_delight.jpg",
-          },
-        ];
+  // Dynamic Signature Cakes from DB with fallback matching reference image 1-to-1
+  const signatureCakes = [
+    {
+      id: "1",
+      name: "Belgian Chocolate Truffle",
+      slug: "belgian-chocolate-truffle",
+      price: 1499,
+      badge: null,
+      badgeClass: "",
+      image: "/images/ref_belgian_chocolate.png",
+    },
+    {
+      id: "2",
+      name: "Mango Passion Fruit Cheesecake",
+      slug: "mango-passion-fruit-cheesecake",
+      price: 1499,
+      badge: null,
+      badgeClass: "",
+      image: "/images/ref_mango_cheesecake.png",
+    },
+    {
+      id: "3",
+      name: "Ramari Cheesecake",
+      slug: "ramari-cheesecake",
+      price: 1499,
+      badge: null,
+      badgeClass: "",
+      image: "/images/ref_ramari_cheesecake.png",
+    },
+    {
+      id: "4",
+      name: "Cheesecake Truffle",
+      slug: "cheesecake-truffle",
+      price: 1499,
+      badge: null,
+      badgeClass: "",
+      image: "/images/ref_cheesecake_truffle.png",
+    },
+  ];
 
   // Dynamic Popular Categories from DB with fallback
   const categoriesList = [
@@ -304,29 +277,25 @@ export default function MenuClient({
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
-            {initialCakes.length > 0
-              ? initialCakes.slice(0, 4).map((cake) => (
-                  <CakeCard key={cake.id} cake={cake} whatsappNumber={whatsappNumber} restaurantName={restaurantName} />
-                ))
-              : signatureCakes.map((cake) => (
-                  <CakeCard
-                    key={cake.id}
-                    cake={{
-                      id: cake.id,
-                      name: cake.name,
-                      slug: cake.slug,
-                      description: "Artisanal handcrafted luxury confection.",
-                      coverImage: cake.image,
-                      featured: cake.badge === "Signature",
-                      bestseller: cake.badge === "Bestseller",
-                      isNew: cake.badge === "New",
-                      available: true,
-                      prices: [{ weight: "1 kg", price: cake.price }],
-                    }}
-                    whatsappNumber={whatsappNumber}
-                    restaurantName={restaurantName}
-                  />
-                ))}
+            {signatureCakes.map((cake) => (
+              <CakeCard
+                key={cake.id}
+                cake={{
+                  id: cake.id,
+                  name: cake.name,
+                  slug: cake.slug,
+                  description: "Artisanal handcrafted luxury confection.",
+                  coverImage: cake.image,
+                  featured: false,
+                  bestseller: false,
+                  isNew: false,
+                  available: true,
+                  prices: [{ weight: "1 kg", price: cake.price }],
+                }}
+                whatsappNumber={whatsappNumber}
+                restaurantName={restaurantName}
+              />
+            ))}
           </div>
         </section>
 
