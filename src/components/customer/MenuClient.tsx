@@ -136,7 +136,7 @@ export default function MenuClient({
             <div className="relative w-56 h-56 sm:w-72 sm:h-72 md:w-80 md:h-80 aspect-square -my-2">
               <Image
                 src={heroImage}
-                alt={heroTitle || "Crafted for Sweet Perfection"}
+                alt="Crafted for Sweet Perfection"
                 fill
                 priority
                 sizes="(max-width: 768px) 300px, 360px"
@@ -144,8 +144,8 @@ export default function MenuClient({
               />
             </div>
 
-            {/* Large Serif Display Headline */}
-            <h1 className="font-serif text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-[#FBF7EE] leading-tight px-2">
+            {/* Large Serif Display Headline with Gold Gradient */}
+            <h1 className="font-serif text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-[#FFF3D1] via-[#E6C675] to-[#B89235] bg-clip-text text-transparent leading-tight px-2">
               Crafted for Sweet Perfection
             </h1>
 
@@ -172,72 +172,45 @@ export default function MenuClient({
         {/* 3. DYNAMIC FESTIVAL BANNER */}
         <OccasionShowcase occasionData={activeOccasion} />
 
-        {/* 4. CATEGORY NAVIGATION (STORY CIRCLES WITH GOLD RINGS) */}
+        {/* 4. CATEGORY NAVIGATION (EXACT 5 STORY RINGS FROM MOCKUP) */}
         <section className="py-2">
           {/* Horizontal Story Circles Row */}
-          <div className="flex items-center gap-4 overflow-x-auto py-1 scrollbar-none snap-x justify-start sm:justify-center px-1">
+          <div className="flex items-center gap-3.5 overflow-x-auto py-1 scrollbar-none snap-x justify-start sm:justify-center px-1">
             {[
               {
                 id: "all",
                 name: "All",
                 slug: "all",
                 isAll: true,
-                svg: (
-                  <svg className="w-6 h-6 text-gold-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <path d="M12 4v4m0 0l-2-2m2 2l2-2" />
-                    <path d="M4 14h16v6H4z" />
-                    <path d="M6 10h12v4H6z" />
-                  </svg>
-                ),
+                image: "/images/cat_all.png",
               },
               {
                 id: "truffle",
                 name: "Truffle",
                 slug: "chocolate-truffle",
                 isAll: false,
-                svg: (
-                  <svg className="w-6 h-6 text-gold-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <path d="M12 3v3" />
-                    <path d="M5 12c0-3.3 3.1-6 7-6s7 2.7 7 6v6H5v-6z" />
-                    <path d="M8 12c0 1.5 1.8 2 4 2s4-.5 4-2" />
-                  </svg>
-                ),
+                image: "/images/cat_truffle.png",
               },
               {
                 id: "fruit",
                 name: "Fruit",
                 slug: "fruit-berry",
                 isAll: false,
-                svg: (
-                  <svg className="w-6 h-6 text-gold-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <circle cx="12" cy="12" r="7" />
-                    <path d="M12 9v6m-3-3h6" />
-                  </svg>
-                ),
+                image: "/images/cat_fruit.png",
               },
               {
                 id: "cheesecakes",
                 name: "Cheesecakes",
                 slug: "cheesecakes",
                 isAll: false,
-                svg: (
-                  <svg className="w-6 h-6 text-gold-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <path d="M4 18l16-3V8L4 18z" />
-                    <path d="M4 18v3h16v-6" />
-                  </svg>
-                ),
+                image: "/images/cat_cheesecakes.png",
               },
               {
                 id: "photo-cakes",
                 name: "Photo Cakes",
                 slug: "photo-designer",
                 isAll: false,
-                svg: (
-                  <svg className="w-6 h-6 text-gold-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <rect x="4" y="6" width="16" height="12" rx="2" />
-                    <circle cx="12" cy="12" r="3" />
-                  </svg>
-                ),
+                image: "/images/cat_photo_cakes.png",
               },
             ].map((cat) => (
               <Link
@@ -246,14 +219,20 @@ export default function MenuClient({
                 className="group flex flex-col items-center shrink-0 snap-start space-y-1.5 active:scale-95 transition-transform"
               >
                 <div
-                  className={`relative flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full p-0.5 transition-all ${
+                  className={`relative flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full overflow-hidden p-0.5 transition-all ${
                     cat.isAll
                       ? "border-2 border-gold-400 bg-[#14110e] shadow-[0_0_15px_rgba(212,175,55,0.4)]"
                       : "border-2 border-gold-500/40 bg-[#12100e] hover:border-gold-400"
                   }`}
                 >
-                  <div className="flex h-full w-full items-center justify-center rounded-full bg-[#0d0b09]">
-                    {cat.svg}
+                  <div className="relative flex h-full w-full items-center justify-center rounded-full overflow-hidden">
+                    <Image
+                      src={cat.image}
+                      alt={cat.name}
+                      fill
+                      sizes="64px"
+                      className="object-cover"
+                    />
                   </div>
                 </div>
                 <span
@@ -268,8 +247,8 @@ export default function MenuClient({
           </div>
         </section>
 
-        {/* 5. SIGNATURE CAKES */}
-        <section className="space-y-3 pt-1">
+        {/* 5. SIGNATURE CAKES (EXACT 4 CARDS MATCHING MOCKUP 1-TO-1) */}
+        <section className="space-y-3 pt-1 pb-6">
           <div className="px-1 text-left">
             <h2 className="font-serif text-lg sm:text-xl font-bold text-gold-200">
               Signature Cakes
@@ -298,66 +277,9 @@ export default function MenuClient({
             ))}
           </div>
         </section>
-
-        {/* 6. CUSTOM CAKE CTA (RESPONSIVE BANNER) */}
-        <section className="rounded-2xl md:rounded-3xl border border-gold-500/20 bg-[#14120f] p-3.5 sm:p-6 md:p-8 shadow-xl">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 md:gap-8">
-            {/* Left Content */}
-            <div className="space-y-2 text-left sm:max-w-xl">
-              <div className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[9px] sm:text-xs font-bold uppercase tracking-wider bg-gold-500/10 text-gold-400 border border-gold-500/20">
-                <Sparkles className="h-3 w-3" />
-                <span>Bespoke Confectionery</span>
-              </div>
-              <h3 className="font-serif text-base sm:text-xl md:text-2xl font-bold text-[#FBF7EE]">
-                Looking for a Custom Cake?
-              </h3>
-              <p className="text-[10.5px] sm:text-xs md:text-sm text-luxury-300 font-light leading-relaxed">
-                Personalised eggless cakes for birthdays, weddings, anniversaries, corporate milestones and special celebrations. Handcrafted to your exact vision.
-              </p>
-              <div className="pt-1 sm:pt-2">
-                <a
-                  href={waLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center space-x-2 rounded-xl bg-[#25D366] px-4 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-bold text-white shadow-lg hover:bg-emerald-500 transition-colors"
-                >
-                  <MessageCircle className="h-4 w-4 fill-white text-white" />
-                  <span>Chat with Pastry Chef on WhatsApp</span>
-                </a>
-              </div>
-            </div>
-
-            {/* Right Bespoke Cake Image */}
-            <div className="relative aspect-square w-28 sm:w-36 md:w-44 lg:w-48 shrink-0 overflow-hidden rounded-2xl border border-gold-500/25 bg-luxury-950 shadow-md">
-              <Image
-                src="/images/custom_cake.jpg"
-                alt="Custom Celebration Cake"
-                fill
-                sizes="(max-width: 640px) 120px, 200px"
-                className="object-cover"
-              />
-            </div>
-          </div>
-
-          {/* Bottom 3 Trust Badges */}
-          <div className="mt-3 sm:mt-5 pt-3 border-t border-luxury-800/80 grid grid-cols-3 gap-2 text-center text-[9px] sm:text-xs text-cream-200">
-            <div className="flex items-center justify-center space-x-1.5">
-              <Leaf className="h-3.5 w-3.5 text-gold-400 shrink-0" />
-              <span className="truncate font-medium">100% Pure Veg & Eggless</span>
-            </div>
-            <div className="flex items-center justify-center space-x-1.5">
-              <ShieldCheck className="h-3.5 w-3.5 text-gold-400 shrink-0" />
-              <span className="truncate font-medium">Hygienic Artisan Kitchen</span>
-            </div>
-            <div className="flex items-center justify-center space-x-1.5">
-              <Clock className="h-3.5 w-3.5 text-gold-400 shrink-0" />
-              <span className="truncate font-medium">Fresh Daily On-Time Delivery</span>
-            </div>
-          </div>
-        </section>
       </main>
 
-      {/* 7. DESKTOP FOOTER */}
+      {/* 6. DESKTOP FOOTER */}
       <div className="hidden md:block">
         <Footer
           restaurantName={restaurantName}
@@ -371,7 +293,7 @@ export default function MenuClient({
         />
       </div>
 
-      {/* 8. SINGLE FLOATING STICKY WHATSAPP CUSTOM CAKE BAR ON MOBILE (MATCHES MOCKUP 1-TO-1) */}
+      {/* 7. SINGLE FLOATING STICKY WHATSAPP CUSTOM CAKE BAR ON MOBILE (MATCHES MOCKUP 1-TO-1) */}
       <div className="fixed bottom-3 left-3 right-3 z-50 md:hidden">
         <a
           href={waLink}

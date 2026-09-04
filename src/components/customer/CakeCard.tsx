@@ -47,9 +47,9 @@ export default function CakeCard({
   const lowestPrice = sortedPrices[0]?.price || 1499;
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-gold-500/25 bg-[#14110e] p-2.5 sm:p-3 transition-all duration-300 hover:border-gold-500/50 hover:shadow-[0_4px_20px_rgba(212,175,55,0.15)]">
+    <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-gold-500/25 bg-[#12100e] p-2.5 sm:p-3 transition-all duration-300 hover:border-gold-500/50 hover:shadow-[0_4px_20px_rgba(212,175,55,0.15)]">
       {/* Top Image Container */}
-      <Link href={`/menu/cake/${cake.slug}`} className="relative block aspect-square w-full overflow-hidden rounded-xl bg-[#0a0907]">
+      <Link href={`/menu/cake/${cake.slug}`} className="relative block aspect-square w-full overflow-hidden rounded-xl bg-[#12100e]">
         <Image
           src={cake.coverImage}
           alt={cake.name}
@@ -57,8 +57,6 @@ export default function CakeCard({
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
         />
-
-        <div className="absolute inset-0 bg-gradient-to-t from-[#14110e]/60 via-transparent to-transparent" />
 
         {/* Top-Right Green Veg Indicator Symbol */}
         <div className="absolute top-2 right-2 z-10">
