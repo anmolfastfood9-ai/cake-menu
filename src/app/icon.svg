@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <rect width="512" height="512" rx="128" fill="#090807"/>
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="none" stroke="#D4AF37" stroke-width="8" opacity="0.3"/>
+  <!-- Sparkles -->
+  <path d="M 380 120 Q 380 145 405 145 Q 380 145 380 170 Q 380 145 355 145 Q 380 145 380 120 Z" fill="#FCD34D"/>
+  <path d="M 120 140 Q 120 155 135 155 Q 120 155 120 170 Q 120 155 105 155 Q 120 155 120 140 Z" fill="#D4AF37"/>
+  <!-- Cake Base Stand -->
+  <rect x="112" y="384" width="288" height="24" rx="12" fill="#D4AF37"/>
+  <!-- Bottom Tier -->
+  <path d="M 128 384 L 128 288 C 128 270 142 256 160 256 L 352 256 C 370 256 384 270 384 288 L 384 384 Z" fill="#1C1814" stroke="#D4AF37" stroke-width="12"/>
+  <!-- Bottom Tier Frosting Drips -->
+  <path d="M 128 288 Q 160 320 192 288 Q 224 320 256 288 Q 288 320 320 288 Q 352 320 384 288" fill="none" stroke="#F59E0B" stroke-width="10" stroke-linecap="round"/>
+  <!-- Top Tier -->
+  <path d="M 176 256 L 176 184 C 176 168 188 156 204 156 L 308 156 C 324 156 336 168 336 184 L 336 256 Z" fill="#26211C" stroke="#D4AF37" stroke-width="12"/>
+  <!-- Top Tier Swirl -->
+  <path d="M 176 184 Q 216 212 256 184 Q 296 212 336 184" fill="none" stroke="#FCD34D" stroke-width="8" stroke-linecap="round"/>
+  <!-- Cherry / Decoration on top -->
+  <circle cx="256" cy="120" r="20" fill="#EF4444"/>
+  <path d="M 256 100 Q 270 80 264 64" fill="none" stroke="#D4AF37" stroke-width="6" stroke-linecap="round"/>
+</svg>
