@@ -62,9 +62,9 @@ export default function CakeCard({
 
         {/* Badges on Top-Left */}
         <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1.5 flex-wrap">
-          <span className="inline-flex items-center gap-1 rounded bg-black/80 backdrop-blur-md px-1.5 py-0.5 text-[8.5px] font-bold text-emerald-400 border border-emerald-500/40 shadow-sm">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            Pure Veg
+          <span className="inline-flex items-center gap-1 rounded-md bg-[#0a120e] px-1.5 py-0.5 text-[9.5px] font-bold text-emerald-400 border border-emerald-500/50 shadow-md">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0 animate-pulse" />
+            <span>Pure Veg</span>
           </span>
           {cake.bestseller && (
             <span className="rounded-md bg-[#C59B27] px-2 py-0.5 text-[9.5px] font-bold text-luxury-950 uppercase tracking-wide shadow-md">
