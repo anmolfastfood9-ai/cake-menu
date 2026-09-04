@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import Navbar from "@/components/customer/Navbar";
 import Footer from "@/components/customer/Footer";
 import CakeCard from "@/components/customer/CakeCard";
-import FloatingContact from "@/components/customer/FloatingContact";
+import MobileBottomNav from "@/components/customer/MobileBottomNav";
 import {
   getCachedOccasion,
   getCachedWebsiteSettings,
@@ -110,7 +110,7 @@ export default async function OccasionPage({
   const festiveWhatsAppUrl = `https://wa.me/${cleanWaNumber}?text=${customEnquiryMsg}`;
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#080706] text-[#FBF7EE] selection:bg-gold-500 selection:text-luxury-950 font-sans">
+    <div className="min-h-screen flex flex-col bg-[#050505] text-[#FBF7EE] selection:bg-gold-500 selection:text-luxury-950 font-sans pb-24 md:pb-0">
       <Navbar
         restaurantName={restaurantName}
         whatsappNumber={whatsappNumber}
@@ -136,7 +136,7 @@ export default async function OccasionPage({
 
           {/* Occasion Hero Card */}
           <div
-            className="relative overflow-hidden rounded-3xl border border-gold-500/25 bg-gradient-to-b from-[#181410] via-[#120f0d] to-[#0a0807] p-6 sm:p-10 shadow-2xl backdrop-blur-2xl"
+            className="relative overflow-hidden rounded-[24px] border border-gold-500/25 bg-gradient-to-b from-[#181410] via-[#120f0d] to-[#0a0807] p-6 sm:p-10 shadow-2xl backdrop-blur-2xl"
             style={{
               boxShadow: `0 12px 40px -10px ${accentColor}25, 0 1px 3px rgba(0,0,0,0.5)`,
             }}
@@ -182,7 +182,7 @@ export default async function OccasionPage({
 
               {/* Title & Description */}
               <div className="space-y-2">
-                <h1 className="font-serif text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-cream-50 leading-tight">
+                <h1 className="font-serif text-2xl sm:text-4xl lg:text-5xl font-bold tracking-normal text-cream-50 leading-tight">
                   {occasion.name}
                   <span className="block text-gold-400 font-sans text-lg sm:text-2xl font-light tracking-wide mt-1">
                     Festive Confection Collection
@@ -295,33 +295,7 @@ export default async function OccasionPage({
         footerText={settings?.footerText}
       />
 
-      {/* Mobile Bottom Navigation Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around border-t border-gold-500/20 bg-[#0d0c0a]/95 py-2 backdrop-blur-xl md:hidden">
-        <Link
-          href="/menu"
-          className="flex flex-col items-center space-y-0.5 px-4 py-1 text-luxury-400 hover:text-cream-100 transition-colors"
-        >
-          <Sparkles className="h-4 w-4" />
-          <span className="text-[9.5px] font-medium">Menu</span>
-        </Link>
-
-        <Link
-          href="/menu/cakes"
-          className="relative flex flex-col items-center space-y-0.5 px-4 py-1 rounded-xl bg-gold-500/10 text-gold-400"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span className="text-[9.5px] font-bold">All Cakes</span>
-        </Link>
-
-        <Link
-          href="/menu/order"
-          className="flex flex-col items-center space-y-0.5 px-4 py-1 text-luxury-400 hover:text-cream-100 transition-colors"
-        >
-          <MessageCircle className="h-4 w-4" />
-          <span className="text-[9.5px] font-medium">Order</span>
-        </Link>
-      </div>
+      <MobileBottomNav active="cakes" />
     </div>
   );
 }
-

@@ -7,8 +7,13 @@
 :root {
   --background: #090807;
   --foreground: #fcf8f2;
-  --font-playfair: 'Playfair Display', serif;
-  --font-plus-jakarta: 'Plus Jakarta Sans', sans-serif;
+  --font-playfair: "Playfair Display", serif;
+  --font-plus-jakarta: "Plus Jakarta Sans", sans-serif;
+}
+
+html {
+  background: var(--background);
+  overflow-x: hidden;
 }
 
 body {
@@ -16,30 +21,82 @@ body {
   background: var(--background);
   font-family: var(--font-plus-jakarta);
   overflow-x: hidden;
+  min-width: 0;
 }
 
-/* Custom Luxury Typography */
-h1, h2, h3, h4, .font-serif {
+/* ==========================================================
+   CUSTOM LUXURY TYPOGRAPHY
+   ========================================================== */
+
+h1,
+h2,
+h3,
+h4,
+.font-serif {
   font-family: var(--font-playfair);
 }
 
-/* Custom Scrollbar */
+/* ==========================================================
+   CUSTOM SCROLLBAR
+   ========================================================== */
+
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
+
 ::-webkit-scrollbar-track {
   background: #0d0c0a;
 }
+
 ::-webkit-scrollbar-thumb {
   background: #2b251d;
   border-radius: 4px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: #d4af37;
 }
 
-/* Glassmorphism Card Style */
+/* ==========================================================
+   HORIZONTAL SCROLL HELPERS
+   ========================================================== */
+
+/*
+ * Used by category navigation and other intentional
+ * horizontal scrollers.
+ *
+ * IMPORTANT:
+ * Only the element with this class may scroll horizontally.
+ * The document itself remains locked to viewport width.
+ */
+
+.menu-horizontal-scroll {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.menu-horizontal-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.menu-horizontal-content {
+  width: max-content;
+  min-width: max-content;
+}
+
+/* ==========================================================
+   GLASSMORPHISM CARD STYLE
+   ========================================================== */
+
 .glass-panel {
   background: rgba(22, 19, 16, 0.75);
   backdrop-filter: blur(12px);
@@ -50,20 +107,32 @@ h1, h2, h3, h4, .font-serif {
 .glass-panel-hover {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
 .glass-panel-hover:hover {
   border-color: rgba(212, 175, 55, 0.4);
   box-shadow: 0 10px 30px -10px rgba(212, 175, 55, 0.2);
   transform: translateY(-2px);
 }
 
-/* Gold Shimmer Gradient Animation */
+/* ==========================================================
+   GOLD SHIMMER GRADIENT ANIMATION
+   ========================================================== */
+
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 .gold-shimmer-text {
-  background: linear-gradient(90deg, #FAF4DC 0%, #D4AF37 50%, #FAF4DC 100%);
+  background: linear-gradient(90deg,
+      #faf4dc 0%,
+      #d4af37 50%,
+      #faf4dc 100%);
   background-size: 200% auto;
   color: transparent;
   -webkit-background-clip: text;
@@ -72,7 +141,10 @@ h1, h2, h3, h4, .font-serif {
 }
 
 .gold-gradient-bg {
-  background: linear-gradient(135deg, #ECC86B 0%, #D4AF37 50%, #9E7B34 100%);
+  background: linear-gradient(135deg,
+      #ecc86b 0%,
+      #d4af37 50%,
+      #9e7b34 100%);
 }
 
 .gold-glow-border {
@@ -80,10 +152,20 @@ h1, h2, h3, h4, .font-serif {
   box-shadow: 0 0 15px rgba(212, 175, 55, 0.1);
 }
 
-/* Pulse animation for WhatsApp badge */
+/* ==========================================================
+   WHATSAPP / SUBTLE MOTION
+   ========================================================== */
+
 @keyframes subtle-bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
 }
 
 .animate-subtle-bounce {
@@ -91,24 +173,156 @@ h1, h2, h3, h4, .font-serif {
 }
 
 @keyframes progressBar {
-  0% { width: 0%; opacity: 1; }
-  40% { width: 60%; opacity: 1; }
-  80% { width: 88%; opacity: 1; }
-  100% { width: 98%; opacity: 1; }
+  0% {
+    width: 0%;
+    opacity: 1;
+  }
+
+  40% {
+    width: 60%;
+    opacity: 1;
+  }
+
+  80% {
+    width: 88%;
+    opacity: 1;
+  }
+
+  100% {
+    width: 98%;
+    opacity: 1;
+  }
 }
 
 .animate-progressBar {
   animation: progressBar 1.6s cubic-bezier(0.1, 0.6, 0.1, 1) infinite;
 }
 
-/* Instant Mobile Touch & Button Tap Responsiveness */
-a, button, [role="button"] {
+/* ==========================================================
+   TOUCH / BUTTON RESPONSIVENESS
+   ========================================================== */
+
+a,
+button,
+[role="button"] {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
 
-a:active, button:active {
+a:active,
+button:active {
   transform: scale(0.98);
   transition: transform 100ms ease;
 }
 
+/* ==========================================================
+   PUBLIC MENU SAFE WIDTH
+   ========================================================== */
+
+/*
+ * Prevent flex/grid children from forcing the entire public
+ * page wider than the viewport.
+ */
+
+main,
+section,
+article,
+header,
+footer,
+nav {
+  min-width: 0;
+}
+
+img {
+  max-width: 100%;
+}
+
+/* ==========================================================
+   MOBILE PUBLIC MENU
+   ========================================================== */
+
+@media (max-width: 767px) {
+  /*
+   * Keep the mobile experience compact.
+   * Do not introduce large desktop-style spacing.
+   */
+
+  body {
+    width: 100%;
+    max-width: 100vw;
+  }
+
+  /*
+   * Prevent accidental page-level horizontal overflow.
+   * Intentional horizontal scrolling must happen inside the
+   * dedicated menu-horizontal-scroll container.
+   */
+
+  main {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /*
+   * Prevent long text from creating wider grid items.
+   */
+
+  h1,
+  h2,
+  h3,
+  h4,
+  p,
+  a,
+  span {
+    min-width: 0;
+  }
+}
+
+/* ==========================================================
+   TABLET
+   ========================================================== */
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  /*
+   * Keep tablet layouts controlled rather than allowing
+   * mobile-width components to remain unnecessarily tiny.
+   */
+
+  .menu-horizontal-scroll {
+    overflow-x: auto;
+  }
+}
+
+/* ==========================================================
+   DESKTOP
+   ========================================================== */
+
+@media (min-width: 1024px) {
+  /*
+   * Desktop should use available width without becoming
+   * infinitely wide.
+   */
+
+  .menu-desktop-container {
+    width: 100%;
+    max-width: 1180px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* ==========================================================
+   ACCESSIBILITY
+   ========================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

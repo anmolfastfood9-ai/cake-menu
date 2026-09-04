@@ -33,129 +33,383 @@ export default function Footer({
   facebook,
   footerText,
 }: FooterProps) {
-  const safeRestaurantName = restaurantName || "Raman Sweet & Luxury Pâtisserie";
+  const safeRestaurantName =
+    restaurantName || "Raman Sweet & Luxury Pâtisserie";
+
   const safePhone = phone || "+91 98765 43210";
   const safeWhatsapp = whatsapp || "919876543210";
-  const safeAddress = address || "123, Bakery Street, Patna, Bihar 800001";
-  const safeOpeningHours = openingHours || "10:00 AM – 10:00 PM (All Days)";
-  const safeFooterText = footerText || "© 2026 Raman Sweet & Luxury Pâtisserie. All rights reserved.";
+  const safeAddress =
+    address || "123, Bakery Street, Patna, Bihar 800001";
+  const safeOpeningHours =
+    openingHours || "10:00 AM – 10:00 PM (All Days)";
+  const safeFooterText =
+    footerText ||
+    "© 2026 Raman Sweet & Luxury Pâtisserie. All rights reserved.";
 
-  const waLink = generateGeneralWhatsAppLink(safeWhatsapp, safeRestaurantName);
+  const waLink = generateGeneralWhatsAppLink(
+    safeWhatsapp,
+    safeRestaurantName
+  );
 
-  // Extract Instagram handle if a full URL is provided
   const instagramHandle = instagram
-    ? instagram.replace(/^https?:\/\/(www\.)?instagram\.com\//i, "@").replace(/\/$/, "")
-    : "@ramansweetcake";
+    ? instagram
+      .replace(/^https?:\/\/(www\.)?instagram\.com\//i, "@")
+      .replace(/\/$/, "")
+    : "";
 
-  // Extract Facebook name/handle if a full URL is provided
   const facebookHandle = facebook
-    ? facebook.replace(/^https?:\/\/(www\.)?facebook\.com\//i, "").replace(/\/$/, "") || "Facebook"
-    : "Facebook";
+    ? facebook
+      .replace(/^https?:\/\/(www\.)?facebook\.com\//i, "")
+      .replace(/\/$/, "") || "Facebook"
+    : "";
 
   return (
-    <footer className="border-t border-gold-500/15 bg-[#080706] text-[#EDE4D3] py-8">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
-        {/* Top: Compact Brand & Identity */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-luxury-800 pb-6 text-center sm:text-left">
-          <div className="flex items-center space-x-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-gold-500/30 bg-[#14120f] text-gold-400">
-              <Cake className="h-4 w-4" />
+    <footer
+      className="
+        border-t
+        border-[#D4AF37]/15
+        bg-[#070605]
+        text-[#EDE4D3]
+      "
+    >
+      <div
+        className="
+          mx-auto
+          w-full
+          max-w-6xl
+          px-6
+          py-8
+          lg:px-8
+        "
+      >
+        {/* ======================================================
+            TOP BRAND ROW
+        ====================================================== */}
+        <div
+          className="
+            flex
+            flex-col
+            gap-5
+            border-b
+            border-white/[0.07]
+            pb-6
+            md:flex-row
+            md:items-center
+            md:justify-between
+          "
+        >
+          {/* Brand */}
+          <Link
+            href="/menu"
+            className="
+              flex
+              min-w-0
+              items-center
+              gap-3
+              transition-opacity
+              hover:opacity-90
+            "
+          >
+            <div
+              className="
+                flex
+                h-10
+                w-10
+                shrink-0
+                items-center
+                justify-center
+                rounded-full
+                border
+                border-[#D4AF37]/40
+                bg-[#11100D]
+                text-[#D4AF37]
+                shadow-[0_0_15px_rgba(212,175,55,0.10)]
+              "
+            >
+              <Cake className="h-4.5 w-4.5" />
             </div>
-            <div>
-              <span className="font-serif text-lg font-bold text-[#FBF7EE] block">
+
+            <div className="min-w-0">
+              <span
+                className="
+                  block
+                  truncate
+                  font-serif
+                  text-lg
+                  font-bold
+                  leading-tight
+                  text-[#F8F0DE]
+                "
+              >
                 {safeRestaurantName}
               </span>
-              <span className="text-[9px] uppercase tracking-widest text-gold-400 font-bold">
+
+              <span
+                className="
+                  mt-0.5
+                  block
+                  text-[9px]
+                  font-bold
+                  uppercase
+                  tracking-[0.16em]
+                  text-[#D4AF37]
+                "
+              >
                 100% Eggless • Pure Vegetarian
               </span>
             </div>
-          </div>
+          </Link>
 
-          <div className="flex items-center space-x-6 text-xs text-luxury-300">
-            <Link href="/menu" className="hover:text-gold-400 transition-colors">
+          {/* Navigation */}
+          <nav
+            className="
+              flex
+              flex-wrap
+              items-center
+              gap-x-5
+              gap-y-2
+              text-[11px]
+              text-[#C9C0B1]
+              md:justify-end
+            "
+          >
+            <Link
+              href="/menu"
+              className="
+                transition-colors
+                hover:text-[#D4AF37]
+              "
+            >
               Menu
             </Link>
-            <Link href="/menu/cakes" className="hover:text-gold-400 transition-colors">
+
+            <Link
+              href="/menu/cakes"
+              className="
+                transition-colors
+                hover:text-[#D4AF37]
+              "
+            >
               All Cakes
             </Link>
-            <Link href="/menu/order" className="hover:text-gold-400 transition-colors">
+
+            <Link
+              href="/menu/order"
+              className="
+                transition-colors
+                hover:text-[#D4AF37]
+              "
+            >
               Enquire / Order
             </Link>
-          </div>
+          </nav>
         </div>
 
-        {/* Middle: Compact Contact Strip */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs text-luxury-300">
+        {/* ======================================================
+            CONTACT INFORMATION
+        ====================================================== */}
+        <div
+          className="
+            grid
+            grid-cols-1
+            gap-5
+            py-6
+            sm:grid-cols-2
+            lg:grid-cols-4
+          "
+        >
           {/* Address */}
-          <div className="flex items-start space-x-2">
-            <MapPin className="h-3.5 w-3.5 text-gold-400 shrink-0 mt-0.5" />
-            <span className="text-[11px] text-cream-200">{safeAddress}</span>
+          <div className="flex items-start gap-2.5">
+            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#D4AF37]" />
+
+            <div className="min-w-0">
+              <p
+                className="
+                  mb-1
+                  text-[9px]
+                  font-bold
+                  uppercase
+                  tracking-[0.14em]
+                  text-[#8F8678]
+                "
+              >
+                Visit Us
+              </p>
+
+              <p className="text-[11px] leading-relaxed text-[#DED5C6]">
+                {safeAddress}
+              </p>
+            </div>
           </div>
 
-          {/* Hours */}
-          <div className="flex items-start space-x-2">
-            <Clock className="h-3.5 w-3.5 text-gold-400 shrink-0 mt-0.5" />
-            <span className="text-[11px] text-cream-200">{safeOpeningHours}</span>
+          {/* Opening Hours */}
+          <div className="flex items-start gap-2.5">
+            <Clock className="mt-0.5 h-4 w-4 shrink-0 text-[#D4AF37]" />
+
+            <div className="min-w-0">
+              <p
+                className="
+                  mb-1
+                  text-[9px]
+                  font-bold
+                  uppercase
+                  tracking-[0.14em]
+                  text-[#8F8678]
+                "
+              >
+                Opening Hours
+              </p>
+
+              <p className="text-[11px] leading-relaxed text-[#DED5C6]">
+                {safeOpeningHours}
+              </p>
+            </div>
           </div>
 
-          {/* WhatsApp & Call */}
-          <div className="flex items-center space-x-3">
+          {/* WhatsApp + Phone */}
+          <div className="flex flex-col gap-2">
+            <p
+              className="
+                text-[9px]
+                font-bold
+                uppercase
+                tracking-[0.14em]
+                text-[#8F8678]
+              "
+            >
+              Contact
+            </p>
+
             <a
               href={waLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center space-x-1.5 text-emerald-400 hover:underline text-[11px]"
+              className="
+                flex
+                items-center
+                gap-2
+                text-[11px]
+                text-emerald-400
+                transition-colors
+                hover:text-emerald-300
+              "
             >
-              <MessageCircle className="h-3.5 w-3.5 fill-[#25D366] text-[#25D366]" />
+              <MessageCircle
+                className="h-3.5 w-3.5 shrink-0 text-[#25D366]"
+                fill="#25D366"
+              />
               <span>WhatsApp</span>
             </a>
 
             <a
-              href={`tel:${safePhone.replace(/\s+/g, "")}`}
-              className="flex items-center space-x-1.5 text-gold-400 hover:underline text-[11px]"
+              href={`tel:${safePhone.replace(/[^\d+]/g, "")}`}
+              className="
+                flex
+                items-center
+                gap-2
+                text-[11px]
+                text-[#D4AF37]
+                transition-colors
+                hover:text-[#EBD699]
+              "
             >
-              <Phone className="h-3.5 w-3.5" />
+              <Phone className="h-3.5 w-3.5 shrink-0" />
               <span>{safePhone}</span>
             </a>
           </div>
 
-          {/* Social Channels: Instagram & Facebook */}
-          <div className="flex flex-col space-y-1.5">
+          {/* Social */}
+          <div className="flex flex-col gap-2">
+            <p
+              className="
+                text-[9px]
+                font-bold
+                uppercase
+                tracking-[0.14em]
+                text-[#8F8678]
+              "
+            >
+              Connect
+            </p>
+
             {instagram && (
               <a
-                href={instagram.startsWith("http") ? instagram : `https://${instagram}`}
+                href={
+                  instagram.startsWith("http")
+                    ? instagram
+                    : `https://${instagram}`
+                }
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center space-x-2 text-[11px] text-luxury-300 hover:text-gold-400 transition-colors"
-                title="Instagram"
+                className="
+                  flex
+                  items-center
+                  gap-2
+                  truncate
+                  text-[11px]
+                  text-[#C9C0B1]
+                  transition-colors
+                  hover:text-[#D4AF37]
+                "
               >
-                <Instagram className="h-3.5 w-3.5 text-gold-400 shrink-0" />
-                <span className="truncate">{instagramHandle}</span>
+                <Instagram className="h-3.5 w-3.5 shrink-0 text-[#D4AF37]" />
+
+                <span className="truncate">
+                  {instagramHandle}
+                </span>
               </a>
             )}
 
             {facebook && (
               <a
-                href={facebook.startsWith("http") ? facebook : `https://${facebook}`}
+                href={
+                  facebook.startsWith("http")
+                    ? facebook
+                    : `https://${facebook}`
+                }
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center space-x-2 text-[11px] text-luxury-300 hover:text-gold-400 transition-colors"
-                title="Facebook"
+                className="
+                  flex
+                  items-center
+                  gap-2
+                  truncate
+                  text-[11px]
+                  text-[#C9C0B1]
+                  transition-colors
+                  hover:text-[#D4AF37]
+                "
               >
-                <Facebook className="h-3.5 w-3.5 text-gold-400 shrink-0" />
-                <span className="truncate">/{facebookHandle}</span>
+                <Facebook className="h-3.5 w-3.5 shrink-0 text-[#D4AF37]" />
+
+                <span className="truncate">
+                  /{facebookHandle}
+                </span>
               </a>
             )}
 
             {!instagram && !facebook && (
-              <span className="text-[11px] text-luxury-400">{safeRestaurantName}</span>
+              <span className="text-[11px] text-[#756E64]">
+                Follow us on social media
+              </span>
             )}
           </div>
         </div>
 
-        {/* Bottom Copyright */}
-        <div className="text-center text-[10px] text-luxury-500 pt-2 border-t border-luxury-800/60">
-          <p>{safeFooterText}</p>
+        {/* ======================================================
+            BOTTOM COPYRIGHT
+        ====================================================== */}
+        <div
+          className="
+            border-t
+            border-white/[0.07]
+            pt-4
+            text-center
+          "
+        >
+          <p className="text-[9px] leading-relaxed text-[#6F685F]">
+            {safeFooterText}
+          </p>
         </div>
       </div>
     </footer>

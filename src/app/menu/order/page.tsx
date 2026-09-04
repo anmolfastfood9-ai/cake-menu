@@ -2,14 +2,13 @@ import Image from "next/image";
 import Link from "next/link";
 import prisma from "@/lib/db";
 import Footer from "@/components/customer/Footer";
+import MobileBottomNav from "@/components/customer/MobileBottomNav";
 import {
-  ArrowLeft,
   MessageCircle,
   Phone,
   Store,
   MapPin,
   Clock,
-  Cake as CakeIcon,
   Sparkles,
 } from "lucide-react";
 import { generateGeneralWhatsAppLink } from "@/lib/whatsapp";
@@ -39,27 +38,25 @@ export default async function OrderPage() {
   const waLink = generateGeneralWhatsAppLink(whatsappNumber, restaurantName);
 
   return (
-    <div className="min-h-screen bg-[#090807] text-[#FBF7EE] font-sans flex flex-col justify-between selection:bg-gold-500/30 selection:text-gold-200 pb-20 md:pb-0">
+    <div className="min-h-screen bg-[#050505] text-[#FBF7EE] font-sans flex flex-col justify-between selection:bg-gold-500/30 selection:text-gold-200 pb-24 md:pb-0">
       {/* 1. TOP HEADER */}
-      <header className="sticky top-0 z-40 w-full border-b border-gold-500/10 bg-[#090807]/95 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3.5">
-          <Link
-            href="/menu"
-            className="flex items-center space-x-2 text-[#FBF7EE] hover:text-gold-400 transition-colors text-xs font-semibold"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back to Digital Menu</span>
+      <header className="sticky top-0 z-40 w-full bg-[#050505]/95 px-3 py-3 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto flex items-center justify-between rounded-2xl border border-[#D4AF37]/25 bg-[#0E0D0A]/95 px-3 py-2.5 shadow-[0_8px_30px_rgba(0,0,0,0.45)]">
+          <Link href="/menu" className="flex min-w-0 items-center gap-2.5">
+            <span className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#D4AF37]/65 bg-[#062919]">
+              <Image src="/images/logo_emblem.png" alt={`${restaurantName} logo`} fill sizes="40px" className="object-cover" />
+            </span>
+            <span className="min-w-0">
+              <span className="block truncate font-serif text-sm font-bold text-[#F0DEA3]">{restaurantName}</span>
+              <span className="block text-[9px] font-semibold uppercase tracking-[0.14em] text-emerald-400">Custom Cake Order</span>
+            </span>
           </Link>
-
-          <span className="font-serif text-sm font-bold text-gold-400 hidden sm:inline">
-            {restaurantName}
-          </span>
         </div>
       </header>
 
       {/* 2. MAIN BODY CONTAINER */}
       <main className="flex-1 max-w-md md:max-w-4xl lg:max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 flex flex-col justify-center">
-        <div className="rounded-3xl border border-gold-500/20 bg-gradient-to-b from-[#14120f] to-[#0d0b09] p-6 sm:p-8 md:p-10 shadow-2xl">
+        <div className="overflow-hidden rounded-[24px] border border-[#D4AF37]/25 bg-gradient-to-b from-[#14120f] to-[#0b0907] p-5 sm:p-8 md:p-10 shadow-2xl">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-10 items-center">
             
             {/* Left Column: Chef Illustration & Headline */}
@@ -76,16 +73,16 @@ export default async function OrderPage() {
               </div>
 
               <div className="space-y-1.5">
-                <div className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-gold-500/10 text-gold-400 border border-gold-500/20">
+                <div className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-gold-500/10 text-gold-400 border border-gold-500/20">
                   <Sparkles className="h-3 w-3" />
                   <span>Direct Confection Concierge</span>
                 </div>
                 <h1 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight text-[#FBF7EE] leading-tight">
-                  We&apos;d Love to Bake <br />
-                  Your Happiness! <span className="inline-block text-red-500">❤️</span>
+                  Book a Cake, <br />
+                  Your Way
                 </h1>
                 <p className="text-xs sm:text-sm text-[#A69B8D] font-normal leading-relaxed">
-                  For custom designer cakes, bulk celebratory orders or general queries, connect directly with our chefs.
+                  Share your flavour, weight, design, date, and name-message directly on WhatsApp.
                 </p>
               </div>
             </div>
@@ -99,7 +96,7 @@ export default async function OrderPage() {
                   href={waLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center space-x-2.5 w-full py-3.5 px-5 rounded-2xl bg-[#25D366] hover:bg-emerald-500 text-white shadow-lg shadow-emerald-950/40 active:scale-[0.98] transition-all font-bold text-xs sm:text-sm"
+                  className="flex items-center justify-center space-x-2.5 w-full py-3.5 px-5 rounded-2xl border border-emerald-300/35 bg-[#25D366] hover:bg-emerald-500 text-white shadow-lg shadow-emerald-950/40 active:scale-[0.98] transition-all font-bold text-xs sm:text-sm"
                 >
                   <MessageCircle className="h-5 w-5 fill-white text-white" />
                   <span>CHAT ON WHATSAPP DIRECTLY</span>
@@ -166,32 +163,7 @@ export default async function OrderPage() {
         />
       </div>
 
-      {/* 4. FIXED MOBILE BOTTOM NAVIGATION BAR */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around border-t border-gold-500/20 bg-[#0d0c0a]/95 py-2 backdrop-blur-xl md:hidden">
-        <Link
-          href="/menu"
-          className="flex flex-col items-center space-y-0.5 px-4 py-1 text-luxury-400 hover:text-cream-100 transition-colors"
-        >
-          <CakeIcon className="h-4 w-4" />
-          <span className="text-[9.5px] font-medium">Menu</span>
-        </Link>
-
-        <Link
-          href="/menu/cakes"
-          className="flex flex-col items-center space-y-0.5 px-4 py-1 text-luxury-400 hover:text-cream-100 transition-colors"
-        >
-          <Sparkles className="h-4 w-4" />
-          <span className="text-[9.5px] font-medium">All Cakes</span>
-        </Link>
-
-        <Link
-          href="/menu/order"
-          className="relative flex flex-col items-center space-y-0.5 px-4 py-1 rounded-xl bg-gold-500/10 text-gold-400"
-        >
-          <MessageCircle className="h-4 w-4" />
-          <span className="text-[9.5px] font-bold">Order</span>
-        </Link>
-      </div>
+      <MobileBottomNav active="order" />
     </div>
   );
 }

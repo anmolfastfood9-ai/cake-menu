@@ -1,20 +1,12 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import CakeCard, { CakeItem } from "@/components/customer/CakeCard";
 import Footer from "@/components/customer/Footer";
-import {
-  Search,
-  ArrowLeft,
-  MessageCircle,
-  SlidersHorizontal,
-  ChevronDown,
-  X,
-  Cake as CakeIcon,
-  Sparkles,
-} from "lucide-react";
+import MobileBottomNav from "@/components/customer/MobileBottomNav";
+import { Search, ArrowLeft, MessageCircle, SlidersHorizontal, ChevronDown, X } from "lucide-react";
 import { generateGeneralWhatsAppLink } from "@/lib/whatsapp";
 
 interface AllCakesClientProps {
@@ -36,6 +28,33 @@ export default function AllCakesClient({
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [sortBy, setSortBy] = useState<"featured" | "price-asc" | "price-desc" | "rating">("featured");
   const [visibleCount, setVisibleCount] = useState<number>(24);
+
+  useEffect(() => {
+    setSelectedCategory(selectedCategorySlug);
+  }, [selectedCategorySlug]);
+
+  useEffect(() => {
+    const syncFromUrl = () => {
+      const params = new URLSearchParams(window.location.search);
+      setSelectedCategory(params.get("category") || "all");
+    };
+
+    window.addEventListener("popstate", syncFromUrl);
+    return () => window.removeEventListener("popstate", syncFromUrl);
+  }, []);
+
+  const handleCategorySelect = (slug: string) => {
+    setSelectedCategory(slug);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      if (slug === "all") {
+        url.searchParams.delete("category");
+      } else {
+        url.searchParams.set("category", slug);
+      }
+      window.history.pushState({}, "", url.toString());
+    }
+  };
 
   const restaurantName = settings?.restaurantName || "Sweet Delights";
   const whatsappNumber = whatsappSetting?.whatsappNumber || settings?.whatsapp || "919876543210";
@@ -86,21 +105,22 @@ export default function AllCakesClient({
   }, [initialCakes, selectedCategory, searchQuery, sortBy]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#090807] text-[#FBF7EE] selection:bg-gold-500 selection:text-luxury-950 pb-20 md:pb-0">
+    <div className="min-h-screen flex flex-col bg-[#050505] text-[#FBF7EE] selection:bg-gold-500 selection:text-luxury-950 pb-24 md:pb-0">
       {/* Top Header matching Screen 2 */}
-      <header className="sticky top-0 z-40 border-b border-gold-500/15 bg-[#090807]/95 backdrop-blur-md px-4 py-3">
-        <div className="mx-auto flex max-w-7xl items-center justify-between">
+      <header className="sticky top-0 z-40 bg-[#050505]/95 px-3 py-3 backdrop-blur-md">
+        <div className="mx-auto flex max-w-7xl items-center justify-between rounded-2xl border border-[#D4AF37]/25 bg-[#0E0D0A]/95 px-3 py-2 shadow-[0_8px_30px_rgba(0,0,0,0.45)]">
           <Link
             href="/menu"
-            className="flex h-8 w-8 items-center justify-center rounded-full text-cream-200 hover:text-gold-400"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-[#D4AF37]/35 bg-[#15120E] text-cream-200 hover:text-gold-400"
             aria-label="Back to Menu"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
 
-          <h1 className="font-serif text-lg font-bold text-[#FBF7EE]">
-            All Cakes
-          </h1>
+          <div className="text-center">
+            <h1 className="font-serif text-lg font-bold text-[#F0DEA3]">All Cakes</h1>
+            <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-emerald-400">100% Eggless</p>
+          </div>
 
           <a
             href={waLink}
@@ -124,7 +144,7 @@ export default function AllCakesClient({
               placeholder="Search cakes..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-xl border border-luxury-800 bg-[#12100e] py-2.5 pl-10 pr-10 text-xs text-cream-100 placeholder-luxury-500 focus:border-gold-500 focus:outline-none"
+              className="w-full rounded-2xl border border-[#D4AF37]/20 bg-[#11100D] py-3 pl-10 pr-10 text-xs text-cream-100 shadow-[inset_0_0_18px_rgba(212,175,55,0.025)] placeholder-luxury-500 focus:border-gold-500 focus:outline-none"
             />
             {searchQuery && (
               <button
@@ -137,10 +157,11 @@ export default function AllCakesClient({
           </div>
 
           {/* Category Tabs with Counts */}
-          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto py-1 scrollbar-none">
+          <div className="menu-horizontal-scroll sticky top-[73px] z-30 -mx-4 bg-[#050505]/92 px-4 py-2 backdrop-blur-md sm:top-[80px]">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <button
-              onClick={() => setSelectedCategory("all")}
-              className={`flex shrink-0 items-center rounded-full px-2.5 py-1 text-[11px] sm:px-3.5 sm:py-1.5 sm:text-xs font-semibold transition-all duration-200 active:scale-95 ${
+              onClick={() => handleCategorySelect("all")}
+              className={`flex shrink-0 items-center rounded-full px-2.5 py-1.5 text-[11px] sm:px-3.5 sm:text-xs font-semibold transition-all duration-200 active:scale-95 ${
                 selectedCategory === "all"
                   ? "border border-gold-500/80 bg-gold-500/15 text-gold-300 font-bold shadow-[0_0_10px_rgba(212,175,55,0.2)] scale-[1.02]"
                   : "border border-white/10 bg-[#12100e] text-luxury-300 hover:border-gold-500/30 hover:text-cream-100"
@@ -164,8 +185,8 @@ export default function AllCakesClient({
               return (
                 <button
                   key={cat.id}
-                  onClick={() => setSelectedCategory(cat.slug)}
-                  className={`flex shrink-0 items-center rounded-full px-2.5 py-1 text-[11px] sm:px-3.5 sm:py-1.5 sm:text-xs font-semibold transition-all duration-200 active:scale-95 ${
+                  onClick={() => handleCategorySelect(cat.slug)}
+                    className={`flex shrink-0 items-center rounded-full px-2.5 py-1.5 text-[11px] sm:px-3.5 sm:text-xs font-semibold transition-all duration-200 active:scale-95 ${
                     isSelected
                       ? "border border-gold-500/80 bg-gold-500/15 text-gold-300 font-bold shadow-[0_0_10px_rgba(212,175,55,0.2)] scale-[1.02]"
                       : "border border-white/10 bg-[#12100e] text-luxury-300 hover:border-gold-500/30 hover:text-cream-100"
@@ -188,6 +209,7 @@ export default function AllCakesClient({
             <button className="flex shrink-0 items-center justify-center rounded-full border border-white/10 bg-[#12100e] p-1.5 text-luxury-400 hover:text-cream-100">
               <SlidersHorizontal className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
             </button>
+          </div>
           </div>
 
           {/* Showing Status & Sort */}
@@ -236,35 +258,7 @@ export default function AllCakesClient({
         footerText={settings?.footerText}
       />
 
-      {/* Mobile Bottom Navigation Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around border-t border-gold-500/20 bg-[#0d0c0a]/95 py-2 backdrop-blur-xl md:hidden">
-        {/* Menu */}
-        <Link
-          href="/menu"
-          className="flex flex-col items-center space-y-0.5 px-4 py-1 text-luxury-400 hover:text-cream-100 transition-colors"
-        >
-          <CakeIcon className="h-4 w-4" />
-          <span className="text-[9.5px] font-medium">Menu</span>
-        </Link>
-
-        {/* All Cakes (Active) */}
-        <Link
-          href="/menu/cakes"
-          className="relative flex flex-col items-center space-y-0.5 px-4 py-1 rounded-xl bg-gold-500/10 text-gold-400"
-        >
-          <Sparkles className="h-4 w-4" />
-          <span className="text-[9.5px] font-bold">All Cakes</span>
-        </Link>
-
-        {/* Order */}
-        <Link
-          href="/menu/order"
-          className="flex flex-col items-center space-y-0.5 px-4 py-1 text-luxury-400 hover:text-cream-100 transition-colors"
-        >
-          <MessageCircle className="h-4 w-4" />
-          <span className="text-[9.5px] font-medium">Order</span>
-        </Link>
-      </div>
+      <MobileBottomNav active="cakes" />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import Footer from "@/components/customer/Footer";
+import MobileBottomNav from "@/components/customer/MobileBottomNav";
 import {
   ArrowLeft,
   MessageCircle,
@@ -11,7 +12,6 @@ import {
   Sparkles,
   ShieldCheck,
   Heart,
-  Cake as CakeIcon,
   Crown,
   Camera,
 } from "lucide-react";
@@ -82,27 +82,28 @@ export default function CakeDetailClient({
   const generalWaLink = generateGeneralWhatsAppLink(whatsappNumber, restaurantName);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#090807] text-[#FBF7EE] selection:bg-gold-500 selection:text-luxury-950 pb-20 md:pb-0">
+    <div className="min-h-screen flex flex-col bg-[#050505] text-[#FBF7EE] selection:bg-gold-500 selection:text-luxury-950 pb-32 md:pb-0">
       {/* Top Header matching Screen 3 */}
-      <header className="sticky top-0 z-40 border-b border-gold-500/15 bg-[#090807]/95 backdrop-blur-md px-4 py-3">
-        <div className="mx-auto flex max-w-7xl items-center justify-between">
+      <header className="sticky top-0 z-40 bg-[#050505]/95 px-3 py-3 backdrop-blur-md">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 rounded-2xl border border-[#D4AF37]/25 bg-[#0E0D0A]/95 px-3 py-2 shadow-[0_8px_30px_rgba(0,0,0,0.45)]">
           <Link
             href="/menu"
-            className="flex h-8 w-8 items-center justify-center rounded-full text-cream-200 hover:text-gold-400"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#D4AF37]/35 bg-[#15120E] text-cream-200 hover:text-gold-400"
             aria-label="Back to Menu"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
 
-          <h1 className="font-serif text-lg font-bold text-[#FBF7EE] truncate max-w-[200px] sm:max-w-md">
-            {cake.name}
-          </h1>
+          <div className="min-w-0 text-center">
+            <h1 className="truncate font-serif text-base font-bold text-[#F0DEA3] sm:text-lg">{cake.name}</h1>
+            <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-emerald-400">Order Preview</p>
+          </div>
 
           <a
             href={waLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-[#25D366] text-white shadow-md"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#25D366] text-white shadow-md"
             aria-label="Chat on WhatsApp"
           >
             <MessageCircle className="h-4 w-4 fill-white text-white" />
@@ -118,7 +119,7 @@ export default function CakeDetailClient({
             {/* Left Column: Main Image & Gallery Thumbnails */}
             <div className="md:col-span-6 lg:col-span-6 space-y-3 md:space-y-4 md:sticky md:top-20">
               {/* Main Hero Image */}
-              <div className="relative aspect-square w-full overflow-hidden rounded-2xl md:rounded-3xl border border-gold-500/25 bg-[#14120f] shadow-2xl">
+              <div className="relative aspect-square w-full overflow-hidden rounded-[22px] border border-[#D4AF37]/35 bg-[#11100D] shadow-[0_14px_45px_rgba(0,0,0,0.45)]">
                 <Image
                   key={activeImage}
                   src={activeImage}
@@ -128,7 +129,7 @@ export default function CakeDetailClient({
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
                   className="object-cover transition-all duration-300"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#14120f]/60 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent pointer-events-none" />
 
                 {/* Pagination badge on top right */}
                 <div className="absolute top-3.5 right-3.5 rounded-md bg-black/75 px-2.5 py-0.5 text-[10px] font-bold text-cream-100 backdrop-blur-md">
@@ -224,13 +225,13 @@ export default function CakeDetailClient({
 
               {/* Title & Eggless Guarantee */}
               <div>
-                <div className="flex items-center justify-between gap-2">
+                <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-2">
                     {/* Standard Indian Veg Symbol */}
                     <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-[2px] border border-emerald-500 p-[1.5px]" title="100% Pure Veg">
                       <span className="h-2 w-2 rounded-full bg-emerald-500" />
                     </span>
-                    <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-[#FBF7EE] leading-tight">
+                    <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-[#F8F0DE] leading-tight tracking-normal">
                       {cake.name}
                     </h1>
                   </div>
@@ -253,7 +254,7 @@ export default function CakeDetailClient({
               </p>
 
               {/* Select Weight Section */}
-              <div className="space-y-2.5 pt-3 border-t border-luxury-800">
+              <div className="space-y-2.5 rounded-2xl border border-[#D4AF37]/20 bg-[#11100D] p-3.5 shadow-[inset_0_0_20px_rgba(212,175,55,0.025)]">
                 <div className="flex items-baseline justify-between">
                   <span className="text-xs font-bold uppercase tracking-wider text-cream-100 flex items-center gap-1.5">
                     <span>Select Weight & Size</span>
@@ -265,7 +266,7 @@ export default function CakeDetailClient({
                 </div>
 
                 {/* Weight Cards Grid */}
-                <div className="grid grid-cols-4 gap-2 sm:gap-2.5">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-2.5">
                   {sortedPrices.map((p, idx) => {
                     const isSelected = selectedWeightIndex === idx;
                     return (
@@ -340,7 +341,7 @@ export default function CakeDetailClient({
               <div className="space-y-1.5 pt-2 border-t border-luxury-800">
                 <div className="flex items-center justify-between">
                   <label className="text-[11px] sm:text-xs font-bold text-cream-200 flex items-center gap-1.5">
-                    <span>✍️ Name / Message on Cake (Optional)</span>
+                    <span>Name / Message on Cake</span>
                   </label>
                   <span className="text-[10px] sm:text-xs text-gold-400 font-medium">Free Custom Plaque</span>
                 </div>
@@ -348,9 +349,9 @@ export default function CakeDetailClient({
                   type="text"
                   value={customMessage}
                   onChange={(e) => setCustomMessage(e.target.value)}
-                  placeholder="e.g. Happy Birthday Riya 🎂 / Happy 10th Anniversary"
+                  placeholder="e.g. Happy Birthday Riya"
                   maxLength={60}
-                  className="w-full rounded-xl border border-luxury-700 bg-luxury-950 px-3.5 py-2.5 text-xs text-cream-100 placeholder-luxury-500 focus:border-gold-500 focus:outline-none transition-colors"
+                  className="w-full rounded-2xl border border-luxury-700 bg-[#11100D] px-3.5 py-3 text-xs text-cream-100 placeholder-luxury-500 focus:border-gold-500 focus:outline-none transition-colors"
                 />
               </div>
 
@@ -360,7 +361,7 @@ export default function CakeDetailClient({
                   href={waLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex w-full items-center justify-center space-x-2 rounded-xl bg-gradient-to-r from-emerald-600 to-[#25D366] py-3.5 px-4 text-center text-xs sm:text-sm font-bold text-white shadow-lg shadow-emerald-950/40 transition-all hover:brightness-110 active:scale-95"
+                  className="flex w-full items-center justify-center space-x-2 rounded-2xl border border-emerald-300/35 bg-gradient-to-r from-emerald-600 to-[#25D366] py-3.5 px-4 text-center text-xs sm:text-sm font-bold text-white shadow-lg shadow-emerald-950/40 transition-all hover:brightness-110 active:scale-95"
                 >
                   <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5 fill-white text-white" />
                   <span>Order on WhatsApp (₹{activePriceObj.price.toLocaleString("en-IN")})</span>
@@ -423,7 +424,7 @@ export default function CakeDetailClient({
       </main>
 
       {/* Floating Sticky Mobile Order CTA */}
-      <div className="fixed bottom-14 left-3 right-3 z-30 md:hidden">
+      <div className="fixed bottom-[calc(84px+env(safe-area-inset-bottom))] left-3 right-3 z-30 md:hidden">
         <a
           href={waLink}
           target="_blank"
@@ -456,32 +457,7 @@ export default function CakeDetailClient({
         footerText={settings?.footerText}
       />
 
-      {/* Mobile Bottom Navigation Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around border-t border-gold-500/20 bg-[#0d0c0a]/95 py-2 backdrop-blur-xl md:hidden">
-        <Link
-          href="/menu"
-          className="flex flex-col items-center space-y-0.5 px-4 py-1 text-luxury-400 hover:text-cream-100 transition-colors"
-        >
-          <CakeIcon className="h-4 w-4" />
-          <span className="text-[9.5px] font-medium">Menu</span>
-        </Link>
-
-        <Link
-          href="/menu/cakes"
-          className="flex flex-col items-center space-y-0.5 px-4 py-1 text-luxury-400 hover:text-cream-100 transition-colors"
-        >
-          <Sparkles className="h-4 w-4" />
-          <span className="text-[9.5px] font-medium">All Cakes</span>
-        </Link>
-
-        <Link
-          href="/menu/order"
-          className="flex flex-col items-center space-y-0.5 px-4 py-1 text-luxury-400 hover:text-cream-100 transition-colors"
-        >
-          <MessageCircle className="h-4 w-4" />
-          <span className="text-[9.5px] font-medium">Order</span>
-        </Link>
-      </div>
+      <MobileBottomNav active="cakes" />
     </div>
   );
 }
