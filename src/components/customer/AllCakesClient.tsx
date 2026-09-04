@@ -137,16 +137,25 @@ export default function AllCakesClient({
           </div>
 
           {/* Category Tabs with Counts */}
-          <div className="flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-none">
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto py-1 scrollbar-none">
             <button
               onClick={() => setSelectedCategory("all")}
-              className={`flex shrink-0 items-center rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all ${
+              className={`flex shrink-0 items-center rounded-full px-2.5 py-1 text-[11px] sm:px-3.5 sm:py-1.5 sm:text-xs font-semibold transition-all duration-200 active:scale-95 ${
                 selectedCategory === "all"
-                  ? "border border-gold-500 bg-[#C59B27]/15 text-gold-400 font-bold"
-                  : "border border-luxury-800 bg-[#12100e] text-luxury-300"
+                  ? "border border-gold-500/80 bg-gold-500/15 text-gold-300 font-bold shadow-[0_0_10px_rgba(212,175,55,0.2)] scale-[1.02]"
+                  : "border border-white/10 bg-[#12100e] text-luxury-300 hover:border-gold-500/30 hover:text-cream-100"
               }`}
             >
-              <span>All ({categoryCounts.all ?? initialCakes.length})</span>
+              <span>All</span>
+              <span
+                className={`ml-1.5 rounded-full px-1.5 py-0.2 text-[9px] font-mono ${
+                  selectedCategory === "all"
+                    ? "bg-gold-500/30 text-gold-200 font-bold"
+                    : "bg-white/5 text-luxury-400 font-normal"
+                }`}
+              >
+                {categoryCounts.all ?? initialCakes.length}
+              </span>
             </button>
 
             {initialCategories.map((cat) => {
@@ -156,19 +165,28 @@ export default function AllCakesClient({
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.slug)}
-                  className={`flex shrink-0 items-center rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all ${
+                  className={`flex shrink-0 items-center rounded-full px-2.5 py-1 text-[11px] sm:px-3.5 sm:py-1.5 sm:text-xs font-semibold transition-all duration-200 active:scale-95 ${
                     isSelected
-                      ? "border border-gold-500 bg-[#C59B27]/15 text-gold-400 font-bold"
-                      : "border border-luxury-800 bg-[#12100e] text-luxury-300 hover:border-gold-500/40 hover:text-cream-100"
+                      ? "border border-gold-500/80 bg-gold-500/15 text-gold-300 font-bold shadow-[0_0_10px_rgba(212,175,55,0.2)] scale-[1.02]"
+                      : "border border-white/10 bg-[#12100e] text-luxury-300 hover:border-gold-500/30 hover:text-cream-100"
                   }`}
                 >
-                  <span>{cat.name} ({count})</span>
+                  <span>{cat.name}</span>
+                  <span
+                    className={`ml-1.5 rounded-full px-1.5 py-0.2 text-[9px] font-mono ${
+                      isSelected
+                        ? "bg-gold-500/30 text-gold-200 font-bold"
+                        : "bg-white/5 text-luxury-400 font-normal"
+                    }`}
+                  >
+                    {count}
+                  </span>
                 </button>
               );
             })}
 
-            <button className="flex shrink-0 items-center justify-center rounded-full border border-luxury-800 bg-[#12100e] p-2 text-luxury-400 hover:text-cream-100">
-              <SlidersHorizontal className="h-3.5 w-3.5" />
+            <button className="flex shrink-0 items-center justify-center rounded-full border border-white/10 bg-[#12100e] p-1.5 text-luxury-400 hover:text-cream-100">
+              <SlidersHorizontal className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
             </button>
           </div>
 
