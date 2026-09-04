@@ -34,126 +34,133 @@ export default function MenuClient({
   whatsappSetting,
   activeOccasion,
 }: MenuClientProps) {
-  const restaurantName = settings?.restaurantName || "Raman Sweet & Luxury Pâtisserie";
-  const tagline = settings?.tagline || "Artisanal Luxury Pâtisserie";
-  const heroTitle = settings?.heroTitle || "Every Celebration Deserves a Perfect Cake";
-  const heroSubtitle =
-    settings?.heroSubtitle ||
-    "Freshly baked daily. Beautifully handcrafted with 100% pure vegetarian & eggless gourmet ingredients.";
-  const heroImage = "/images/ref_hero_gold_cake.png";
+  const restaurantName = settings?.restaurantName || "RAMAN SWEET BAKERY";
+  const tagline = settings?.tagline || "& Family Restaurant";
+  const heroTitle = settings?.heroTitle || "Crafted for Sweet Perfection";
+  const heroImage = settings?.heroImage || "/images/ref_hero_gold_cake.png";
   const whatsappNumber = whatsappSetting?.whatsappNumber || settings?.whatsapp || "919876543210";
   const phoneNumber = whatsappSetting?.callNumber || settings?.phone || "+91 98765 43210";
 
   // Dynamic Signature Cakes from DB with fallback matching reference image 1-to-1
-  const signatureCakes = [
-    {
-      id: "1",
-      name: "Belgian Chocolate Truffle",
-      slug: "belgian-chocolate-truffle",
-      price: 1499,
-      badge: null,
-      badgeClass: "",
-      image: "/images/ref_belgian_chocolate.png",
-    },
-    {
-      id: "2",
-      name: "Mango Passion Fruit Cheesecake",
-      slug: "mango-passion-fruit-cheesecake",
-      price: 1499,
-      badge: null,
-      badgeClass: "",
-      image: "/images/ref_mango_cheesecake.png",
-    },
-    {
-      id: "3",
-      name: "Ramari Cheesecake",
-      slug: "ramari-cheesecake",
-      price: 1499,
-      badge: null,
-      badgeClass: "",
-      image: "/images/ref_ramari_cheesecake.png",
-    },
-    {
-      id: "4",
-      name: "Cheesecake Truffle",
-      slug: "cheesecake-truffle",
-      price: 1499,
-      badge: null,
-      badgeClass: "",
-      image: "/images/ref_cheesecake_truffle.png",
-    },
-  ];
+  const displayCakes =
+    initialCakes.length > 0
+      ? initialCakes.slice(0, 4)
+      : [
+          {
+            id: "1",
+            name: "Belgian Chocolate Truffle",
+            slug: "belgian-chocolate-truffle",
+            coverImage: "/images/ref_belgian_chocolate.png",
+            available: true,
+            prices: [{ weight: "1 kg", price: 1499 }],
+          },
+          {
+            id: "2",
+            name: "Mango Passion Fruit Cheesecake",
+            slug: "mango-passion-fruit-cheesecake",
+            coverImage: "/images/ref_mango_cheesecake.png",
+            available: true,
+            prices: [{ weight: "1 kg", price: 1499 }],
+          },
+          {
+            id: "3",
+            name: "Ramari Cheesecake",
+            slug: "ramari-cheesecake",
+            coverImage: "/images/ref_ramari_cheesecake.png",
+            available: true,
+            prices: [{ weight: "1 kg", price: 1499 }],
+          },
+          {
+            id: "4",
+            name: "Cheesecake Truffle",
+            slug: "cheesecake-truffle",
+            coverImage: "/images/ref_cheesecake_truffle.png",
+            available: true,
+            prices: [{ weight: "1 kg", price: 1499 }],
+          },
+        ];
 
   // Dynamic Popular Categories from DB with fallback
   const categoriesList = [
     {
       id: "all",
-      name: "All Cakes",
+      name: "All",
       isAll: true,
       slug: "all",
-      image: "/images/categories/all_cakes.svg",
+      image: "/images/cat_all.png",
     },
     ...(initialCategories.length > 0
-      ? initialCategories.map((cat) => ({
-          id: cat.id,
-          name: cat.name,
-          slug: cat.slug,
-          isAll: false,
-          image: cat.image || "/images/categories/chocolate.png",
-        }))
+      ? initialCategories.map((cat) => {
+          let catImage = cat.image || "/images/cat_truffle.png";
+          const lowerName = cat.name.toLowerCase();
+          if (lowerName.includes("truffle") || lowerName.includes("chocolate")) {
+            catImage = "/images/cat_truffle.png";
+          } else if (lowerName.includes("fruit") || lowerName.includes("berry")) {
+            catImage = "/images/cat_fruit.png";
+          } else if (lowerName.includes("cheese")) {
+            catImage = "/images/cat_cheesecakes.png";
+          } else if (lowerName.includes("photo") || lowerName.includes("designer")) {
+            catImage = "/images/cat_photo_cakes.png";
+          }
+          return {
+            id: cat.id,
+            name: cat.name,
+            slug: cat.slug,
+            isAll: false,
+            image: catImage,
+          };
+        })
       : [
-          { id: "chocolate", name: "Chocolate", slug: "chocolate", isAll: false, image: "/images/categories/chocolate.png" },
-          { id: "fruit-berry", name: "Fruit & Berry", slug: "fruit-berry", isAll: false, image: "/images/categories/fruit_berry.png" },
-          { id: "exotic-premium", name: "Exotic & Premium", slug: "exotic-premium", isAll: false, image: "/images/categories/exotic.png" },
-          { id: "bento", name: "Bento Cakes", slug: "bento-cakes", isAll: false, image: "/images/categories/bento.png" },
-          { id: "anniversary", name: "Anniversary", slug: "anniversary", isAll: false, image: "/images/categories/anniversary.png" },
-          { id: "birthday", name: "Birthday", slug: "birthday", isAll: false, image: "/images/categories/birthday.png" },
-          { id: "photo-designer", name: "Photo & Designer", slug: "designer-cakes", isAll: false, image: "/images/categories/designer.png" },
+          { id: "truffle", name: "Truffle", slug: "chocolate-truffle", isAll: false, image: "/images/cat_truffle.png" },
+          { id: "fruit", name: "Fruit", slug: "fruit-berry", isAll: false, image: "/images/cat_fruit.png" },
+          { id: "cheesecakes", name: "Cheesecakes", slug: "cheesecakes", isAll: false, image: "/images/cat_cheesecakes.png" },
+          { id: "photo-cakes", name: "Photo Cakes", slug: "photo-designer", isAll: false, image: "/images/cat_photo_cakes.png" },
         ]),
   ];
 
   const waLink = generateGeneralWhatsAppLink(whatsappNumber, restaurantName);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#090807] text-[#FBF7EE] selection:bg-gold-500 selection:text-luxury-950 font-sans pb-20 md:pb-0">
+    <div className="min-h-screen flex flex-col bg-[#070605] text-[#FBF7EE] selection:bg-gold-500 selection:text-luxury-950 font-sans pb-28 md:pb-8">
       {/* 1. TOP HEADER BRAND NAVBAR */}
       <Navbar
         restaurantName={restaurantName}
+        tagline={tagline}
         whatsappNumber={whatsappNumber}
         phoneNumber={phoneNumber}
       />
 
-      {/* RESPONSIVE MAIN CONTENT CONTAINER */}
-      <main className="w-full max-w-md md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-2 sm:pt-4 pb-8 space-y-4 md:space-y-8 flex-1">
+      {/* RESPONSIVE MAIN CONTENT CONTAINER (CONTROLLED MOBILE WIDTH) */}
+      <main className="w-full max-w-md md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-1 sm:pt-3 space-y-3.5 sm:space-y-6 flex-1">
         
-        {/* 2. CELEBRATION HERO SHOWCASE (FLOATING CAKE WITH RADIAL SPOTLIGHT) */}
-        <section className="relative w-full py-2 sm:py-4 text-center overflow-hidden">
+        {/* 2. CELEBRATION HERO SHOWCASE (LARGE 3D FLOATING CAKE WITH AMBIENT RADIAL SPOTLIGHT) */}
+        <section className="relative w-full pt-1 pb-3 text-center overflow-hidden">
           {/* Ambient Golden Radial Spotlight directly behind the cake */}
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(212,175,55,0.25),rgba(9,8,7,0)_70%)]" />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-amber-500/25 via-transparent to-transparent" />
 
-          <div className="relative z-10 flex flex-col items-center max-w-2xl mx-auto space-y-3 sm:space-y-4">
-            {/* Giant Floating 3D Gold Cake Image */}
-            <div className="relative w-56 h-56 sm:w-72 sm:h-72 md:w-80 md:h-80 aspect-square -my-2">
+          <div className="relative z-10 flex flex-col items-center max-w-xl mx-auto space-y-3">
+            {/* Large Floating 3D Gold Cake Image */}
+            <div className="relative w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 aspect-square -my-2">
               <Image
                 src={heroImage}
-                alt="Crafted for Sweet Perfection"
+                alt={heroTitle}
                 fill
                 priority
-                sizes="(max-width: 768px) 300px, 360px"
+                sizes="(max-width: 768px) 340px, 420px"
                 className="object-contain filter drop-shadow-[0_20px_35px_rgba(212,175,55,0.35)] hover:scale-105 transition-transform duration-700"
               />
             </div>
 
             {/* Large Serif Display Headline with Gold Gradient */}
-            <h1 className="font-serif text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-[#FFF3D1] via-[#E6C675] to-[#B89235] bg-clip-text text-transparent leading-tight px-2">
-              Crafted for Sweet Perfection
+            <h1 className="font-serif text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-[#FFF3D1] via-[#E6C675] to-[#B89235] bg-clip-text text-transparent leading-snug px-2">
+              {heroTitle}
             </h1>
 
             {/* Glowing Emerald CTA Buttons */}
-            <div className="pt-1 flex items-center justify-center gap-3.5 flex-wrap">
+            <div className="pt-1 flex items-center justify-center gap-3.5">
               <Link
                 href="/menu/cakes"
-                className="inline-flex items-center justify-center rounded-xl border border-emerald-500/60 bg-[#0c2419] px-6 sm:px-7 py-2.5 text-xs font-semibold text-emerald-100 shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:bg-emerald-900/50 active:scale-95 transition-all"
+                className="inline-flex items-center justify-center rounded-xl border border-emerald-500/60 bg-[#0c2419] px-6 sm:px-8 py-2.5 text-xs sm:text-sm font-semibold text-emerald-100 shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:bg-emerald-900/50 active:scale-95 transition-all min-w-[120px]"
               >
                 <span>Explore Menu</span>
               </Link>
@@ -161,7 +168,7 @@ export default function MenuClient({
                 href={waLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center rounded-xl border border-emerald-500/60 bg-[#0c2419] px-6 sm:px-7 py-2.5 text-xs font-semibold text-emerald-100 shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:bg-emerald-900/50 active:scale-95 transition-all"
+                className="inline-flex items-center justify-center rounded-xl border border-emerald-500/60 bg-[#0c2419] px-6 sm:px-8 py-2.5 text-xs sm:text-sm font-semibold text-emerald-100 shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:bg-emerald-900/50 active:scale-95 transition-all min-w-[120px]"
               >
                 <span>Book a Cake</span>
               </a>
@@ -172,47 +179,10 @@ export default function MenuClient({
         {/* 3. DYNAMIC FESTIVAL BANNER */}
         <OccasionShowcase occasionData={activeOccasion} />
 
-        {/* 4. CATEGORY NAVIGATION (EXACT 5 STORY RINGS FROM MOCKUP) */}
-        <section className="py-2">
-          {/* Horizontal Story Circles Row */}
-          <div className="flex items-center gap-3.5 overflow-x-auto py-1 scrollbar-none snap-x justify-start sm:justify-center px-1">
-            {[
-              {
-                id: "all",
-                name: "All",
-                slug: "all",
-                isAll: true,
-                image: "/images/cat_all.png",
-              },
-              {
-                id: "truffle",
-                name: "Truffle",
-                slug: "chocolate-truffle",
-                isAll: false,
-                image: "/images/cat_truffle.png",
-              },
-              {
-                id: "fruit",
-                name: "Fruit",
-                slug: "fruit-berry",
-                isAll: false,
-                image: "/images/cat_fruit.png",
-              },
-              {
-                id: "cheesecakes",
-                name: "Cheesecakes",
-                slug: "cheesecakes",
-                isAll: false,
-                image: "/images/cat_cheesecakes.png",
-              },
-              {
-                id: "photo-cakes",
-                name: "Photo Cakes",
-                slug: "photo-designer",
-                isAll: false,
-                image: "/images/cat_photo_cakes.png",
-              },
-            ].map((cat) => (
+        {/* 4. CATEGORY NAVIGATION (UNCLIPPED FULL HORIZONTAL SCROLL) */}
+        <section className="py-1">
+          <div className="flex items-center gap-3.5 overflow-x-auto py-1 scrollbar-none snap-x justify-start sm:justify-center px-1 after:content-[''] after:w-4 after:shrink-0">
+            {categoriesList.map((cat) => (
               <Link
                 key={cat.id}
                 href={cat.isAll ? "/menu/cakes" : `/menu/cakes?category=${cat.slug}`}
@@ -247,8 +217,8 @@ export default function MenuClient({
           </div>
         </section>
 
-        {/* 5. SIGNATURE CAKES (EXACT 4 CARDS MATCHING MOCKUP 1-TO-1) */}
-        <section className="space-y-3 pt-1 pb-6">
+        {/* 5. SIGNATURE CAKES (EXACT 2-COLUMN MOBILE GRID MATCHING MOCKUP 1-TO-1) */}
+        <section className="space-y-3 pt-1">
           <div className="px-1 text-left">
             <h2 className="font-serif text-lg sm:text-xl font-bold text-gold-200">
               Signature Cakes
@@ -256,20 +226,20 @@ export default function MenuClient({
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
-            {signatureCakes.map((cake) => (
+            {displayCakes.map((cake: any) => (
               <CakeCard
                 key={cake.id}
                 cake={{
                   id: cake.id,
                   name: cake.name,
-                  slug: cake.slug,
-                  description: "Artisanal handcrafted luxury confection.",
-                  coverImage: cake.image,
-                  featured: false,
-                  bestseller: false,
-                  isNew: false,
-                  available: true,
-                  prices: [{ weight: "1 kg", price: cake.price }],
+                  slug: cake.slug || cake.id,
+                  description: cake.description || "Artisanal handcrafted luxury confection.",
+                  coverImage: cake.coverImage || cake.image || "/images/ref_belgian_chocolate.png",
+                  featured: cake.featured || false,
+                  bestseller: cake.bestseller || false,
+                  isNew: cake.isNew || false,
+                  available: cake.available !== false,
+                  prices: cake.prices || [{ weight: "1 kg", price: cake.price || 1499 }],
                 }}
                 whatsappNumber={whatsappNumber}
                 restaurantName={restaurantName}
@@ -293,7 +263,7 @@ export default function MenuClient({
         />
       </div>
 
-      {/* 7. SINGLE FLOATING STICKY WHATSAPP CUSTOM CAKE BAR ON MOBILE (MATCHES MOCKUP 1-TO-1) */}
+      {/* 7. FLOATING STICKY WHATSAPP CTA BAR ON MOBILE (FLOATS WITHOUT COVERING CARD CONTENT) */}
       <div className="fixed bottom-3 left-3 right-3 z-50 md:hidden">
         <a
           href={waLink}
