@@ -30,29 +30,37 @@ export default function Navbar({
   }
 
   return (
-    <header className="sticky top-0 z-40 w-full px-3 pt-2 sm:pt-3 bg-[#090807]/90 backdrop-blur-md pb-2">
-      <div className="mx-auto flex max-w-7xl items-center justify-between rounded-2xl border border-gold-500/30 bg-[#0c0a08]/95 px-3.5 py-2.5 shadow-xl">
-        {/* Left: Round Emblem Monogram & Brand Name */}
-        <Link href="/menu" className="flex items-center space-x-2.5">
-          <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gold-500/60 bg-[#16120b] text-gold-400 shadow-[0_0_12px_rgba(212,175,55,0.25)]">
-            <span className="font-serif text-sm font-bold tracking-tighter text-gold-400">R</span>
-            <span className="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5 items-center justify-center rounded-full bg-gold-500 text-[6px] text-luxury-950 font-bold">✨</span>
+    <header className="sticky top-0 z-40 w-full px-3 pt-2 sm:pt-3 bg-[#070605]/95 backdrop-blur-md pb-2">
+      <div className="mx-auto flex max-w-7xl items-center justify-between rounded-2xl border border-[#D4AF37]/35 bg-[#12100e] px-3.5 py-2 shadow-xl shadow-black/60">
+        {/* Left: Round Emerald/Gold Emblem Monogram & Brand Name */}
+        <Link href="/menu" className="flex items-center space-x-3">
+          <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-gold-500/60 bg-[#052b1b] p-0.5 shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+            <img
+              src="/images/logo_emblem.png"
+              alt="Raman Sweet Bakery Logo"
+              className="h-full w-full rounded-full object-cover"
+            />
           </div>
           <div className="flex flex-col text-left">
-            <span className="font-serif text-xs sm:text-sm font-bold tracking-wider text-[#FBF7EE] leading-tight uppercase">
+            <span className="font-serif text-[13px] sm:text-base font-bold tracking-wider text-[#EBD699] leading-tight uppercase">
               {title}
             </span>
-            <span className="text-[9.5px] sm:text-[10.5px] tracking-tight text-gold-400/90 font-medium">
+            <span className="font-serif text-[10.5px] sm:text-xs tracking-wide text-[#D8CEBE]/90 font-light leading-tight mt-0.5">
               {subtitle}
             </span>
           </div>
         </Link>
 
-        {/* Right: 100% EGGLESS Badge */}
-        <div className="flex items-center space-x-2">
-          <span className="inline-flex items-center rounded-lg border border-gold-500/40 bg-gold-500/10 px-2.5 py-1 text-[10px] sm:text-[11px] font-bold text-gold-300 tracking-wider shadow-sm">
-            100% EGGLESS
-          </span>
+        {/* Right: 2-Line 100% EGGLESS Badge Box */}
+        <div className="flex items-center">
+          <div className="inline-flex flex-col items-center justify-center rounded-xl border border-[#D4AF37]/75 bg-black/40 px-3 py-1 text-center shadow-[0_0_12px_rgba(212,175,55,0.2)]">
+            <span className="text-[12px] sm:text-[13px] font-extrabold text-[#EBD699] font-mono leading-none tracking-tight">
+              100%
+            </span>
+            <span className="text-[8.5px] sm:text-[9.5px] font-bold text-[#EBD699] tracking-widest uppercase leading-tight mt-0.5">
+              EGGLESS
+            </span>
+          </div>
         </div>
       </div>
     </header>
