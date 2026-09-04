@@ -153,38 +153,34 @@ export default function MenuClient({
       {/* RESPONSIVE MAIN CONTENT CONTAINER */}
       <main className="w-full max-w-md md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-2 sm:pt-4 pb-8 space-y-4 md:space-y-8 flex-1">
         
-        {/* 2. CELEBRATION HERO SHOWCASE (3D FLOATING CAKE WITH AMBIENT RADIAL LIGHTING) */}
-        <section className="relative w-full rounded-2xl md:rounded-3xl border border-gold-500/20 bg-[#0d0b09] p-4 sm:p-6 md:p-8 lg:p-10 shadow-2xl overflow-hidden text-center">
-          {/* Ambient Golden Radial Glow behind Hero Cake */}
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(212,175,55,0.25),rgba(13,11,9,0)_70%)]" />
+        {/* 2. CELEBRATION HERO SHOWCASE (FLOATING CAKE WITH RADIAL SPOTLIGHT) */}
+        <section className="relative w-full py-2 sm:py-4 text-center overflow-hidden">
+          {/* Ambient Golden Radial Spotlight directly behind the cake */}
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(212,175,55,0.25),rgba(9,8,7,0)_70%)]" />
 
           <div className="relative z-10 flex flex-col items-center max-w-2xl mx-auto space-y-3 sm:space-y-4">
-            {/* Floating 3D Gold Cake Image */}
-            <div className="relative w-48 h-48 sm:w-64 sm:h-64 md:w-72 md:h-72 aspect-square my-1">
+            {/* Giant Floating 3D Gold Cake Image */}
+            <div className="relative w-56 h-56 sm:w-72 sm:h-72 md:w-80 md:h-80 aspect-square -my-2">
               <Image
                 src={heroImage}
-                alt="Crafted for Sweet Perfection"
+                alt={heroTitle || "Crafted for Sweet Perfection"}
                 fill
                 priority
-                sizes="(max-width: 768px) 250px, 320px"
-                className="object-contain filter drop-shadow-[0_15px_30px_rgba(212,175,55,0.3)] hover:scale-105 transition-transform duration-700"
+                sizes="(max-width: 768px) 300px, 360px"
+                className="object-contain filter drop-shadow-[0_20px_35px_rgba(212,175,55,0.35)] hover:scale-105 transition-transform duration-700"
               />
             </div>
 
-            {/* Headline & Subtitle */}
-            <h1 className="font-serif text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-[#FBF7EE] leading-tight">
+            {/* Large Serif Display Headline */}
+            <h1 className="font-serif text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-[#FBF7EE] leading-tight px-2">
               Crafted for Sweet Perfection
             </h1>
 
-            <p className="text-xs sm:text-sm text-[#A69B8D] font-normal leading-relaxed max-w-lg">
-              Pure vegetarian handcrafted cakes baked daily with premium Belgian cocoa.
-            </p>
-
-            {/* Glassmorphism CTA Buttons */}
-            <div className="pt-2 flex items-center justify-center gap-3 flex-wrap">
+            {/* Glowing Emerald CTA Buttons */}
+            <div className="pt-1 flex items-center justify-center gap-3.5 flex-wrap">
               <Link
                 href="/menu/cakes"
-                className="inline-flex items-center space-x-1.5 rounded-full border border-emerald-500/50 bg-[#0d1812]/80 px-5 sm:px-6 py-2.5 text-xs font-bold text-cream-100 shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:border-emerald-400 backdrop-blur-md active:scale-95 transition-all"
+                className="inline-flex items-center justify-center rounded-xl border border-emerald-500/60 bg-[#0c2419] px-6 sm:px-7 py-2.5 text-xs font-semibold text-emerald-100 shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:bg-emerald-900/50 active:scale-95 transition-all"
               >
                 <span>Explore Menu</span>
               </Link>
@@ -192,74 +188,103 @@ export default function MenuClient({
                 href={waLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center space-x-1.5 rounded-full border border-emerald-500/50 bg-[#0d1812]/80 px-5 sm:px-6 py-2.5 text-xs font-bold text-cream-100 shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:border-emerald-400 backdrop-blur-md active:scale-95 transition-all"
+                className="inline-flex items-center justify-center rounded-xl border border-emerald-500/60 bg-[#0c2419] px-6 sm:px-7 py-2.5 text-xs font-semibold text-emerald-100 shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:bg-emerald-900/50 active:scale-95 transition-all"
               >
-                <MessageCircle className="h-3.5 w-3.5 text-emerald-400" />
                 <span>Book a Cake</span>
               </a>
             </div>
           </div>
         </section>
 
-        {/* 3. DYNAMIC OCCASION SHOWCASE (AUTOMATIC FESTIVAL & OCCASION ENGINE) */}
+        {/* 3. DYNAMIC FESTIVAL BANNER */}
         <OccasionShowcase occasionData={activeOccasion} />
 
-        {/* 4. POPULAR CATEGORIES (Instagram Story-Style Horizontal Scroll) */}
-        <section className="space-y-2.5 sm:space-y-3.5 pt-1">
-          <div className="flex items-center justify-between px-1">
-            <h2 className="font-serif text-[15px] sm:text-lg md:text-xl font-bold text-[#FBF7EE] tracking-tight flex items-center gap-2">
-              <span>Popular Categories</span>
-              <span className="rounded-full bg-gold-500/10 border border-gold-500/20 px-2 py-0.5 text-[9.5px] text-gold-400 font-mono">
-                {categoriesList.length} Collections
-              </span>
-            </h2>
-            <Link
-              href="/menu/cakes"
-              className="text-[11px] sm:text-xs md:text-sm font-semibold text-gold-400 hover:text-gold-300 transition-colors"
-            >
-              View all →
-            </Link>
-          </div>
-
-          {/* Story-style Horizontal Scroll Row */}
-          <div className="flex items-center gap-3 overflow-x-auto py-2 scrollbar-none snap-x">
-            {categoriesList.map((cat) => (
+        {/* 4. CATEGORY NAVIGATION (STORY CIRCLES WITH GOLD RINGS) */}
+        <section className="py-2">
+          {/* Horizontal Story Circles Row */}
+          <div className="flex items-center gap-4 overflow-x-auto py-1 scrollbar-none snap-x justify-start sm:justify-center px-1">
+            {[
+              {
+                id: "all",
+                name: "All",
+                slug: "all",
+                isAll: true,
+                svg: (
+                  <svg className="w-6 h-6 text-gold-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M12 4v4m0 0l-2-2m2 2l2-2" />
+                    <path d="M4 14h16v6H4z" />
+                    <path d="M6 10h12v4H6z" />
+                  </svg>
+                ),
+              },
+              {
+                id: "truffle",
+                name: "Truffle",
+                slug: "chocolate-truffle",
+                isAll: false,
+                svg: (
+                  <svg className="w-6 h-6 text-gold-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M12 3v3" />
+                    <path d="M5 12c0-3.3 3.1-6 7-6s7 2.7 7 6v6H5v-6z" />
+                    <path d="M8 12c0 1.5 1.8 2 4 2s4-.5 4-2" />
+                  </svg>
+                ),
+              },
+              {
+                id: "fruit",
+                name: "Fruit",
+                slug: "fruit-berry",
+                isAll: false,
+                svg: (
+                  <svg className="w-6 h-6 text-gold-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <circle cx="12" cy="12" r="7" />
+                    <path d="M12 9v6m-3-3h6" />
+                  </svg>
+                ),
+              },
+              {
+                id: "cheesecakes",
+                name: "Cheesecakes",
+                slug: "cheesecakes",
+                isAll: false,
+                svg: (
+                  <svg className="w-6 h-6 text-gold-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M4 18l16-3V8L4 18z" />
+                    <path d="M4 18v3h16v-6" />
+                  </svg>
+                ),
+              },
+              {
+                id: "photo-cakes",
+                name: "Photo Cakes",
+                slug: "photo-designer",
+                isAll: false,
+                svg: (
+                  <svg className="w-6 h-6 text-gold-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <rect x="4" y="6" width="16" height="12" rx="2" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                ),
+              },
+            ].map((cat) => (
               <Link
                 key={cat.id}
                 href={cat.isAll ? "/menu/cakes" : `/menu/cakes?category=${cat.slug}`}
-                className="group flex flex-col items-center shrink-0 snap-start space-y-1.5 transition-transform active:scale-95"
+                className="group flex flex-col items-center shrink-0 snap-start space-y-1.5 active:scale-95 transition-transform"
               >
                 <div
-                  className={`relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full p-0.5 transition-all duration-300 ${
+                  className={`relative flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full p-0.5 transition-all ${
                     cat.isAll
-                      ? "bg-gradient-to-tr from-[#C59B27] via-gold-300 to-[#C59B27] shadow-[0_0_12px_rgba(212,175,55,0.4)] scale-[1.03]"
-                      : "bg-gradient-to-tr from-gold-500/40 via-white/10 to-gold-500/40 hover:from-gold-400 hover:to-gold-300"
+                      ? "border-2 border-gold-400 bg-[#14110e] shadow-[0_0_15px_rgba(212,175,55,0.4)]"
+                      : "border-2 border-gold-500/40 bg-[#12100e] hover:border-gold-400"
                   }`}
                 >
-                  <div className="relative flex h-full w-full items-center justify-center rounded-full bg-[#0d0b09] border border-black/40 overflow-hidden">
-                    {cat.isAll ? (
-                      <div className="relative flex h-full w-full items-center justify-center p-2.5">
-                        <Image
-                          src={cat.image}
-                          alt={cat.name}
-                          width={40}
-                          height={40}
-                          className="object-contain"
-                        />
-                      </div>
-                    ) : (
-                      <Image
-                        src={cat.image}
-                        alt={cat.name}
-                        fill
-                        sizes="80px"
-                        className="object-cover group-hover:scale-110 transition-transform duration-500"
-                      />
-                    )}
+                  <div className="flex h-full w-full items-center justify-center rounded-full bg-[#0d0b09]">
+                    {cat.svg}
                   </div>
                 </div>
                 <span
-                  className={`text-[10.5px] sm:text-xs font-semibold leading-tight text-center max-w-[72px] sm:max-w-[84px] truncate ${
+                  className={`text-xs font-medium leading-tight text-center ${
                     cat.isAll ? "text-gold-300 font-bold" : "text-cream-200 group-hover:text-gold-400"
                   }`}
                 >
@@ -270,23 +295,12 @@ export default function MenuClient({
           </div>
         </section>
 
-        {/* 5. SIGNATURE CAKES (2-Column Mobile Grid) */}
-        <section className="space-y-2.5 sm:space-y-3.5 pt-1">
-          <div className="flex items-center justify-between px-1">
-            <div>
-              <h2 className="font-serif text-lg sm:text-xl font-bold text-[#FBF7EE]">
-                Signature Cakes
-              </h2>
-              <p className="text-[10px] sm:text-xs text-luxury-400 font-light">
-                Handpicked favorites for every special moment.
-              </p>
-            </div>
-            <Link
-              href="/menu/cakes"
-              className="text-[11px] sm:text-xs font-semibold text-gold-400 hover:text-gold-300 transition-colors"
-            >
-              View all →
-            </Link>
+        {/* 5. SIGNATURE CAKES */}
+        <section className="space-y-3 pt-1">
+          <div className="px-1 text-left">
+            <h2 className="font-serif text-lg sm:text-xl font-bold text-gold-200">
+              Signature Cakes
+            </h2>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
@@ -388,56 +402,21 @@ export default function MenuClient({
         />
       </div>
 
-      {/* 8. FLOATING STICKY WHATSAPP CUSTOM CAKE BAR ON MOBILE */}
-      <div className="fixed bottom-14 left-3 right-3 z-30 md:hidden">
+      {/* 8. SINGLE FLOATING STICKY WHATSAPP CUSTOM CAKE BAR ON MOBILE (MATCHES MOCKUP 1-TO-1) */}
+      <div className="fixed bottom-3 left-3 right-3 z-50 md:hidden">
         <a
           href={waLink}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-between rounded-full border border-emerald-500/50 bg-[#0d1812]/95 px-4 py-2.5 shadow-[0_4px_20px_rgba(16,185,129,0.3)] backdrop-blur-md active:scale-95 transition-transform"
+          className="flex items-center justify-center gap-2.5 rounded-full border border-emerald-500/50 bg-[#092217]/95 px-4 py-3 shadow-[0_0_20px_rgba(16,185,129,0.35)] backdrop-blur-md active:scale-95 transition-transform"
         >
-          <div className="flex items-center space-x-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#25D366] text-white shadow-md animate-pulse">
-              <MessageCircle className="h-4 w-4 fill-white text-white" />
-            </span>
-            <span className="text-[11.5px] font-bold text-cream-100">
-              Order Custom Cake on WhatsApp
-            </span>
-          </div>
-          <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[9.5px] font-bold text-emerald-400 border border-emerald-500/40">
-            Instant →
+          <span className="flex h-5 w-5 items-center justify-center text-[#25D366]">
+            <MessageCircle className="h-5 w-5 fill-[#25D366] text-[#25D366]" />
+          </span>
+          <span className="text-xs sm:text-sm font-semibold text-emerald-100 tracking-wide">
+            Order Custom Cake on WhatsApp
           </span>
         </a>
-      </div>
-
-      {/* 9. FIXED MOBILE BOTTOM NAVIGATION BAR */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around border-t border-gold-500/20 bg-[#0d0c0a]/95 py-2 backdrop-blur-xl md:hidden">
-        {/* Menu (Active Tab with Gold Glow) */}
-        <Link
-          href="/menu"
-          className="relative flex flex-col items-center space-y-0.5 px-4 py-1 rounded-xl bg-gold-500/10 text-gold-400"
-        >
-          <CakeIcon className="h-4 w-4" />
-          <span className="text-[9.5px] font-bold">Menu</span>
-        </Link>
-
-        {/* All Cakes */}
-        <Link
-          href="/menu/cakes"
-          className="flex flex-col items-center space-y-0.5 px-4 py-1 text-luxury-400 hover:text-cream-100 transition-colors"
-        >
-          <Sparkles className="h-4 w-4" />
-          <span className="text-[9.5px] font-medium">All Cakes</span>
-        </Link>
-
-        {/* Order */}
-        <Link
-          href="/menu/order"
-          className="flex flex-col items-center space-y-0.5 px-4 py-1 text-luxury-400 hover:text-cream-100 transition-colors"
-        >
-          <MessageCircle className="h-4 w-4" />
-          <span className="text-[9.5px] font-medium">Order</span>
-        </Link>
       </div>
     </div>
   );
