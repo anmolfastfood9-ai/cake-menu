@@ -47,9 +47,9 @@ export default function CakeCard({
   const lowestPrice = sortedPrices[0]?.price || 1499;
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-gold-500/25 bg-[#12100e] p-2.5 sm:p-3 transition-all duration-300 hover:border-gold-500/50 hover:shadow-[0_4px_20px_rgba(212,175,55,0.15)]">
+    <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-[#D4AF37]/30 bg-[#12100e] p-2 sm:p-3 transition-all duration-300 hover:border-[#D4AF37]/60 shadow-[0_4px_15px_rgba(0,0,0,0.6)] hover:shadow-[0_4px_20px_rgba(212,175,55,0.25)]">
       {/* Top Image Container */}
-      <Link href={`/menu/cake/${cake.slug}`} className="relative block aspect-square w-full overflow-hidden rounded-xl bg-[#12100e]">
+      <Link href={`/menu/cake/${cake.slug}`} className="relative block aspect-square w-full overflow-hidden rounded-xl bg-[#090807]">
         <Image
           src={cake.coverImage}
           alt={cake.name}
@@ -60,7 +60,7 @@ export default function CakeCard({
 
         {/* Top-Right Green Veg Indicator Symbol */}
         <div className="absolute top-2 right-2 z-10">
-          <span className="flex h-3.5 w-3.5 items-center justify-center rounded-[2px] border border-emerald-500 bg-black/70 p-[1px] shadow-md" title="100% Pure Veg">
+          <span className="flex h-4 w-4 items-center justify-center rounded-[3px] border border-emerald-500 bg-black/80 p-[1.5px] shadow-md" title="100% Pure Veg">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
           </span>
         </div>
@@ -68,23 +68,23 @@ export default function CakeCard({
 
       {/* Content Details */}
       <div className="flex flex-1 flex-col justify-between pt-2 space-y-2 text-left">
-        <Link href={`/menu/cake/${cake.slug}`} className="block min-h-[32px]">
-          <h3 className="font-serif text-xs sm:text-sm font-medium text-[#FBF7EE] transition-colors group-hover:text-gold-400 line-clamp-2 leading-snug">
+        <Link href={`/menu/cake/${cake.slug}`} className="block min-h-[30px]">
+          <h3 className="font-serif text-[12px] sm:text-sm font-bold text-[#EBD699] transition-colors group-hover:text-gold-300 line-clamp-1 leading-snug">
             {cake.name}
           </h3>
         </Link>
 
         {/* Bottom Controls Row: Gold Price Pill (Left) & Emerald Order Button (Right) */}
-        <div className="flex items-center justify-between pt-1">
+        <div className="flex items-center justify-between pt-0.5">
           {/* Gold Price Box */}
-          <span className="inline-flex items-center justify-center rounded-lg border border-gold-500/40 bg-[#241c0e] px-2 py-0.5 text-[11px] font-bold font-mono text-gold-300 shadow-sm">
+          <span className="inline-flex items-center justify-center rounded-md border border-[#D4AF37]/50 bg-[#1e170d] px-2 py-0.5 text-[11px] font-bold font-mono text-[#EBD699] shadow-sm">
             ₹{lowestPrice.toLocaleString("en-IN")}
           </span>
 
           {/* Emerald Order CTA Button */}
           <Link
             href={`/menu/cake/${cake.slug}`}
-            className="inline-flex items-center justify-center rounded-lg border border-emerald-500/60 bg-[#0c2419] px-3 py-0.5 text-[11px] font-bold text-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.3)] hover:bg-emerald-900/40 active:scale-95 transition-all"
+            className="inline-flex items-center justify-center rounded-xl border border-emerald-500/70 bg-[#092217] px-3 py-1 text-[11px] font-semibold text-emerald-200 shadow-[0_0_10px_rgba(16,185,129,0.3)] hover:bg-emerald-900/60 active:scale-95 transition-all"
           >
             <span>Order</span>
           </Link>

@@ -28,12 +28,12 @@ export default function OccasionShowcase({ occasionData }: OccasionShowcaseProps
   return (
     <section className="w-full my-1 px-0">
       <div className="relative overflow-hidden rounded-2xl border border-[#D4AF37]/50 bg-[#120d08] shadow-[0_4px_20px_rgba(212,175,55,0.2)] text-center min-h-[66px] flex flex-col items-center justify-center py-2.5 px-4">
-        {/* Background Image of Gold Ribbon & Mandala Banner */}
+        {/* Background Image of Gold Ribbon & Mandala Banner Frame */}
         <div className="absolute inset-0 z-0 opacity-95">
           <img
-            src="/images/festival_banner_bg.png"
+            src="/images/festival_banner_frame.png"
             alt="Festival Occasion Banner"
-            className="w-full h-full object-fill"
+            className="w-full h-full object-cover"
           />
         </div>
 

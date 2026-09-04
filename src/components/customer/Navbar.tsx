@@ -31,10 +31,10 @@ export default function Navbar({
 
   return (
     <header className="sticky top-0 z-40 w-full px-3 pt-2 sm:pt-3 bg-[#070605]/95 backdrop-blur-md pb-2">
-      <div className="mx-auto flex max-w-7xl items-center justify-between rounded-2xl border border-[#D4AF37]/35 bg-[#12100e] px-3.5 py-2 shadow-xl shadow-black/60">
+      <div className="mx-auto flex max-w-7xl items-center justify-between rounded-2xl border border-[#D4AF37]/35 bg-[#12100e] px-3 py-2 shadow-xl shadow-black/60">
         {/* Left: Round Emerald/Gold Emblem Monogram & Brand Name */}
-        <Link href="/menu" className="flex items-center space-x-3">
-          <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-gold-500/60 bg-[#052b1b] p-0.5 shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+        <Link href="/menu" className="flex items-center space-x-2.5 sm:space-x-3">
+          <div className="relative flex h-11 sm:h-12 w-11 sm:w-12 shrink-0 items-center justify-center rounded-full border border-gold-500/70 bg-[#052b1b] p-0.5 shadow-[0_0_15px_rgba(16,185,129,0.35)]">
             <img
               src="/images/logo_emblem.png"
               alt="Raman Sweet Bakery Logo"
@@ -42,10 +42,10 @@ export default function Navbar({
             />
           </div>
           <div className="flex flex-col text-left">
-            <span className="font-serif text-[13px] sm:text-base font-bold tracking-wider text-[#EBD699] leading-tight uppercase">
+            <span className="font-serif text-[12.5px] sm:text-base font-bold tracking-wider text-[#EBD699] leading-tight uppercase">
               {title}
             </span>
-            <span className="font-serif text-[10.5px] sm:text-xs tracking-wide text-[#D8CEBE]/90 font-light leading-tight mt-0.5">
+            <span className="font-serif text-[10px] sm:text-xs tracking-wide text-[#D8CEBE]/80 font-light leading-tight mt-0.5">
               {subtitle}
             </span>
           </div>
@@ -53,7 +53,7 @@ export default function Navbar({
 
         {/* Right: 2-Line 100% EGGLESS Badge Box */}
         <div className="flex items-center">
-          <div className="inline-flex flex-col items-center justify-center rounded-xl border border-[#D4AF37]/75 bg-black/40 px-3 py-1 text-center shadow-[0_0_12px_rgba(212,175,55,0.2)]">
+          <div className="inline-flex flex-col items-center justify-center rounded-xl border border-[#D4AF37]/80 bg-black/60 px-2.5 sm:px-3 py-1 text-center shadow-[0_0_12px_rgba(212,175,55,0.25)]">
             <span className="text-[12px] sm:text-[13px] font-extrabold text-[#EBD699] font-mono leading-none tracking-tight">
               100%
             </span>

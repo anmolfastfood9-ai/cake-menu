@@ -121,7 +121,7 @@ export default function MenuClient({
   const waLink = generateGeneralWhatsAppLink(whatsappNumber, restaurantName);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#070605] text-[#FBF7EE] selection:bg-gold-500 selection:text-luxury-950 font-sans pb-28 md:pb-8">
+    <div className="min-h-screen flex flex-col bg-[#070605] text-[#FBF7EE] selection:bg-gold-500 selection:text-luxury-950 font-sans pb-36 md:pb-12">
       {/* 1. TOP HEADER BRAND NAVBAR */}
       <Navbar
         restaurantName={restaurantName}
@@ -130,24 +130,24 @@ export default function MenuClient({
         phoneNumber={phoneNumber}
       />
 
-      {/* RESPONSIVE MAIN CONTENT CONTAINER (CONTROLLED MOBILE WIDTH) */}
-      <main className="w-full max-w-md md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-1 sm:pt-3 space-y-3.5 sm:space-y-6 flex-1">
+      {/* RESPONSIVE MAIN CONTENT CONTAINER (CONTROLLED MOBILE WIDTH & COMPACT TIGHT SPACING) */}
+      <main className="w-full max-w-md md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-1 space-y-2.5 sm:space-y-4 flex-1">
         
-        {/* 2. CELEBRATION HERO SHOWCASE (LARGE 3D FLOATING CAKE WITH AMBIENT RADIAL SPOTLIGHT) */}
-        <section className="relative w-full pt-1 pb-3 text-center overflow-hidden">
-          {/* Ambient Golden Radial Spotlight directly behind the cake */}
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-amber-500/25 via-transparent to-transparent" />
+        {/* 2. CELEBRATION HERO SHOWCASE (LARGE 3D FLOATING CAKE WITH SOFT BLENDING & SPOTLIGHT) */}
+        <section className="relative w-full pt-1 pb-1 text-center overflow-hidden">
+          {/* Ambient Golden Radial Spotlight directly behind the floating cake */}
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(212,175,55,0.4)_0%,rgba(16,185,129,0.12)_45%,transparent_75%)]" />
 
-          <div className="relative z-10 flex flex-col items-center max-w-xl mx-auto space-y-3">
-            {/* Large Floating 3D Gold Cake Image */}
-            <div className="relative w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 aspect-square -my-2">
+          <div className="relative z-10 flex flex-col items-center max-w-xl mx-auto space-y-2 sm:space-y-3">
+            {/* Large Floating 3D Gold Cake Image with Soft Radial Edge Mask */}
+            <div className="relative w-72 h-72 xs:w-80 xs:h-80 sm:w-88 sm:h-88 md:w-[420px] md:h-[420px] aspect-square -my-4 sm:-my-6 [mask-image:radial-gradient(circle_at_center,black_80%,transparent_100%)] [-webkit-mask-image:radial-gradient(circle_at_center,black_80%,transparent_100%)]">
               <Image
                 src={heroImage}
                 alt={heroTitle}
                 fill
                 priority
-                sizes="(max-width: 768px) 340px, 420px"
-                className="object-contain filter drop-shadow-[0_20px_35px_rgba(212,175,55,0.35)] hover:scale-105 transition-transform duration-700"
+                sizes="(max-width: 768px) 360px, 460px"
+                className="object-contain filter drop-shadow-[0_20px_35px_rgba(212,175,55,0.4)] hover:scale-105 transition-transform duration-700"
               />
             </div>
 
@@ -157,10 +157,10 @@ export default function MenuClient({
             </h1>
 
             {/* Glowing Emerald CTA Buttons */}
-            <div className="pt-1 flex items-center justify-center gap-3.5">
+            <div className="pt-0.5 flex items-center justify-center gap-3">
               <Link
                 href="/menu/cakes"
-                className="inline-flex items-center justify-center rounded-xl border border-emerald-500/60 bg-[#0c2419] px-6 sm:px-8 py-2.5 text-xs sm:text-sm font-semibold text-emerald-100 shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:bg-emerald-900/50 active:scale-95 transition-all min-w-[120px]"
+                className="inline-flex items-center justify-center rounded-xl border border-emerald-500/70 bg-[#0c2419]/90 px-6 sm:px-8 py-2.5 text-xs sm:text-sm font-semibold text-emerald-100 shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:bg-emerald-900/50 active:scale-95 transition-all min-w-[120px]"
               >
                 <span>Explore Menu</span>
               </Link>
@@ -168,7 +168,7 @@ export default function MenuClient({
                 href={waLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center rounded-xl border border-emerald-500/60 bg-[#0c2419] px-6 sm:px-8 py-2.5 text-xs sm:text-sm font-semibold text-emerald-100 shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:bg-emerald-900/50 active:scale-95 transition-all min-w-[120px]"
+                className="inline-flex items-center justify-center rounded-xl border border-emerald-500/70 bg-[#0c2419]/90 px-6 sm:px-8 py-2.5 text-xs sm:text-sm font-semibold text-emerald-100 shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:bg-emerald-900/50 active:scale-95 transition-all min-w-[120px]"
               >
                 <span>Book a Cake</span>
               </a>
@@ -179,14 +179,14 @@ export default function MenuClient({
         {/* 3. DYNAMIC FESTIVAL BANNER */}
         <OccasionShowcase occasionData={activeOccasion} />
 
-        {/* 4. CATEGORY NAVIGATION (UNCLIPPED FULL HORIZONTAL SCROLL) */}
-        <section className="py-1">
-          <div className="flex items-center gap-3.5 overflow-x-auto py-1 scrollbar-none snap-x justify-start sm:justify-center px-1 after:content-[''] after:w-4 after:shrink-0">
+        {/* 4. CATEGORY NAVIGATION (SMOOTH TOUCH HORIZONTAL SCROLL) */}
+        <section className="py-0.5 w-full overflow-hidden">
+          <div className="flex items-center gap-3.5 overflow-x-auto py-1.5 px-1 scrollbar-none snap-x snap-mandatory touch-pan-x [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden justify-start sm:justify-center">
             {categoriesList.map((cat) => (
               <Link
                 key={cat.id}
                 href={cat.isAll ? "/menu/cakes" : `/menu/cakes?category=${cat.slug}`}
-                className="group flex flex-col items-center shrink-0 snap-start space-y-1.5 active:scale-95 transition-transform"
+                className="group flex flex-col items-center shrink-0 snap-start space-y-1.5 active:scale-95 transition-transform min-w-[64px]"
               >
                 <div
                   className={`relative flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full overflow-hidden p-0.5 transition-all ${
@@ -206,7 +206,7 @@ export default function MenuClient({
                   </div>
                 </div>
                 <span
-                  className={`text-xs font-medium leading-tight text-center ${
+                  className={`text-[11.5px] font-medium leading-tight text-center ${
                     cat.isAll ? "text-gold-300 font-bold" : "text-cream-200 group-hover:text-gold-400"
                   }`}
                 >
@@ -217,15 +217,15 @@ export default function MenuClient({
           </div>
         </section>
 
-        {/* 5. SIGNATURE CAKES (EXACT 2-COLUMN MOBILE GRID MATCHING MOCKUP 1-TO-1) */}
-        <section className="space-y-3 pt-1">
+        {/* 5. SIGNATURE CAKES (EXACT 2-COLUMN MOBILE GRID MATCHING MOCKUP) */}
+        <section className="space-y-2.5 pt-0.5">
           <div className="px-1 text-left">
-            <h2 className="font-serif text-lg sm:text-xl font-bold text-gold-200">
+            <h2 className="font-serif text-base sm:text-xl font-bold text-gold-200 tracking-wide">
               Signature Cakes
             </h2>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 lg:gap-5">
             {displayCakes.map((cake: any) => (
               <CakeCard
                 key={cake.id}
@@ -263,7 +263,7 @@ export default function MenuClient({
         />
       </div>
 
-      {/* 7. FLOATING STICKY WHATSAPP CTA BAR ON MOBILE (FLOATS WITHOUT COVERING CARD CONTENT) */}
+      {/* 7. FLOATING STICKY WHATSAPP CTA BAR ON MOBILE */}
       <div className="fixed bottom-3 left-3 right-3 z-50 md:hidden">
         <a
           href={waLink}
