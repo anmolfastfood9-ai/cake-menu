@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { getSessionAdminFromRequest } from "@/lib/auth";
+import { invalidateAppCache } from "@/lib/cache";
 
 function generateSlug(name: string): string {
   return name
@@ -68,6 +69,8 @@ export async function POST(req: NextRequest) {
         active: Boolean(active),
       },
     });
+
+    invalidateAppCache();
 
     return NextResponse.json({ success: true, category }, { status: 201 });
   } catch (error: any) {

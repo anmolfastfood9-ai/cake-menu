@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { getSessionAdminFromRequest } from "@/lib/auth";
+import { invalidateAppCache } from "@/lib/cache";
 
 // PUT /api/categories/[id] - Update category (Admin only)
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
@@ -27,6 +28,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       where: { id },
       data: updateData,
     });
+
+    invalidateAppCache();
 
     return NextResponse.json({ success: true, category });
   } catch (error: any) {
@@ -60,6 +63,8 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     }
 
     await prisma.category.delete({ where: { id } });
+
+    invalidateAppCache();
 
     return NextResponse.json({ success: true, message: "Category deleted successfully" });
   } catch (error: any) {
