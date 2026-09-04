@@ -170,19 +170,19 @@ export default function MenuClient({
                 {heroSubtitle}
               </p>
 
-              {/* Desktop Quick Action CTA Buttons */}
-              <div className="pt-1 md:pt-2 hidden sm:flex items-center gap-3">
+              {/* Quick Action CTA Buttons */}
+              <div className="pt-2 flex items-center gap-2 sm:gap-3 flex-wrap">
                 <Link
                   href="/menu/cakes"
-                  className="rounded-xl bg-gold-gradient px-5 py-2.5 text-xs font-bold text-luxury-950 shadow-gold-sm hover:opacity-95 transition-opacity"
+                  className="inline-flex items-center space-x-1 rounded-xl bg-gold-gradient px-4 sm:px-5 py-2 sm:py-2.5 text-[11px] sm:text-xs font-bold text-luxury-950 shadow-gold-sm hover:opacity-95 transition-opacity active:scale-95"
                 >
-                  Explore All Cakes →
+                  <span>Explore All Cakes →</span>
                 </Link>
                 <a
                   href={waLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-xl border border-gold-500/30 bg-gold-500/10 px-4 py-2.5 text-xs font-semibold text-gold-300 hover:bg-gold-500/20 transition-all flex items-center gap-1.5"
+                  className="inline-flex items-center space-x-1.5 rounded-xl border border-gold-500/30 bg-gold-500/10 px-3.5 sm:px-4 py-2 sm:py-2.5 text-[11px] sm:text-xs font-semibold text-gold-300 hover:bg-gold-500/20 transition-all active:scale-95"
                 >
                   <MessageCircle className="h-3.5 w-3.5 text-emerald-400" />
                   <span>WhatsApp Enquiry</span>

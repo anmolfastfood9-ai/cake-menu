@@ -37,9 +37,11 @@ export default function Navbar({
         <div className="flex items-center space-x-2 sm:space-x-3">
           <Link
             href="/menu/cakes"
-            className="rounded-full border border-gold-500/30 bg-gold-500/10 px-3.5 sm:px-4 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold text-gold-300 hover:bg-gold-500/20 transition-all active:scale-95 shadow-gold-sm"
+            className="inline-flex items-center space-x-1 sm:space-x-1.5 rounded-full border border-gold-500/50 bg-gradient-to-r from-[#ECC86B] via-[#D4AF37] to-[#B48828] px-3 sm:px-4 py-1 sm:py-1.5 text-[10.5px] sm:text-xs font-bold text-luxury-950 shadow-[0_2px_10px_rgba(212,175,55,0.3)] hover:opacity-95 transition-all active:scale-95 shrink-0"
           >
-            All Cakes →
+            <Sparkles className="h-3 w-3 text-luxury-950 shrink-0" />
+            <span>All Cakes</span>
+            <span className="text-[10px] font-mono">→</span>
           </Link>
         </div>
       </div>
