@@ -224,12 +224,26 @@ export default function CakeDetailClient({
 
               {/* Title & Eggless Guarantee */}
               <div>
-                <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-[#FBF7EE] leading-tight">
-                  {cake.name}
-                </h1>
-                <div className="mt-1.5 flex items-center space-x-2 text-xs sm:text-sm text-emerald-400">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    {/* Standard Indian Veg Symbol */}
+                    <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-[2px] border border-emerald-500 p-[1.5px]" title="100% Pure Veg">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                    </span>
+                    <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-[#FBF7EE] leading-tight">
+                      {cake.name}
+                    </h1>
+                  </div>
+
+                  {/* Rating Badge */}
+                  <div className="flex items-center gap-1 rounded-lg bg-black/60 px-2 py-1 text-xs font-bold text-gold-400 border border-gold-500/30 backdrop-blur-md shrink-0">
+                    <span>★</span>
+                    <span>{cake.rating || 4.9}</span>
+                  </div>
+                </div>
+
+                <div className="mt-1.5 flex items-center space-x-2 text-xs sm:text-sm text-emerald-400 font-semibold">
                   <span>100% Eggless • Pure Vegetarian Confection</span>
-                  <span>🌿</span>
                 </div>
               </div>
 
@@ -241,10 +255,13 @@ export default function CakeDetailClient({
               {/* Select Weight Section */}
               <div className="space-y-2.5 pt-3 border-t border-luxury-800">
                 <div className="flex items-baseline justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-cream-100">
-                    Select Weight & Size
+                  <span className="text-xs font-bold uppercase tracking-wider text-cream-100 flex items-center gap-1.5">
+                    <span>Select Weight & Size</span>
+                    <span className="rounded bg-gold-500/10 border border-gold-500/20 px-1.5 py-0.2 text-[9.5px] text-gold-400 font-mono">
+                      Real-time Pricing
+                    </span>
                   </span>
-                  <span className="text-[10px] sm:text-xs text-luxury-400">Prices are inclusive of all taxes</span>
+                  <span className="text-[10px] sm:text-xs text-luxury-400">Inclusive of all taxes</span>
                 </div>
 
                 {/* Weight Cards Grid */}
@@ -261,7 +278,7 @@ export default function CakeDetailClient({
                         }}
                         className={`flex flex-col items-center justify-center rounded-xl p-2.5 text-center transition-all active:scale-95 ${
                           isSelected
-                            ? "border border-gold-400 bg-[#C59B27]/15 text-gold-300 font-bold shadow-gold-sm"
+                            ? "border-2 border-gold-400 bg-gold-500/15 text-gold-300 font-bold shadow-[0_0_12px_rgba(212,175,55,0.25)] scale-[1.02]"
                             : "border border-luxury-800 bg-[#14120f] text-cream-200 hover:border-gold-500/40"
                         }`}
                       >
@@ -343,10 +360,10 @@ export default function CakeDetailClient({
                   href={waLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex w-full items-center justify-center space-x-2 rounded-xl bg-[#25D366] py-3.5 px-4 text-center text-xs sm:text-sm font-bold text-white shadow-lg shadow-emerald-950/40 transition-all hover:bg-emerald-500"
+                  className="flex w-full items-center justify-center space-x-2 rounded-xl bg-gradient-to-r from-emerald-600 to-[#25D366] py-3.5 px-4 text-center text-xs sm:text-sm font-bold text-white shadow-lg shadow-emerald-950/40 transition-all hover:brightness-110 active:scale-95"
                 >
                   <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5 fill-white text-white" />
-                  <span>Enquire / Order on WhatsApp</span>
+                  <span>Order on WhatsApp (₹{activePriceObj.price.toLocaleString("en-IN")})</span>
                 </a>
 
                 <a
@@ -404,6 +421,28 @@ export default function CakeDetailClient({
           )}
         </div>
       </main>
+
+      {/* Floating Sticky Mobile Order CTA */}
+      <div className="fixed bottom-14 left-3 right-3 z-30 md:hidden">
+        <a
+          href={waLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-between rounded-full border border-emerald-500/50 bg-[#0d1812]/95 px-4 py-2.5 shadow-[0_4px_20px_rgba(16,185,129,0.35)] backdrop-blur-md active:scale-95 transition-transform"
+        >
+          <div className="flex items-center space-x-2">
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#25D366] text-white shadow-md animate-pulse">
+              <MessageCircle className="h-4 w-4 fill-white text-white" />
+            </span>
+            <span className="text-[11.5px] font-bold text-cream-100">
+              Order {activePriceObj.weight} on WhatsApp
+            </span>
+          </div>
+          <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[11px] font-bold text-emerald-400 border border-emerald-500/40">
+            ₹{activePriceObj.price.toLocaleString("en-IN")} →
+          </span>
+        </a>
+      </div>
 
       {/* Global Footer */}
       <Footer

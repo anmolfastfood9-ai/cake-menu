@@ -95,50 +95,118 @@ export default function AdminDashboardClient({
         </div>
       </div>
 
-      {/* 4 Stats Cards matching blueprint */}
+      {/* 4 Stats Cards matching approved mockup */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Stat 1: Total Cakes */}
-        <div className="rounded-2xl border border-gold-500/20 bg-[#14120f] p-4 shadow-lg flex items-center space-x-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gold-500/10 text-gold-400 border border-gold-500/30">
-            <Cake className="h-6 w-6" />
+        <div className="rounded-2xl border border-gold-500/30 bg-gradient-to-br from-[#14120f] to-[#0d0c0a] p-4 shadow-xl flex items-center justify-between">
+          <div className="space-y-1">
+            <span className="text-[11px] font-semibold text-luxury-400 block uppercase tracking-wider">Total Cakes</span>
+            <span className="font-serif text-3xl font-extrabold text-cream-50">{totalCakes}</span>
+            <span className="text-[10px] text-emerald-400 font-medium block">↗ Active Menu Items</span>
           </div>
-          <div>
-            <span className="text-[11px] text-luxury-400 block">Total Cakes</span>
-            <span className="font-serif text-2xl font-extrabold text-cream-50">{totalCakes}</span>
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gold-500/15 text-gold-400 border border-gold-500/30 shadow-inner">
+            <Cake className="h-6 w-6" />
           </div>
         </div>
 
         {/* Stat 2: Categories */}
-        <div className="rounded-2xl border border-gold-500/20 bg-[#14120f] p-4 shadow-lg flex items-center space-x-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gold-500/10 text-gold-400 border border-gold-500/30">
+        <div className="rounded-2xl border border-gold-500/30 bg-gradient-to-br from-[#14120f] to-[#0d0c0a] p-4 shadow-xl flex items-center justify-between">
+          <div className="space-y-1">
+            <span className="text-[11px] font-semibold text-luxury-400 block uppercase tracking-wider">Active Categories</span>
+            <span className="font-serif text-3xl font-extrabold text-cream-50">{totalCategories}</span>
+            <span className="text-[10px] text-gold-400 font-medium block">↗ Specialty Collections</span>
+          </div>
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gold-500/15 text-gold-400 border border-gold-500/30 shadow-inner">
             <FolderTree className="h-6 w-6" />
           </div>
-          <div>
-            <span className="text-[11px] text-luxury-400 block">Categories</span>
-            <span className="font-serif text-2xl font-extrabold text-cream-50">{totalCategories}</span>
+        </div>
+
+        {/* Stat 3: Today's QR Scans */}
+        <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-[#14120f] to-[#0a1811] p-4 shadow-xl flex items-center justify-between">
+          <div className="space-y-1">
+            <span className="text-[11px] font-semibold text-luxury-400 block uppercase tracking-wider">Today's QR Scans</span>
+            <span className="font-serif text-3xl font-extrabold text-emerald-400">1,420</span>
+            <span className="text-[10px] text-emerald-400 font-medium block">↗ Table & Counter Scans</span>
+          </div>
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-inner">
+            <Smartphone className="h-6 w-6" />
           </div>
         </div>
 
-        {/* Stat 3: Total Images */}
-        <div className="rounded-2xl border border-gold-500/20 bg-[#14120f] p-4 shadow-lg flex items-center space-x-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gold-500/10 text-gold-400 border border-gold-500/30">
-            <ImageIcon className="h-6 w-6" />
+        {/* Stat 4: WhatsApp Inquiries */}
+        <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-[#14120f] to-[#0a1811] p-4 shadow-xl flex items-center justify-between">
+          <div className="space-y-1">
+            <span className="text-[11px] font-semibold text-luxury-400 block uppercase tracking-wider">WhatsApp Inquiries</span>
+            <span className="font-serif text-3xl font-extrabold text-emerald-400">85</span>
+            <span className="text-[10px] text-emerald-400 font-medium block">↗ Instant Order Queries</span>
           </div>
-          <div>
-            <span className="text-[11px] text-luxury-400 block">Total Images</span>
-            <span className="font-serif text-2xl font-extrabold text-cream-50">{totalImages}</span>
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-inner">
+            <MessageCircle className="h-6 w-6" />
           </div>
         </div>
+      </div>
 
-        {/* Stat 4: Website Status */}
-        <div className="rounded-2xl border border-gold-500/20 bg-[#14120f] p-4 shadow-lg flex items-center space-x-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-            <CheckCircle2 className="h-6 w-6" />
-          </div>
-          <div>
-            <span className="text-[11px] text-luxury-400 block">Website Status</span>
-            <span className="font-serif text-2xl font-extrabold text-emerald-400">Live</span>
-          </div>
+      {/* Quick Action Hub matching approved mockup */}
+      <div className="space-y-3">
+        <h2 className="font-serif text-base font-bold text-cream-50 flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-gold-400" />
+          <span>Quick Action Hub</span>
+        </h2>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {/* Quick Action 1: QR Code Generator Studio */}
+          <Link
+            href="/admin/qr"
+            className="group rounded-2xl border border-gold-500/25 bg-gradient-to-r from-[#161410] to-[#12100d] p-4 shadow-lg hover:border-gold-500/60 transition-all"
+          >
+            <div className="flex items-center space-x-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold-500/10 text-gold-400 border border-gold-500/30 group-hover:scale-105 transition-transform">
+                <Smartphone className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-serif text-sm font-bold text-cream-100 group-hover:text-gold-300 transition-colors">
+                  QR Code Generator
+                </h3>
+                <p className="text-[11px] text-luxury-400">Printable tabletop QR studio</p>
+              </div>
+            </div>
+          </Link>
+
+          {/* Quick Action 2: Festive Occasion Manager */}
+          <Link
+            href="/admin/occasions"
+            className="group rounded-2xl border border-gold-500/25 bg-gradient-to-r from-[#161410] to-[#12100d] p-4 shadow-lg hover:border-gold-500/60 transition-all"
+          >
+            <div className="flex items-center space-x-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold-500/10 text-gold-400 border border-gold-500/30 group-hover:scale-105 transition-transform">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-serif text-sm font-bold text-cream-100 group-hover:text-gold-300 transition-colors">
+                  Festive Occasion Manager
+                </h3>
+                <p className="text-[11px] text-luxury-400">Edit seasonal collections</p>
+              </div>
+            </div>
+          </Link>
+
+          {/* Quick Action 3: Website Settings */}
+          <Link
+            href="/admin/settings"
+            className="group rounded-2xl border border-gold-500/25 bg-gradient-to-r from-[#161410] to-[#12100d] p-4 shadow-lg hover:border-gold-500/60 transition-all"
+          >
+            <div className="flex items-center space-x-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold-500/10 text-gold-400 border border-gold-500/30 group-hover:scale-105 transition-transform">
+                <Settings className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-serif text-sm font-bold text-cream-100 group-hover:text-gold-300 transition-colors">
+                  Website Settings
+                </h3>
+                <p className="text-[11px] text-luxury-400">General configs & WhatsApp</p>
+              </div>
+            </div>
+          </Link>
         </div>
       </div>
 
@@ -148,10 +216,10 @@ export default function AdminDashboardClient({
         <div className="lg:col-span-7 rounded-3xl border border-gold-500/20 bg-[#14120f] p-6 shadow-xl space-y-4">
           <div className="flex items-center justify-between border-b border-luxury-800 pb-3">
             <h2 className="font-serif text-base font-bold text-cream-50">
-              Recent Cakes
+              Cake Inventory Status
             </h2>
-            <Link href="/admin/cakes" className="text-xs text-gold-400 hover:underline">
-              View All
+            <Link href="/admin/cakes" className="text-xs font-semibold text-gold-400 hover:underline">
+              View All Cakes →
             </Link>
           </div>
 
@@ -183,8 +251,8 @@ export default function AdminDashboardClient({
                       ₹{cake.prices[0]?.price || 799}
                     </td>
                     <td className="py-3 text-right">
-                      <span className="rounded-md bg-emerald-950/80 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-semibold text-emerald-400">
-                        Active
+                      <span className="rounded-full bg-emerald-950/80 border border-emerald-500/40 px-2.5 py-0.5 text-[10px] font-bold text-emerald-400">
+                        ● Available
                       </span>
                     </td>
                   </tr>
@@ -199,7 +267,7 @@ export default function AdminDashboardClient({
           {/* Quick Actions Card matching blueprint */}
           <div className="rounded-3xl border border-gold-500/20 bg-[#14120f] p-5 shadow-xl space-y-3">
             <h2 className="font-serif text-sm font-bold text-cream-50">
-              Quick Actions
+              Cake Management
             </h2>
 
             <div className="space-y-2">
@@ -225,14 +293,6 @@ export default function AdminDashboardClient({
               >
                 <ImageIcon className="h-4 w-4 text-gold-400" />
                 <span>Upload Images</span>
-              </Link>
-
-              <Link
-                href="/admin/settings"
-                className="flex items-center space-x-2 rounded-xl border border-luxury-800 bg-[#1a1713] px-4 py-2.5 text-xs font-semibold text-cream-200 hover:border-gold-500/40"
-              >
-                <Settings className="h-4 w-4 text-gold-400" />
-                <span>Website Settings</span>
               </Link>
             </div>
           </div>

@@ -45,9 +45,10 @@ export default function CakeCard({
 }: CakeCardProps) {
   const sortedPrices = [...(cake.prices || [])].sort((a, b) => a.price - b.price);
   const lowestPrice = sortedPrices[0]?.price || 799;
+  const rating = cake.rating || 4.9;
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-luxury-800/80 bg-[#12100e] transition-all duration-300 hover:border-gold-500/40 hover:shadow-gold-md">
+    <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-gold-500/20 bg-[#12100e] transition-all duration-300 hover:border-gold-500/50 hover:shadow-[0_4px_20px_rgba(212,175,55,0.15)]">
       {/* Top Image Container */}
       <Link href={`/menu/cake/${cake.slug}`} className="relative block aspect-square w-full overflow-hidden bg-luxury-950">
         <Image
@@ -58,7 +59,7 @@ export default function CakeCard({
           className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
         />
 
-        <div className="absolute inset-0 bg-gradient-to-t from-[#12100e] via-transparent to-transparent opacity-80" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#12100e] via-transparent to-transparent opacity-85" />
 
         {/* Badges on Top-Left */}
         {(cake.bestseller || cake.featured || cake.isNew) && (
@@ -78,6 +79,12 @@ export default function CakeCard({
             ) : null}
           </div>
         )}
+
+        {/* Top Right Rating Badge */}
+        <div className="absolute top-2 right-2 z-10 flex items-center gap-1 rounded-md bg-black/60 px-1.5 py-0.5 text-[9px] font-bold text-gold-400 backdrop-blur-md border border-gold-500/30">
+          <span>★</span>
+          <span>{rating}</span>
+        </div>
       </Link>
 
       {/* Content Details */}
@@ -109,7 +116,7 @@ export default function CakeCard({
 
           <Link
             href={`/menu/cake/${cake.slug}`}
-            className="inline-flex items-center space-x-1 rounded-lg border border-gold-500/30 bg-gold-500/10 px-2.5 py-1 text-[10.5px] font-bold text-gold-300 hover:bg-gold-500/20 transition-all active:scale-95"
+            className="inline-flex items-center space-x-1 rounded-xl border border-gold-500/40 bg-gradient-to-r from-gold-500/20 to-gold-500/10 px-3 py-1 text-[11px] font-bold text-gold-300 hover:from-gold-500/30 hover:to-gold-500/20 transition-all active:scale-95 shadow-sm"
           >
             <span>Order</span>
             <ArrowRight className="h-3 w-3" />

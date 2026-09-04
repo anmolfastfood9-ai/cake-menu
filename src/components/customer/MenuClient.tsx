@@ -210,11 +210,14 @@ export default function MenuClient({
         {/* 3. DYNAMIC OCCASION SHOWCASE (AUTOMATIC FESTIVAL & OCCASION ENGINE) */}
         <OccasionShowcase occasionData={activeOccasion} />
 
-        {/* 4. POPULAR CATEGORIES (4 columns on mobile, 8 columns on desktop) */}
+        {/* 4. POPULAR CATEGORIES (Instagram Story-Style Horizontal Scroll) */}
         <section className="space-y-2.5 sm:space-y-3.5 pt-1">
           <div className="flex items-center justify-between px-1">
-            <h2 className="font-serif text-[15px] sm:text-lg md:text-xl font-bold text-[#FBF7EE] tracking-tight">
-              Popular Categories
+            <h2 className="font-serif text-[15px] sm:text-lg md:text-xl font-bold text-[#FBF7EE] tracking-tight flex items-center gap-2">
+              <span>Popular Categories</span>
+              <span className="rounded-full bg-gold-500/10 border border-gold-500/20 px-2 py-0.5 text-[9.5px] text-gold-400 font-mono">
+                {categoriesList.length} Collections
+              </span>
             </h2>
             <Link
               href="/menu/cakes"
@@ -224,44 +227,47 @@ export default function MenuClient({
             </Link>
           </div>
 
-          <div className="grid grid-cols-4 md:grid-cols-8 gap-1.5 sm:gap-2.5 md:gap-3">
+          {/* Story-style Horizontal Scroll Row */}
+          <div className="flex items-center gap-3 overflow-x-auto py-2 scrollbar-none snap-x">
             {categoriesList.map((cat) => (
               <Link
                 key={cat.id}
                 href={cat.isAll ? "/menu/cakes" : `/menu/cakes?category=${cat.slug}`}
-                className={`group flex flex-col items-center justify-center rounded-2xl py-2 px-1 sm:p-3 text-center transition-all duration-300 ${
-                  cat.isAll
-                    ? "border border-[#C59B27] bg-[#161310] shadow-[0_0_12px_rgba(197,155,39,0.18)]"
-                    : "border border-white/5 bg-[#14120f] hover:border-gold-500/40 hover:bg-[#181512]"
-                }`}
+                className="group flex flex-col items-center shrink-0 snap-start space-y-1.5 transition-transform active:scale-95"
               >
-                <div className="relative flex h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 items-center justify-center overflow-hidden rounded-full bg-[#0d0b09] border border-white/5 shadow-inner">
-                  {cat.isAll ? (
-                    <div className="relative flex h-full w-full items-center justify-center p-1.5 sm:p-2">
+                <div
+                  className={`relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full p-0.5 transition-all duration-300 ${
+                    cat.isAll
+                      ? "bg-gradient-to-tr from-[#C59B27] via-gold-300 to-[#C59B27] shadow-[0_0_12px_rgba(212,175,55,0.4)] scale-[1.03]"
+                      : "bg-gradient-to-tr from-gold-500/40 via-white/10 to-gold-500/40 hover:from-gold-400 hover:to-gold-300"
+                  }`}
+                >
+                  <div className="relative flex h-full w-full items-center justify-center rounded-full bg-[#0d0b09] border border-black/40 overflow-hidden">
+                    {cat.isAll ? (
+                      <div className="relative flex h-full w-full items-center justify-center p-2.5">
+                        <Image
+                          src={cat.image}
+                          alt={cat.name}
+                          width={40}
+                          height={40}
+                          className="object-contain"
+                        />
+                      </div>
+                    ) : (
                       <Image
                         src={cat.image}
                         alt={cat.name}
-                        width={36}
-                        height={36}
-                        className="object-contain"
+                        fill
+                        sizes="80px"
+                        className="object-cover group-hover:scale-110 transition-transform duration-500"
                       />
-                    </div>
-                  ) : (
-                    <Image
-                      src={cat.image}
-                      alt={cat.name}
-                      fill
-                      sizes="(max-width: 640px) 48px, 64px"
-                      className="object-cover group-hover:scale-108 transition-transform duration-300"
-                    />
-                  )}
+                    )}
+                  </div>
                 </div>
                 <span
-                  className={`mt-1.5 text-[9.5px] sm:text-[11px] md:text-xs font-medium leading-tight tracking-tight truncate w-full text-center ${
-                    cat.isAll
-                      ? "text-[#FBF7EE] font-semibold"
-                      : "text-cream-100 group-hover:text-gold-400"
-                  } transition-colors`}
+                  className={`text-[10.5px] sm:text-xs font-semibold leading-tight text-center max-w-[72px] sm:max-w-[84px] truncate ${
+                    cat.isAll ? "text-gold-300 font-bold" : "text-cream-200 group-hover:text-gold-400"
+                  }`}
                 >
                   {cat.name}
                 </span>
@@ -289,15 +295,15 @@ export default function MenuClient({
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3.5 md:gap-4 lg:gap-5">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3.5 md:gap-4 lg:gap-5">
             {signatureCakes.map((cake) => (
               <Link
                 key={cake.id}
                 href={`/menu/cake/${cake.slug}`}
-                className="group relative flex flex-col overflow-hidden rounded-xl md:rounded-2xl border border-luxury-800/80 bg-[#14120f] p-2 sm:p-3 md:p-3.5 transition-all hover:border-gold-500/40 hover:shadow-gold-md"
+                className="group relative flex flex-col overflow-hidden rounded-2xl border border-gold-500/20 bg-[#12100e] p-2 sm:p-3 transition-all hover:border-gold-500/50 hover:shadow-[0_4px_20px_rgba(212,175,55,0.15)]"
               >
-                {/* Cake Image & Badges */}
-                <div className="relative aspect-square w-full overflow-hidden rounded-lg md:rounded-xl bg-luxury-950">
+                {/* Cake Image Container */}
+                <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-luxury-950">
                   <Image
                     src={cake.image}
                     alt={cake.name}
@@ -305,32 +311,46 @@ export default function MenuClient({
                     sizes="(max-width: 640px) 180px, (max-width: 1024px) 240px, 300px"
                     className="object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#12100e]/80 via-transparent to-transparent" />
 
                   {/* Top-Left Badge */}
                   {cake.badge && (
                     <div className="absolute top-1.5 left-1.5 z-10">
-                      <span className={`rounded px-1.5 py-0.5 text-[8px] sm:text-[9px] uppercase tracking-wider ${cake.badgeClass}`}>
+                      <span className={`rounded-md px-1.5 py-0.5 text-[8.5px] font-bold uppercase tracking-wider ${cake.badgeClass}`}>
                         {cake.badge}
                       </span>
                     </div>
                   )}
+
+                  {/* Top-Right Rating */}
+                  <div className="absolute top-1.5 right-1.5 z-10 flex items-center gap-0.5 rounded-md bg-black/60 px-1.5 py-0.5 text-[8.5px] font-bold text-gold-400 border border-gold-500/30">
+                    <span>★</span>
+                    <span>4.9</span>
+                  </div>
                 </div>
 
                 {/* Cake Details */}
-                <div className="mt-2 sm:mt-2.5 space-y-1">
-                  <h3 className="font-serif text-xs sm:text-sm md:text-base font-bold text-[#FBF7EE] group-hover:text-gold-400 transition-colors truncate">
-                    {cake.name}
-                  </h3>
-                  <div className="flex items-center justify-between pt-0.5">
-                    <div className="flex items-baseline space-x-1">
-                      <span className="text-[9.5px] sm:text-xs text-luxury-400">From</span>
-                      <span className="text-xs sm:text-sm md:text-base font-bold text-gold-400">
+                <div className="mt-2 space-y-1">
+                  <div className="flex items-center gap-1.5">
+                    {/* Standard Indian Veg Icon */}
+                    <span className="flex h-3 w-3 shrink-0 items-center justify-center rounded-[2px] border border-emerald-500 p-[1px]">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    </span>
+                    <h3 className="font-serif text-xs sm:text-sm font-bold text-[#FBF7EE] group-hover:text-gold-400 transition-colors truncate">
+                      {cake.name}
+                    </h3>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1 border-t border-luxury-800/60">
+                    <div>
+                      <span className="text-[9px] text-luxury-400 block leading-none">Starting</span>
+                      <span className="text-xs sm:text-sm font-bold text-gold-400">
                         ₹{cake.price}
                       </span>
                     </div>
-                    <span className="text-[9px] sm:text-xs font-semibold text-gold-400 group-hover:translate-x-0.5 transition-transform">
-                      View Cake →
+                    <span className="inline-flex items-center space-x-1 rounded-lg border border-gold-500/40 bg-gold-500/10 px-2 py-0.5 text-[10px] font-bold text-gold-300 group-hover:bg-gold-500/20 transition-colors">
+                      <span>Order</span>
+                      <ArrowRight className="h-2.5 w-2.5" />
                     </span>
                   </div>
                 </div>
@@ -411,7 +431,29 @@ export default function MenuClient({
         />
       </div>
 
-      {/* 8. FIXED MOBILE BOTTOM NAVIGATION BAR */}
+      {/* 8. FLOATING STICKY WHATSAPP CUSTOM CAKE BAR ON MOBILE */}
+      <div className="fixed bottom-14 left-3 right-3 z-30 md:hidden">
+        <a
+          href={waLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-between rounded-full border border-emerald-500/50 bg-[#0d1812]/95 px-4 py-2.5 shadow-[0_4px_20px_rgba(16,185,129,0.3)] backdrop-blur-md active:scale-95 transition-transform"
+        >
+          <div className="flex items-center space-x-2">
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#25D366] text-white shadow-md animate-pulse">
+              <MessageCircle className="h-4 w-4 fill-white text-white" />
+            </span>
+            <span className="text-[11.5px] font-bold text-cream-100">
+              Order Custom Cake on WhatsApp
+            </span>
+          </div>
+          <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[9.5px] font-bold text-emerald-400 border border-emerald-500/40">
+            Instant →
+          </span>
+        </a>
+      </div>
+
+      {/* 9. FIXED MOBILE BOTTOM NAVIGATION BAR */}
       <div className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around border-t border-gold-500/20 bg-[#0d0c0a]/95 py-2 backdrop-blur-xl md:hidden">
         {/* Menu (Active Tab with Gold Glow) */}
         <Link
