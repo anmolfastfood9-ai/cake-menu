@@ -152,57 +152,50 @@ export default function MenuClient({
       {/* RESPONSIVE MAIN CONTENT CONTAINER */}
       <main className="w-full max-w-md md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-2 sm:pt-4 pb-8 space-y-4 md:space-y-8 flex-1">
         
-        {/* 2. CELEBRATION HERO SECTION (RESPONSIVE SPLIT ON TABLET/DESKTOP) */}
-        <section className="relative w-full rounded-2xl md:rounded-3xl border border-gold-500/15 bg-gradient-to-b md:bg-gradient-to-r from-[#14120f] via-[#100e0c] to-[#0a0908] p-3.5 sm:p-6 md:p-8 lg:p-10 shadow-2xl overflow-hidden text-left">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-8 items-center">
-            {/* Left Content */}
-            <div className="md:col-span-7 space-y-1.5 md:space-y-4">
-              <div className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[9.5px] md:text-xs font-bold tracking-wider uppercase border border-gold-500/30 bg-gold-500/10 text-gold-400">
-                <Sparkles className="h-3 w-3 shrink-0" />
-                <span>{tagline}</span>
-              </div>
+        {/* 2. CELEBRATION HERO SHOWCASE (3D FLOATING CAKE WITH AMBIENT RADIAL LIGHTING) */}
+        <section className="relative w-full rounded-2xl md:rounded-3xl border border-gold-500/20 bg-[#0d0b09] p-4 sm:p-6 md:p-8 lg:p-10 shadow-2xl overflow-hidden text-center">
+          {/* Ambient Golden Radial Glow behind Hero Cake */}
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(212,175,55,0.25),rgba(13,11,9,0)_70%)]" />
 
-              <h1 className="font-serif text-[26px] xs:text-[28px] sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-[#FBF7EE] leading-[1.12]">
-                {heroTitle}
-              </h1>
-
-              <p className="text-[11px] sm:text-xs md:text-sm text-[#A69B8D] font-normal leading-relaxed max-w-lg">
-                {heroSubtitle}
-              </p>
-
-              {/* Quick Action CTA Buttons */}
-              <div className="pt-2 flex items-center gap-2 sm:gap-3 flex-wrap">
-                <Link
-                  href="/menu/cakes"
-                  className="inline-flex items-center space-x-1 rounded-xl bg-gold-gradient px-4 sm:px-5 py-2 sm:py-2.5 text-[11px] sm:text-xs font-bold text-luxury-950 shadow-gold-sm hover:opacity-95 transition-opacity active:scale-95"
-                >
-                  <span>Explore All Cakes →</span>
-                </Link>
-                <a
-                  href={waLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center space-x-1.5 rounded-xl border border-gold-500/30 bg-gold-500/10 px-3.5 sm:px-4 py-2 sm:py-2.5 text-[11px] sm:text-xs font-semibold text-gold-300 hover:bg-gold-500/20 transition-all active:scale-95"
-                >
-                  <MessageCircle className="h-3.5 w-3.5 text-emerald-400" />
-                  <span>WhatsApp Enquiry</span>
-                </a>
-              </div>
-            </div>
-
-            {/* Right Hero Chocolate Cake on Pedestal Stand */}
-            <div className="md:col-span-5 relative w-full aspect-[282/215] max-w-[320px] sm:max-w-[360px] md:max-w-none mx-auto mt-0.5 md:mt-0">
+          <div className="relative z-10 flex flex-col items-center max-w-2xl mx-auto space-y-3 sm:space-y-4">
+            {/* Floating 3D Gold Cake Image */}
+            <div className="relative w-48 h-48 sm:w-64 sm:h-64 md:w-72 md:h-72 aspect-square my-1">
               <Image
                 src={heroImage}
-                alt={heroTitle}
+                alt="Crafted for Sweet Perfection"
                 fill
                 priority
-                sizes="(max-width: 768px) 100vw, 450px"
-                className="object-contain hover:scale-103 transition-transform duration-500"
+                sizes="(max-width: 768px) 250px, 320px"
+                className="object-contain filter drop-shadow-[0_15px_30px_rgba(212,175,55,0.3)] hover:scale-105 transition-transform duration-700"
               />
-              {/* Seamless Vignettes */}
-              <div className="absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-[#14120f]/80 to-transparent pointer-events-none hidden md:block" />
-              <div className="absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-[#0a0908]/80 to-transparent pointer-events-none hidden md:block" />
+            </div>
+
+            {/* Headline & Subtitle */}
+            <h1 className="font-serif text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-[#FBF7EE] leading-tight">
+              Crafted for Sweet Perfection
+            </h1>
+
+            <p className="text-xs sm:text-sm text-[#A69B8D] font-normal leading-relaxed max-w-lg">
+              Pure vegetarian handcrafted cakes baked daily with premium Belgian cocoa.
+            </p>
+
+            {/* Glassmorphism CTA Buttons */}
+            <div className="pt-2 flex items-center justify-center gap-3 flex-wrap">
+              <Link
+                href="/menu/cakes"
+                className="inline-flex items-center space-x-1.5 rounded-full border border-emerald-500/50 bg-[#0d1812]/80 px-5 sm:px-6 py-2.5 text-xs font-bold text-cream-100 shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:border-emerald-400 backdrop-blur-md active:scale-95 transition-all"
+              >
+                <span>Explore Menu</span>
+              </Link>
+              <a
+                href={waLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center space-x-1.5 rounded-full border border-emerald-500/50 bg-[#0d1812]/80 px-5 sm:px-6 py-2.5 text-xs font-bold text-cream-100 shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:border-emerald-400 backdrop-blur-md active:scale-95 transition-all"
+              >
+                <MessageCircle className="h-3.5 w-3.5 text-emerald-400" />
+                <span>Book a Cake</span>
+              </a>
             </div>
           </div>
         </section>
