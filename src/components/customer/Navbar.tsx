@@ -13,38 +13,35 @@ interface NavbarProps {
 }
 
 export default function Navbar({
-  restaurantName = "Raman Sweet & Luxury Pâtisserie",
-}: NavbarProps) {
+  restaurantName = "RAMAN SWEET BAKERY",
+  tagline = "& Family Restaurant",
+}: NavbarProps & { tagline?: string }) {
+  const displayName = restaurantName.toUpperCase();
+
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-gold-500/20 bg-[#090807]/95 backdrop-blur-md">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 py-3">
-        {/* Brand Logo & Crown Icon */}
+    <header className="sticky top-0 z-40 w-full px-3 pt-2 sm:pt-3 bg-[#090807]/90 backdrop-blur-md pb-2">
+      <div className="mx-auto flex max-w-7xl items-center justify-between rounded-2xl border border-gold-500/30 bg-[#0c0a08]/95 px-3.5 py-2.5 shadow-xl">
+        {/* Left: Round Emblem Monogram & Brand Name */}
         <Link href="/menu" className="flex items-center space-x-2.5">
-          <div className="relative flex h-9 w-9 items-center justify-center rounded-full border border-emerald-500/40 bg-[#0d1812] text-gold-400 shadow-[0_0_12px_rgba(16,185,129,0.2)]">
-            <Cake className="h-5 w-5 stroke-[1.75]" />
-            <Sparkles className="absolute -top-0.5 -right-0.5 h-3 w-3 text-emerald-400" />
+          <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-emerald-500/60 bg-[#0a1811] text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.3)]">
+            <span className="font-serif text-sm font-bold tracking-tighter text-emerald-400">R</span>
+            <span className="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5 items-center justify-center rounded-full bg-gold-500 text-[6px] text-luxury-950 font-bold">✨</span>
           </div>
           <div className="flex flex-col text-left">
-            <span className="font-serif text-base sm:text-lg font-bold tracking-tight text-[#FBF7EE] leading-tight">
-              RAMAN SWEET BAKERY
+            <span className="font-serif text-xs sm:text-sm font-bold tracking-wider text-[#FBF7EE] leading-tight">
+              {displayName}
             </span>
-            <span className="text-[9px] sm:text-[10px] tracking-wider text-gold-400/90 font-medium">
-              & Family Restaurant
+            <span className="text-[9px] sm:text-[10px] tracking-tight text-gold-400/90 font-medium">
+              {tagline || "& Family Restaurant"}
             </span>
           </div>
         </Link>
 
-        {/* 100% Eggless Badge */}
+        {/* Right: 100% EGGLESS Badge */}
         <div className="flex items-center space-x-2">
-          <span className="inline-flex items-center rounded-lg border border-gold-500/40 bg-gold-500/10 px-2.5 py-1 text-[10px] sm:text-[11px] font-bold text-gold-300 tracking-wider">
+          <span className="inline-flex items-center rounded-lg border border-gold-500/40 bg-gold-500/10 px-2.5 py-1 text-[10px] sm:text-[11px] font-bold text-gold-300 tracking-wider shadow-sm">
             100% EGGLESS
           </span>
-          <Link
-            href="/menu/cakes"
-            className="inline-flex items-center space-x-1 rounded-lg border border-gold-500/50 bg-gold-gradient px-3 py-1 text-[11px] font-bold text-luxury-950 shadow-md hover:opacity-95 transition-all active:scale-95 shrink-0"
-          >
-            <span>All Cakes →</span>
-          </Link>
         </div>
       </div>
     </header>

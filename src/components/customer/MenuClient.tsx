@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import Navbar from "@/components/customer/Navbar";
+import CakeCard from "@/components/customer/CakeCard";
 import {
   MessageCircle,
   ArrowRight,
@@ -269,86 +270,49 @@ export default function MenuClient({
           </div>
         </section>
 
-        {/* 5. SIGNATURE CAKES (2-Column on Mobile, 4-Column on Desktop) */}
-        <section className="space-y-2 sm:space-y-3.5 pt-1">
+        {/* 5. SIGNATURE CAKES (2-Column Mobile Grid) */}
+        <section className="space-y-2.5 sm:space-y-3.5 pt-1">
           <div className="flex items-center justify-between px-1">
             <div>
-              <h2 className="font-serif text-sm sm:text-lg md:text-xl font-bold text-[#FBF7EE]">
+              <h2 className="font-serif text-lg sm:text-xl font-bold text-[#FBF7EE]">
                 Signature Cakes
               </h2>
-              <p className="text-[9.5px] sm:text-xs text-luxury-400">
+              <p className="text-[10px] sm:text-xs text-luxury-400 font-light">
                 Handpicked favorites for every special moment.
               </p>
             </div>
             <Link
               href="/menu/cakes"
-              className="text-[10.5px] sm:text-xs md:text-sm font-semibold text-gold-400 hover:text-gold-300"
+              className="text-[11px] sm:text-xs font-semibold text-gold-400 hover:text-gold-300 transition-colors"
             >
               View all →
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3.5 md:gap-4 lg:gap-5">
-            {signatureCakes.map((cake) => (
-              <Link
-                key={cake.id}
-                href={`/menu/cake/${cake.slug}`}
-                className="group relative flex flex-col overflow-hidden rounded-2xl border border-gold-500/20 bg-[#12100e] p-2 sm:p-3 transition-all hover:border-gold-500/50 hover:shadow-[0_4px_20px_rgba(212,175,55,0.15)]"
-              >
-                {/* Cake Image Container */}
-                <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-luxury-950">
-                  <Image
-                    src={cake.image}
-                    alt={cake.name}
-                    fill
-                    sizes="(max-width: 640px) 180px, (max-width: 1024px) 240px, 300px"
-                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
+            {initialCakes.length > 0
+              ? initialCakes.slice(0, 4).map((cake) => (
+                  <CakeCard key={cake.id} cake={cake} whatsappNumber={whatsappNumber} restaurantName={restaurantName} />
+                ))
+              : signatureCakes.map((cake) => (
+                  <CakeCard
+                    key={cake.id}
+                    cake={{
+                      id: cake.id,
+                      name: cake.name,
+                      slug: cake.slug,
+                      description: "Artisanal handcrafted luxury confection.",
+                      coverImage: cake.image,
+                      featured: cake.badge === "Signature",
+                      bestseller: cake.badge === "Bestseller",
+                      isNew: cake.badge === "New",
+                      available: true,
+                      prices: [{ weight: "1 kg", price: cake.price }],
+                    }}
+                    whatsappNumber={whatsappNumber}
+                    restaurantName={restaurantName}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#12100e]/80 via-transparent to-transparent" />
-
-                  {/* Top-Left Badge */}
-                  {cake.badge && (
-                    <div className="absolute top-1.5 left-1.5 z-10">
-                      <span className={`rounded-md px-1.5 py-0.5 text-[8.5px] font-bold uppercase tracking-wider ${cake.badgeClass}`}>
-                        {cake.badge}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Top-Right Rating */}
-                  <div className="absolute top-1.5 right-1.5 z-10 flex items-center gap-0.5 rounded-md bg-black/60 px-1.5 py-0.5 text-[8.5px] font-bold text-gold-400 border border-gold-500/30">
-                    <span>★</span>
-                    <span>4.9</span>
-                  </div>
-                </div>
-
-                {/* Cake Details */}
-                <div className="mt-2 space-y-1">
-                  <div className="flex items-center gap-1.5">
-                    {/* Standard Indian Veg Icon */}
-                    <span className="flex h-3 w-3 shrink-0 items-center justify-center rounded-[2px] border border-emerald-500 p-[1px]">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                    </span>
-                    <h3 className="font-serif text-xs sm:text-sm font-bold text-[#FBF7EE] group-hover:text-gold-400 transition-colors truncate">
-                      {cake.name}
-                    </h3>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-1 border-t border-luxury-800/60">
-                    <div>
-                      <span className="text-[9px] text-luxury-400 block leading-none">Starting</span>
-                      <span className="text-xs sm:text-sm font-bold text-gold-400">
-                        ₹{cake.price}
-                      </span>
-                    </div>
-                    <span className="inline-flex items-center space-x-1 rounded-lg border border-gold-500/40 bg-gold-500/10 px-2 py-0.5 text-[10px] font-bold text-gold-300 group-hover:bg-gold-500/20 transition-colors">
-                      <span>Order</span>
-                      <ArrowRight className="h-2.5 w-2.5" />
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            ))}
+                ))}
           </div>
         </section>
 
