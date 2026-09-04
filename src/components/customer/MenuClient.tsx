@@ -27,6 +27,8 @@ interface MenuClientProps {
 }
 
 export default function MenuClient({
+  initialCategories = [],
+  initialCakes = [],
   settings,
   whatsappSetting,
   activeOccasion,
@@ -41,51 +43,74 @@ export default function MenuClient({
   const whatsappNumber = whatsappSetting?.whatsappNumber || settings?.whatsapp || "919876543210";
   const phoneNumber = whatsappSetting?.callNumber || settings?.phone || "+91 98765 43210";
 
-  // Exact 4 Signature Cakes as defined in specification
-  const signatureCakes = [
-    {
-      id: "1",
-      name: "Chocolate Truffle",
-      slug: "chocolate-truffle",
-      price: 799,
-      badge: "Bestseller",
-      badgeClass: "bg-[#C59B27] text-luxury-950 font-bold",
-      image: "/images/hero_cake.jpg",
-      fallbackImage: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=600&auto=format&fit=crop",
-    },
-    {
-      id: "2",
-      name: "Pistachio Rose",
-      slug: "pistachio-rose",
-      price: 899,
-      badge: "Signature",
-      badgeClass: "bg-[#D97706] text-white font-bold",
-      image: "/images/pistachio_rose.jpg",
-      fallbackImage: "https://images.unsplash.com/photo-1562777717-dc6984f65a63?q=80&w=600&auto=format&fit=crop",
-    },
-    {
-      id: "3",
-      name: "Red Velvet",
-      slug: "red-velvet",
-      price: 849,
-      badge: "New",
-      badgeClass: "bg-[#B45309] text-white font-bold",
-      image: "/images/red_velvet.jpg",
-      fallbackImage: "https://images.unsplash.com/photo-1588195538326-c5b1e9f80a1b?q=80&w=600&auto=format&fit=crop",
-    },
-    {
-      id: "4",
-      name: "Mango Delight",
-      slug: "mango-delight",
-      price: 799,
-      badge: null,
-      badgeClass: "",
-      image: "/images/mango_delight.jpg",
-      fallbackImage: "https://images.unsplash.com/photo-1565958011703-44f9829ba187?q=80&w=600&auto=format&fit=crop",
-    },
-  ];
+  // Dynamic Signature Cakes from DB with fallback
+  const signatureCakes =
+    initialCakes.length > 0
+      ? initialCakes.slice(0, 4).map((cake) => {
+          const price = cake.prices?.[0]?.price || 799;
+          let badge: string | null = null;
+          let badgeClass = "";
+          if (cake.bestseller) {
+            badge = "Bestseller";
+            badgeClass = "bg-[#C59B27] text-luxury-950 font-bold";
+          } else if (cake.featured) {
+            badge = "Signature";
+            badgeClass = "bg-[#D97706] text-white font-bold";
+          } else if (cake.isNew) {
+            badge = "New";
+            badgeClass = "bg-[#B45309] text-white font-bold";
+          }
 
-  // Exact 8 Categories as defined in target specification (Popular Categories)
+          return {
+            id: cake.id,
+            name: cake.name,
+            slug: cake.slug,
+            price,
+            badge,
+            badgeClass,
+            image: cake.coverImage || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=600&auto=format&fit=crop",
+          };
+        })
+      : [
+          {
+            id: "1",
+            name: "Chocolate Truffle",
+            slug: "chocolate-truffle",
+            price: 799,
+            badge: "Bestseller",
+            badgeClass: "bg-[#C59B27] text-luxury-950 font-bold",
+            image: "/images/hero_cake.jpg",
+          },
+          {
+            id: "2",
+            name: "Pistachio Rose",
+            slug: "pistachio-rose",
+            price: 899,
+            badge: "Signature",
+            badgeClass: "bg-[#D97706] text-white font-bold",
+            image: "/images/pistachio_rose.jpg",
+          },
+          {
+            id: "3",
+            name: "Red Velvet",
+            slug: "red-velvet",
+            price: 849,
+            badge: "New",
+            badgeClass: "bg-[#B45309] text-white font-bold",
+            image: "/images/red_velvet.jpg",
+          },
+          {
+            id: "4",
+            name: "Mango Delight",
+            slug: "mango-delight",
+            price: 799,
+            badge: null,
+            badgeClass: "",
+            image: "/images/mango_delight.jpg",
+          },
+        ];
+
+  // Dynamic Popular Categories from DB with fallback
   const categoriesList = [
     {
       id: "all",
@@ -94,48 +119,23 @@ export default function MenuClient({
       slug: "all",
       image: "/images/categories/all_cakes.svg",
     },
-    {
-      id: "chocolate",
-      name: "Chocolate",
-      slug: "chocolate",
-      image: "/images/categories/chocolate.png",
-    },
-    {
-      id: "fruit-berry",
-      name: "Fruit & Berry",
-      slug: "fruit-berry",
-      image: "/images/categories/fruit_berry.png",
-    },
-    {
-      id: "exotic-premium",
-      name: "Exotic & Premium",
-      slug: "exotic-premium",
-      image: "/images/categories/exotic.png",
-    },
-    {
-      id: "bento",
-      name: "Bento Cakes",
-      slug: "bento-cakes",
-      image: "/images/categories/bento.png",
-    },
-    {
-      id: "anniversary",
-      name: "Anniversary",
-      slug: "anniversary",
-      image: "/images/categories/anniversary.png",
-    },
-    {
-      id: "birthday",
-      name: "Birthday",
-      slug: "birthday",
-      image: "/images/categories/birthday.png",
-    },
-    {
-      id: "photo-designer",
-      name: "Photo & Designer",
-      slug: "designer-cakes",
-      image: "/images/categories/designer.png",
-    },
+    ...(initialCategories.length > 0
+      ? initialCategories.map((cat) => ({
+          id: cat.id,
+          name: cat.name,
+          slug: cat.slug,
+          isAll: false,
+          image: cat.image || "/images/categories/chocolate.png",
+        }))
+      : [
+          { id: "chocolate", name: "Chocolate", slug: "chocolate", isAll: false, image: "/images/categories/chocolate.png" },
+          { id: "fruit-berry", name: "Fruit & Berry", slug: "fruit-berry", isAll: false, image: "/images/categories/fruit_berry.png" },
+          { id: "exotic-premium", name: "Exotic & Premium", slug: "exotic-premium", isAll: false, image: "/images/categories/exotic.png" },
+          { id: "bento", name: "Bento Cakes", slug: "bento-cakes", isAll: false, image: "/images/categories/bento.png" },
+          { id: "anniversary", name: "Anniversary", slug: "anniversary", isAll: false, image: "/images/categories/anniversary.png" },
+          { id: "birthday", name: "Birthday", slug: "birthday", isAll: false, image: "/images/categories/birthday.png" },
+          { id: "photo-designer", name: "Photo & Designer", slug: "designer-cakes", isAll: false, image: "/images/categories/designer.png" },
+        ]),
   ];
 
   const waLink = generateGeneralWhatsAppLink(whatsappNumber, restaurantName);

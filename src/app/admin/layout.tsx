@@ -18,6 +18,7 @@ import {
   ShieldAlert,
   User,
   Calendar,
+  QrCode,
 } from "lucide-react";
 
 export default function AdminLayout({
@@ -66,6 +67,7 @@ export default function AdminLayout({
     { label: "Media Library", href: "/admin/images", icon: ImageIcon },
     { label: "Website Settings", href: "/admin/settings", icon: Settings },
     { label: "WhatsApp Template", href: "/admin/whatsapp", icon: MessageCircle },
+    { label: "QR Code Generator", href: "/admin/qr", icon: QrCode },
     { label: "Admin Profile", href: "/admin/profile", icon: User },
   ];
 

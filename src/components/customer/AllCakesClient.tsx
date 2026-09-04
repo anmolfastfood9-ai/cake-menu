@@ -146,12 +146,12 @@ export default function AllCakesClient({
                   : "border border-luxury-800 bg-[#12100e] text-luxury-300"
               }`}
             >
-              <span>All ({categoryCounts.all || 128})</span>
+              <span>All ({categoryCounts.all ?? initialCakes.length})</span>
             </button>
 
             {initialCategories.map((cat) => {
               const isSelected = selectedCategory === cat.slug;
-              const count = categoryCounts[cat.slug] || 18;
+              const count = categoryCounts[cat.slug] ?? 0;
               return (
                 <button
                   key={cat.id}
@@ -174,7 +174,7 @@ export default function AllCakesClient({
 
           {/* Showing Status & Sort */}
           <div className="flex items-center justify-between text-xs text-luxury-400 pt-1">
-            <span>Showing 1 - {Math.min(filteredCakes.length, visibleCount)} of {categoryCounts[selectedCategory] || 128} cakes</span>
+            <span>Showing {filteredCakes.length > 0 ? 1 : 0} - {Math.min(filteredCakes.length, visibleCount)} of {categoryCounts[selectedCategory] ?? filteredCakes.length} cakes</span>
 
             <div className="flex items-center space-x-1 text-luxury-300">
               <span className="text-[11px]">Sort</span>
@@ -190,17 +190,19 @@ export default function AllCakesClient({
           </div>
 
           {/* Load More Cakes Button */}
-          <div className="pt-8 pb-4 text-center space-y-2">
-            <button
-              onClick={() => setVisibleCount((prev) => prev + 12)}
-              className="inline-flex items-center justify-center space-x-1.5 rounded-xl bg-[#C59B27] px-8 py-3 text-xs font-bold text-luxury-950 shadow-gold-sm hover:scale-102 transition-transform w-full max-w-sm"
-            >
-              <span>Load More Cakes ↓</span>
-            </button>
-            <p className="text-[11px] text-luxury-400">
-              You've seen {Math.min(filteredCakes.length, visibleCount)} of {categoryCounts[selectedCategory] || 128} cakes
-            </p>
-          </div>
+          {visibleCount < filteredCakes.length && (
+            <div className="pt-8 pb-4 text-center space-y-2">
+              <button
+                onClick={() => setVisibleCount((prev) => prev + 12)}
+                className="inline-flex items-center justify-center space-x-1.5 rounded-xl bg-[#C59B27] px-8 py-3 text-xs font-bold text-luxury-950 shadow-gold-sm hover:scale-102 transition-transform w-full max-w-sm"
+              >
+                <span>Load More Cakes ↓</span>
+              </button>
+              <p className="text-[11px] text-luxury-400">
+                You've seen {Math.min(filteredCakes.length, visibleCount)} of {filteredCakes.length} cakes
+              </p>
+            </div>
+          )}
         </div>
       </main>
 
