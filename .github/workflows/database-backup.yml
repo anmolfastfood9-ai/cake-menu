@@ -30,51 +30,50 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Remove any pre-installed distro postgresql client to eliminate conflicts
-          sudo apt-get remove -y -qq postgresql-client-common postgresql-client-16 || true
+          # Purge any pre-installed distro packages and wrappers
+          sudo apt-get remove -y --purge postgresql-client-common postgresql-client-16 postgresql-client-14 postgresql-client-15 || true
+          sudo apt-get autoremove -y -qq || true
 
           # Install repository prerequisites
           sudo apt-get update -qq
           sudo apt-get install -y -qq curl ca-certificates gnupg lsb-release age gzip
 
-          # Configure official PostgreSQL PGDG repository
-          sudo install -d -m 0755 /etc/apt/keyrings
-          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /etc/apt/keyrings/postgresql.gpg
-          sudo chmod a+r /etc/apt/keyrings/postgresql.gpg
+          # Install official PostgreSQL PGDG signing key
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+            | sudo gpg --dearmor -o /usr/share/keyrings/postgresql.gpg
 
-          CODENAME=$(lsb_release -cs)
-          echo "deb [signed-by=/etc/apt/keyrings/postgresql.gpg] http://apt.postgresql.org/pub/repos/apt ${CODENAME}-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+          # Add PGDG repository dynamically using the runner's Ubuntu codename
+          echo "deb [signed-by=/usr/share/keyrings/postgresql.gpg] http://apt.postgresql.org/pub/repos/apt $(. /etc/os-release && echo $VERSION_CODENAME)-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/pgdg.list
 
-          # Install postgresql-client-18 from PGDG
+          # Update and install PostgreSQL 18 client explicitly
           sudo apt-get update -qq
           sudo apt-get install -y -qq postgresql-client-18
 
-          # Verify installed package path
-          dpkg -L postgresql-client-18 | grep "bin/pg_dump" || true
-
-          # Force symlinks in /usr/local/bin to guarantee PATH precedence
+          # Enforce symlinks in /usr/local/bin to guarantee PATH precedence
           sudo ln -sf /usr/lib/postgresql/18/bin/pg_dump /usr/local/bin/pg_dump
           sudo ln -sf /usr/lib/postgresql/18/bin/pg_restore /usr/local/bin/pg_restore
           sudo ln -sf /usr/lib/postgresql/18/bin/psql /usr/local/bin/psql
 
-          # Also prepend to GITHUB_PATH for all subsequent steps
+          # Export to runner PATH
           echo "/usr/lib/postgresql/18/bin" >> "$GITHUB_PATH"
 
       - name: Verify PostgreSQL 18 Client Binaries
         run: |
           set -euo pipefail
 
-          export PATH="/usr/lib/postgresql/18/bin:/usr/local/bin:$PATH"
+          # 1. Test explicit PostgreSQL 18 binaries directly
+          /usr/lib/postgresql/18/bin/pg_dump --version
+          /usr/lib/postgresql/18/bin/pg_restore --version
 
-          PG_DUMP_BIN=$(which pg_dump)
-          PG_DUMP_VER=$(pg_dump --version)
-          PG_RESTORE_VER=$(pg_restore --version)
+          # 2. Inspect path resolution
+          which pg_dump
+          readlink -f "$(which pg_dump)"
 
-          echo "which pg_dump: $PG_DUMP_BIN"
-          echo "$PG_DUMP_VER"
-          echo "$PG_RESTORE_VER"
+          # 3. Verify version string contains 18.x
+          PG_DUMP_VER=$(/usr/lib/postgresql/18/bin/pg_dump --version)
+          PG_RESTORE_VER=$(/usr/lib/postgresql/18/bin/pg_restore --version)
 
-          # Strictly enforce PostgreSQL 18.x
           if ! echo "$PG_DUMP_VER" | grep -q "18\."; then
             echo "::error::pg_dump is not PostgreSQL 18! Aborting."
             exit 1
@@ -83,6 +82,25 @@ jobs:
           if ! echo "$PG_RESTORE_VER" | grep -q "18\."; then
             echo "::error::pg_restore is not PostgreSQL 18! Aborting."
             exit 1
+          fi
+
+      - name: Verify Neon Database Server Version
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "::error::DATABASE_URL secret is missing or empty!"
+            exit 1
+          fi
+
+          echo "Querying PostgreSQL server version..."
+          SERVER_VER=$(/usr/lib/postgresql/18/bin/psql "$DATABASE_URL" -tAc "SHOW server_version;")
+          echo "Neon PostgreSQL server version: $SERVER_VER"
+
+          if ! echo "$SERVER_VER" | grep -q "18\."; then
+            echo "::warning::Server version is not 18.x: $SERVER_VER"
           fi
 
       - name: Generate Timestamp and Archive Filename
@@ -100,7 +118,6 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           set -euo pipefail
-          export PATH="/usr/lib/postgresql/18/bin:/usr/local/bin:$PATH"
 
           if [ -z "${DATABASE_URL:-}" ]; then
             echo "::error::DATABASE_URL secret is missing or empty!"
@@ -110,9 +127,8 @@ jobs:
           mkdir -p backups
           DUMP_PATH="backups/${{ steps.meta.outputs.dump_name }}"
 
-          # pg_dump in custom directory format (-Fc), capturing schema, data, sequences, constraints
-          # --no-owner and --no-privileges guarantee portable restoration into any clean PostgreSQL instance
-          pg_dump \
+          # Use absolute PostgreSQL 18 pg_dump binary to guarantee no older binary is ever executed
+          /usr/lib/postgresql/18/bin/pg_dump \
             --dbname="$DATABASE_URL" \
             --format=custom \
             --compress=9 \
@@ -132,12 +148,11 @@ jobs:
       - name: Verify Dump Archive Readability (Metadata-Only Test)
         run: |
           set -euo pipefail
-          export PATH="/usr/lib/postgresql/18/bin:/usr/local/bin:$PATH"
 
           DUMP_PATH="backups/${{ steps.meta.outputs.dump_name }}"
 
-          # Verify pg_restore can parse table of contents and internal schema
-          pg_restore --list "$DUMP_PATH" > /dev/null
+          # Use absolute PostgreSQL 18 pg_restore binary to verify table of contents
+          /usr/lib/postgresql/18/bin/pg_restore --list "$DUMP_PATH" > /dev/null
           echo "pg_restore table-of-contents validation passed."
 
       - name: Encrypt Backup Archive using age
@@ -145,6 +160,7 @@ jobs:
           BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
         run: |
           set -euo pipefail
+
           if [ -z "${BACKUP_ENCRYPTION_KEY:-}" ]; then
             echo "::error::BACKUP_ENCRYPTION_KEY secret is missing or empty!"
             exit 1
@@ -172,7 +188,6 @@ jobs:
           BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
         run: |
           set -euo pipefail
-          export PATH="/usr/lib/postgresql/18/bin:/usr/local/bin:$PATH"
 
           ARCHIVE_PATH="backups/${{ steps.meta.outputs.archive_name }}"
           VERIFY_DUMP="backups/verify.dump"
@@ -180,8 +195,8 @@ jobs:
           # Decrypt into temporary verification file
           printf "%s" "$BACKUP_ENCRYPTION_KEY" | age -d -o "$VERIFY_DUMP" "$ARCHIVE_PATH"
 
-          # Verify decrypted file is readable by pg_restore
-          pg_restore --list "$VERIFY_DUMP" > /dev/null
+          # Verify decrypted file is readable by absolute PostgreSQL 18 pg_restore
+          /usr/lib/postgresql/18/bin/pg_restore --list "$VERIFY_DUMP" > /dev/null
           echo "Verification passed: Archive is decryptable and contains valid PostgreSQL catalog."
 
           # Clean up verification artifact
@@ -197,6 +212,7 @@ jobs:
           BACKUP_ENDPOINT_URL: ${{ secrets.BACKUP_STORAGE_ENDPOINT }}
         run: |
           set -euo pipefail
+
           ARCHIVE_PATH="backups/${{ steps.meta.outputs.archive_name }}"
           ARCHIVE_FILE="${{ steps.meta.outputs.archive_name }}"
 
