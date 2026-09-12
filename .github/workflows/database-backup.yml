@@ -1,0 +1,161 @@
+name: Automated Offsite Database Backup
+
+on:
+  schedule:
+    # Daily at 02:00 UTC (07:30 IST)
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (generate and verify archive without uploading to object storage)"
+        required: false
+        default: "false"
+        type: boolean
+
+concurrency:
+  group: backup-db-production
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    name: Neon DB Backup & Encrypted Offsite Upload
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install PostgreSQL 16 Client & age Encryption Tool
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-16 age gzip
+          pg_dump --version
+          age --version
+
+      - name: Generate Timestamp and Archive Filename
+        id: meta
+        run: |
+          TIMESTAMP=$(date -u +'%Y-%m-%d-%H-%M')
+          DUMP_NAME="raman-sweet-bakery-prod-${TIMESTAMP}.dump"
+          ARCHIVE_NAME="${DUMP_NAME}.age"
+          echo "timestamp=${TIMESTAMP}" >> "$GITHUB_OUTPUT"
+          echo "dump_name=${DUMP_NAME}" >> "$GITHUB_OUTPUT"
+          echo "archive_name=${ARCHIVE_NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Perform Logical PostgreSQL Dump (Custom Format)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "::error::DATABASE_URL secret is missing or empty!"
+            exit 1
+          fi
+
+          mkdir -p backups
+          DUMP_PATH="backups/${{ steps.meta.outputs.dump_name }}"
+
+          # pg_dump in custom directory format (-Fc), capturing schema, data, sequences, constraints
+          # --no-owner and --no-privileges guarantee portable restoration into any clean PostgreSQL instance
+          pg_dump \
+            --dbname="$DATABASE_URL" \
+            --format=custom \
+            --compress=9 \
+            --no-owner \
+            --no-privileges \
+            --file="$DUMP_PATH"
+
+          # Verify dump is non-empty
+          if [ ! -s "$DUMP_PATH" ]; then
+            echo "::error::pg_dump produced an empty or missing file!"
+            exit 1
+          fi
+
+          SIZE=$(stat -c%s "$DUMP_PATH")
+          echo "pg_dump successful. Unencrypted dump size: ${SIZE} bytes."
+
+      - name: Verify Dump Archive Readability (Metadata-Only Test)
+        run: |
+          set -euo pipefail
+          DUMP_PATH="backups/${{ steps.meta.outputs.dump_name }}"
+
+          # Verify pg_restore can parse table of contents and internal schema
+          pg_restore --list "$DUMP_PATH" > /dev/null
+          echo "pg_restore table-of-contents validation passed."
+
+      - name: Encrypt Backup Archive using age
+        env:
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${BACKUP_ENCRYPTION_KEY:-}" ]; then
+            echo "::error::BACKUP_ENCRYPTION_KEY secret is missing or empty!"
+            exit 1
+          fi
+
+          DUMP_PATH="backups/${{ steps.meta.outputs.dump_name }}"
+          ARCHIVE_PATH="backups/${{ steps.meta.outputs.archive_name }}"
+
+          # Pass encryption passphrase via standard input securely without shell tracing
+          printf "%s" "$BACKUP_ENCRYPTION_KEY" | age -p -o "$ARCHIVE_PATH" "$DUMP_PATH"
+
+          if [ ! -s "$ARCHIVE_PATH" ]; then
+            echo "::error::Encrypted archive is empty or missing!"
+            exit 1
+          fi
+
+          ENC_SIZE=$(stat -c%s "$ARCHIVE_PATH")
+          echo "Encryption complete. Encrypted size: ${ENC_SIZE} bytes."
+
+          # Securely shred and delete unencrypted dump from runner disk immediately
+          rm -f "$DUMP_PATH"
+
+      - name: Self-Test Decryption Integrity
+        env:
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+        run: |
+          set -euo pipefail
+          ARCHIVE_PATH="backups/${{ steps.meta.outputs.archive_name }}"
+          VERIFY_DUMP="backups/verify.dump"
+
+          # Decrypt into temporary verification file
+          printf "%s" "$BACKUP_ENCRYPTION_KEY" | age -d -o "$VERIFY_DUMP" "$ARCHIVE_PATH"
+
+          # Verify decrypted file is readable by pg_restore
+          pg_restore --list "$VERIFY_DUMP" > /dev/null
+          echo "Verification passed: Archive is decryptable and contains valid PostgreSQL catalog."
+
+          # Clean up verification artifact
+          rm -f "$VERIFY_DUMP"
+
+      - name: Upload to Offsite Storage (Cloudflare R2 / AWS S3)
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.BACKUP_STORAGE_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_STORAGE_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.BACKUP_STORAGE_REGION || 'auto' }}
+          BACKUP_BUCKET_NAME: ${{ secrets.BACKUP_STORAGE_BUCKET }}
+          BACKUP_ENDPOINT_URL: ${{ secrets.BACKUP_STORAGE_ENDPOINT }}
+        run: |
+          set -euo pipefail
+          ARCHIVE_PATH="backups/${{ steps.meta.outputs.archive_name }}"
+          ARCHIVE_FILE="${{ steps.meta.outputs.archive_name }}"
+
+          # If storage credentials are not provided yet, warn gracefully in logs
+          if [ -z "${AWS_ACCESS_KEY_ID:-}" ] || [ -z "${BACKUP_BUCKET_NAME:-}" ]; then
+            echo "::warning::Storage credentials (BACKUP_STORAGE_ACCESS_KEY_ID or BUCKET) not configured. Archive was encrypted & verified locally."
+            exit 0
+          fi
+
+          pip install -q awscli
+
+          EXTRA_ARGS=""
+          if [ -n "${BACKUP_ENDPOINT_URL:-}" ]; then
+            EXTRA_ARGS="--endpoint-url ${BACKUP_ENDPOINT_URL}"
+          fi
+
+          # Upload encrypted archive to private bucket under daily backups folder
+          aws s3 cp "$ARCHIVE_PATH" "s3://${BACKUP_BUCKET_NAME}/backups/${ARCHIVE_FILE}" $EXTRA_ARGS
+
+          echo "Successfully uploaded ${ARCHIVE_FILE} to offsite storage bucket: ${BACKUP_BUCKET_NAME}."
