@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
+import { revalidatePath } from "next/cache";
 import { getSessionAdminFromRequest } from "@/lib/auth";
 import { invalidateAppCache } from "@/lib/cache";
 import { getClientIp } from "@/lib/rateLimit";
@@ -104,6 +105,9 @@ export async function POST(req: NextRequest) {
     });
 
     invalidateAppCache();
+    try {
+      revalidatePath("/menu");
+    } catch (e) {}
 
     return NextResponse.json({ success: true, category }, { status: 201 });
   } catch (error: any) {

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
+import { revalidatePath } from "next/cache";
 import { clearOccasionCache } from "@/lib/festivals/occasionEngine";
+import { invalidateAppCache } from "@/lib/cache";
 import { getSessionAdminFromRequest } from "@/lib/auth";
 import { getClientIp } from "@/lib/rateLimit";
 import { checkGenericRateLimit, rateLimitResponse } from "@/lib/rateLimit";
@@ -155,6 +157,10 @@ export async function POST(
     });
 
     clearOccasionCache();
+    invalidateAppCache();
+    try {
+      revalidatePath("/menu");
+    } catch (e) {}
 
     return NextResponse.json({ category: newCategory }, { status: 201 });
   } catch (error: any) {
@@ -311,6 +317,10 @@ export async function PUT(
     });
 
     clearOccasionCache();
+    invalidateAppCache();
+    try {
+      revalidatePath("/menu");
+    } catch (e) {}
 
     return NextResponse.json({ category: updatedCategory });
   } catch (error: any) {
@@ -380,6 +390,10 @@ export async function DELETE(
     });
 
     clearOccasionCache();
+    invalidateAppCache();
+    try {
+      revalidatePath("/menu");
+    } catch (e) {}
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

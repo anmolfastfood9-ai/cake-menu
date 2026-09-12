@@ -26,12 +26,63 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install PostgreSQL 16 Client & age Encryption Tool
+      - name: Install PostgreSQL 18 Client & age Encryption Tool
         run: |
+          set -euo pipefail
+
+          # 1. Install prerequisites
           sudo apt-get update -qq
-          sudo apt-get install -y -qq postgresql-client-16 age gzip
-          pg_dump --version
-          age --version
+          sudo apt-get install -y -qq curl ca-certificates lsb-release gnupg age gzip
+
+          # 2. Add official PostgreSQL PGDG apt repository
+          sudo install -d /etc/apt/keyrings
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /etc/apt/keyrings/postgresql.gpg
+          echo "deb [signed-by=/etc/apt/keyrings/postgresql.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+
+          # 3. Update apt index and install postgresql-client-18
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-18
+
+          # 4. Prepend PostgreSQL 18 bin directory to GitHub Actions PATH
+          echo "/usr/lib/postgresql/18/bin" >> "$GITHUB_PATH"
+
+      - name: Verify PostgreSQL 18 Client Binaries
+        run: |
+          set -euo pipefail
+
+          # Explicitly export path in case current step runs before runner refresh
+          export PATH="/usr/lib/postgresql/18/bin:$PATH"
+
+          echo "=== VERIFYING POSTGRESQL CLIENT BINARIES ==="
+          PG_DUMP_PATH=$(which pg_dump)
+          PG_RESTORE_PATH=$(which pg_restore)
+          PSQL_PATH=$(which psql)
+
+          echo "pg_dump location: $PG_DUMP_PATH"
+          echo "pg_dump realpath: $(readlink -f "$PG_DUMP_PATH")"
+          echo "pg_restore location: $PG_RESTORE_PATH"
+          echo "psql location: $PSQL_PATH"
+
+          PG_DUMP_VER=$(pg_dump --version)
+          PG_RESTORE_VER=$(pg_restore --version)
+          PSQL_VER=$(psql --version)
+
+          echo "pg_dump version: $PG_DUMP_VER"
+          echo "pg_restore version: $PG_RESTORE_VER"
+          echo "psql version: $PSQL_VER"
+
+          # Fail immediately if pg_dump is not 18.x
+          if ! echo "$PG_DUMP_VER" | grep -q "18\."; then
+            echo "::error::pg_dump is not PostgreSQL 18! Aborting to prevent version mismatch failure."
+            exit 1
+          fi
+
+          if ! echo "$PG_RESTORE_VER" | grep -q "18\."; then
+            echo "::error::pg_restore is not PostgreSQL 18! Aborting."
+            exit 1
+          fi
+
+          echo "PostgreSQL 18 client verification passed."
 
       - name: Generate Timestamp and Archive Filename
         id: meta
@@ -48,6 +99,8 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           set -euo pipefail
+          export PATH="/usr/lib/postgresql/18/bin:$PATH"
+
           if [ -z "${DATABASE_URL:-}" ]; then
             echo "::error::DATABASE_URL secret is missing or empty!"
             exit 1
@@ -78,6 +131,8 @@ jobs:
       - name: Verify Dump Archive Readability (Metadata-Only Test)
         run: |
           set -euo pipefail
+          export PATH="/usr/lib/postgresql/18/bin:$PATH"
+
           DUMP_PATH="backups/${{ steps.meta.outputs.dump_name }}"
 
           # Verify pg_restore can parse table of contents and internal schema
@@ -116,6 +171,8 @@ jobs:
           BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
         run: |
           set -euo pipefail
+          export PATH="/usr/lib/postgresql/18/bin:$PATH"
+
           ARCHIVE_PATH="backups/${{ steps.meta.outputs.archive_name }}"
           VERIFY_DUMP="backups/verify.dump"
 

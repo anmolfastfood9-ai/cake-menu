@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
+import { revalidatePath } from "next/cache";
 import { getSessionAdminFromRequest } from "@/lib/auth";
 import { clearOccasionCache } from "@/lib/festivals/occasionEngine";
 import { invalidateAppCache } from "@/lib/cache";
@@ -143,6 +144,9 @@ export async function PUT(
 
     clearOccasionCache();
     invalidateAppCache();
+    try {
+      revalidatePath("/menu");
+    } catch (e) {}
 
     return NextResponse.json({ success: true, occasion });
   } catch (error: any) {
@@ -187,6 +191,9 @@ export async function DELETE(
 
     clearOccasionCache();
     invalidateAppCache();
+    try {
+      revalidatePath("/menu");
+    } catch (e) {}
     return NextResponse.json({ success: true, message: "Occasion deleted successfully" });
   } catch (error: any) {
     console.error("Delete occasion error:", error);

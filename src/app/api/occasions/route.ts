@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
+import { revalidatePath } from "next/cache";
 import { ensureOccurrencesForYear, clearOccasionCache } from "@/lib/festivals/occasionEngine";
 import { invalidateAppCache } from "@/lib/cache";
 import { getSessionAdminFromRequest } from "@/lib/auth";
@@ -185,6 +186,9 @@ export async function POST(req: NextRequest) {
 
     clearOccasionCache();
     invalidateAppCache();
+    try {
+      revalidatePath("/menu");
+    } catch (e) {}
 
     return NextResponse.json({ success: true, occasion }, { status: 201 });
   } catch (error: any) {

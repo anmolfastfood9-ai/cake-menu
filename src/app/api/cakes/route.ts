@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
+import { revalidatePath } from "next/cache";
 import { getSessionAdminFromRequest } from "@/lib/auth";
 import { invalidateAppCache, getCachedApiQuery } from "@/lib/cache";
 import { getClientIp, checkGenericRateLimit, rateLimitResponse } from "@/lib/rateLimit";
@@ -105,8 +106,13 @@ export async function GET(req: NextRequest) {
             orderBy: { price: "asc" },
           },
           occasions: {
-            include: {
-              occasion: true,
+            select: {
+              occasionId: true,
+              occasion: {
+                select: {
+                  slug: true,
+                },
+              },
             },
           },
         },
@@ -224,6 +230,9 @@ export async function POST(req: NextRequest) {
     });
 
     invalidateAppCache();
+    try {
+      revalidatePath("/menu");
+    } catch (e) {}
 
     return NextResponse.json({ success: true, cake }, { status: 201 });
   } catch (error: any) {

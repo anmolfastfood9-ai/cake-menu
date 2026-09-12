@@ -1,6 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 
-const globalForPrisma = global as unknown as { prisma: PrismaClient };
+const globalForPrisma = globalThis as unknown as {
+  prisma?: PrismaClient;
+};
 
 let client = globalForPrisma.prisma;
 if (!client || !(client as any).occasionCategory) {
@@ -9,7 +11,9 @@ if (!client || !(client as any).occasionCategory) {
   });
 }
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = client;
+// Attach singleton unconditionally in ALL environments (including production)
+// to prevent connection pool churn across warm serverless worker invocations
+globalForPrisma.prisma = client;
 
 export const prisma = client;
 export default prisma;

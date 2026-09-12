@@ -91,6 +91,16 @@ export default function MenuClient({
   const [selectedCategory, setSelectedCategory] = useState<string>(initialSelectedCategory);
   const [searchQuery, setSearchQuery] = useState<string>("");
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const cat = params.get("category");
+      if (cat) {
+        setSelectedCategory(cat);
+      }
+    }
+  }, []);
+
   const handleSelectCategory = (slug: string) => {
     setSelectedCategory(slug);
     if (typeof window !== "undefined") {

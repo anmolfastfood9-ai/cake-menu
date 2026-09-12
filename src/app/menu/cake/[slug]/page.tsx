@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import CakeDetailClient from "@/components/customer/CakeDetailClient";
 import {
   getCachedCake,
-  getCachedAllCakes,
+  getCachedRelatedCakes,
   getCachedWebsiteSettings,
   getCachedWhatsAppSetting,
 } from "@/lib/cache";
@@ -64,9 +64,8 @@ export async function generateMetadata({
 
 export default async function CakeDetailPage({ params }: { params: { slug: string } }) {
   const { slug } = params;
-  const [cake, allCakes, settings, whatsappSetting] = await Promise.all([
+  const [cake, settings, whatsappSetting] = await Promise.all([
     getCachedCake(slug),
-    getCachedAllCakes(),
     getCachedWebsiteSettings(),
     getCachedWhatsAppSetting(),
   ]);
@@ -75,10 +74,8 @@ export default async function CakeDetailPage({ params }: { params: { slug: strin
     notFound();
   }
 
-  // Filter related cakes in same category from memory in 0.01ms
-  const relatedCakes = allCakes
-    .filter((c: any) => c.categoryId === cake!.categoryId && c.id !== cake!.id)
-    .slice(0, 3);
+  // Targeted related cakes query (same category, deterministic top 3, minimal fields)
+  const relatedCakes = await getCachedRelatedCakes(cake.categoryId, cake.id);
 
   const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://sweetdelights.com").replace(/\/$/, "");
   const canonicalUrl = `${appUrl}/menu/cake/${cake!.slug}`;

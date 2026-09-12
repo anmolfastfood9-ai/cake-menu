@@ -77,6 +77,7 @@ model CakePrice {
   updatedAt     DateTime @updatedAt
 
   @@index([cakeId])
+  @@index([cakeId, price])
 }
 
 model Occasion {

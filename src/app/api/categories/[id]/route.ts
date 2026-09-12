@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
+import { revalidatePath } from "next/cache";
 import { getSessionAdminFromRequest } from "@/lib/auth";
 import { invalidateAppCache } from "@/lib/cache";
 import { getClientIp } from "@/lib/rateLimit";
@@ -55,6 +56,9 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     });
 
     invalidateAppCache();
+    try {
+      revalidatePath("/menu");
+    } catch (e) {}
 
     return NextResponse.json({ success: true, category });
   } catch (error: any) {
@@ -107,6 +111,9 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     await prisma.category.delete({ where: { id } });
 
     invalidateAppCache();
+    try {
+      revalidatePath("/menu");
+    } catch (e) {}
 
     return NextResponse.json({ success: true, message: "Category deleted successfully" });
   } catch (error: any) {

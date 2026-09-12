@@ -247,16 +247,6 @@ export async function getCachedCake(slugOrId: string) {
 
   const promise = (async () => {
     try {
-      // First load all cakes (which loads and indexes all 29 cakes in 1 shot)
-      const allCakes = await getCachedAllCakes();
-      const found = allCakes.find(
-        (c: any) => c.slug === rawKey || c.slug?.toLowerCase() === lowerKey || c.id === rawKey
-      );
-      if (found) {
-        return found;
-      }
-
-      // Fallback single query
       const cake = await prisma.cake.findFirst({
         where: {
           OR: [{ slug: rawKey }, { id: rawKey }, { slug: lowerKey }],
@@ -281,6 +271,48 @@ export async function getCachedCake(slugOrId: string) {
 
   pendingCakes.set(lowerKey, promise);
   return promise;
+}
+
+/**
+ * Targeted in-memory cached related cakes (same category, max 3, minimal fields)
+ */
+export async function getCachedRelatedCakes(categoryId: string, excludeCakeId: string) {
+  if (!categoryId) return [];
+  const cacheKey = `rel_${categoryId}_${excludeCakeId}`;
+  return await getCachedApiQuery(
+    cacheKey,
+    async () => {
+      return await prisma.cake.findMany({
+        where: {
+          categoryId,
+          id: { not: excludeCakeId },
+          available: true,
+          productType: "CAKE",
+        },
+        select: {
+          id: true,
+          slug: true,
+          name: true,
+          coverImage: true,
+          prices: {
+            select: { price: true },
+            orderBy: { price: "asc" },
+            take: 1,
+          },
+          category: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
+        },
+        orderBy: [{ featured: "desc" }, { bestseller: "desc" }, { createdAt: "desc" }],
+        take: 3,
+      });
+    },
+    DEFAULT_TTL_MS
+  );
 }
 
 /**

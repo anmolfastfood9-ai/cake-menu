@@ -71,6 +71,25 @@ export function checkHasBakedInText(bannerUrl?: string | null, badgeText?: strin
   return BAKED_IN_TEXT_PRESETS.some((preset) => url.includes(preset));
 }
 
+/**
+ * ImageKit responsive URL transformer (Zero-Crop / Native-Ratio Locked)
+ * Applies only responsive width, quality, and format auto-negotiation (WebP/AVIF).
+ * NEVER applies crop, aspect-ratio, resize-and-crop, c-at_*, or ar-*.
+ */
+export function getOptimizedBannerUrl(url?: string | null, width: number = 1400): string {
+  if (!url || typeof url !== "string") return "";
+  if (url.includes("ik.imagekit.io")) {
+    const [baseUrl, hash] = url.split("#");
+    const hashPart = hash ? `#${hash}` : "";
+    if (baseUrl.includes("tr=")) {
+      return url;
+    }
+    const separator = baseUrl.includes("?") ? "&" : "?";
+    return `${baseUrl}${separator}tr=w-${width},q-80,f-auto${hashPart}`;
+  }
+  return url;
+}
+
 function CornerFlourish({ position }: { position: "tl" | "tr" | "bl" | "br" }) {
   const rotation = {
     tl: "",
@@ -409,12 +428,18 @@ export default function OccasionShowcase({
                     ${isActive ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"}
                   `}
                 >
-                  <img
-                    src={slide.bannerAsset}
-                    alt={slide.rawName}
-                    className="w-full h-auto block object-contain transition-transform duration-700 group-hover:scale-[1.01]"
-                    loading={idx === 0 ? "eager" : "lazy"}
-                  />
+                  <picture className="w-full h-auto block">
+                    <source
+                      media="(max-width: 767px)"
+                      srcSet={getOptimizedBannerUrl(slide.mobileBannerAsset || slide.bannerAsset, 750)}
+                    />
+                    <img
+                      src={getOptimizedBannerUrl(slide.bannerAsset, 1400)}
+                      alt={slide.rawName}
+                      className="w-full h-auto block object-contain transition-transform duration-700 group-hover:scale-[1.01]"
+                      loading={idx === 0 ? "eager" : "lazy"}
+                    />
+                  </picture>
 
                   {/* SMART HYBRID MODE: Render luxury HTML text & ornaments only if the banner does NOT have baked-in text */}
                   {!slide.hasBakedInText && (
