@@ -2,10 +2,25 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { ensureOccurrencesForYear, clearOccasionCache } from "@/lib/festivals/occasionEngine";
 import { invalidateAppCache } from "@/lib/cache";
+import { getSessionAdminFromRequest } from "@/lib/auth";
+import { getClientIp } from "@/lib/rateLimit";
+import { checkGenericRateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import {
+  safeValidate,
+  validationErrorResponse,
+  CreateOccasionSchema,
+} from "@/lib/validations";
 
 // GET /api/occasions - List all occasions with current year status and cake counts (Read-only)
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const clientIp = getClientIp(req);
+    const rlKey = `ratelimit:occasions:get:${clientIp}`;
+    const rl = await checkGenericRateLimit(rlKey, 60, 60);
+    if (!rl.allowed) {
+      return rateLimitResponse(rl.retryAfter);
+    }
+
     const currentYear = new Date().getUTCFullYear();
 
     const occasions = await prisma.occasion.findMany({
@@ -71,15 +86,24 @@ function generateSlug(name: string): string {
 // POST /api/occasions - Create a custom occasion manually (Admin only)
 export async function POST(req: NextRequest) {
   try {
-    const { getSessionAdminFromRequest } = await import("@/lib/auth");
-    const { clearOccasionCache } = await import("@/lib/festivals/occasionEngine");
-
     const session = getSessionAdminFromRequest(req);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
     }
 
-    const body = await req.json();
+    const clientIp = getClientIp(req);
+    const rlKey = `ratelimit:occasions:post:${session.userId}:${clientIp}`;
+    const rl = await checkGenericRateLimit(rlKey, 20, 60);
+    if (!rl.allowed) {
+      return rateLimitResponse(rl.retryAfter);
+    }
+
+    const rawBody = await req.json().catch(() => ({}));
+    const bodyRes = safeValidate(CreateOccasionSchema, rawBody);
+    if (!bodyRes.success) {
+      return validationErrorResponse(bodyRes.error);
+    }
+
     const {
       name,
       slug: customSlug,
@@ -89,19 +113,12 @@ export async function POST(req: NextRequest) {
       accentColor = "#D4AF37",
       priority = 75,
       active = true,
-      eventDate, // "YYYY-MM-DD" e.g. "2026-09-15"
+      eventDate,
       daysBefore = 5,
       daysAfter = 1,
       cakeIds = [],
       bannerImage,
-    } = body;
-
-    if (!name || !eventDate) {
-      return NextResponse.json(
-        { error: "Occasion Name and Celebration Date are required" },
-        { status: 400 }
-      );
-    }
+    } = bodyRes.data;
 
     const baseSlug = customSlug ? generateSlug(customSlug) : generateSlug(name);
     let slug = baseSlug;
@@ -111,8 +128,8 @@ export async function POST(req: NextRequest) {
     }
 
     const calendarKey = `custom_${slug.replace(/-/g, "_")}`;
-    const numDaysBefore = Math.max(0, Number(daysBefore) || 5);
-    const numDaysAfter = Math.max(0, Number(daysAfter) || 1);
+    const numDaysBefore = daysBefore;
+    const numDaysAfter = daysAfter;
 
     const occasion = await prisma.occasion.create({
       data: {
@@ -124,7 +141,7 @@ export async function POST(req: NextRequest) {
         description: description || `Handcrafted artisanal eggless cakes curated for ${name}.`,
         bannerImage: bannerImage || null,
         accentColor: accentColor || "#D4AF37",
-        priority: Number(priority) || 75,
+        priority: priority ?? 75,
         active: Boolean(active),
         daysBefore: numDaysBefore,
         daysAfter: numDaysAfter,
@@ -169,7 +186,7 @@ export async function POST(req: NextRequest) {
     clearOccasionCache();
     invalidateAppCache();
 
-    return NextResponse.json({ success: true, occasion });
+    return NextResponse.json({ success: true, occasion }, { status: 201 });
   } catch (error: any) {
     console.error("Create custom occasion error:", error);
     return NextResponse.json(

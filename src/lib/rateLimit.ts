@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { Ratelimit } from "@upstash/ratelimit";
 import crypto from "crypto";
@@ -15,6 +15,7 @@ export const LOGIN_WINDOW_SECONDS = 15 * 60;
 
 export interface RateLimitResult {
   success: boolean;
+  allowed?: boolean;
   remaining?: number;
   retryAfter?: number; // seconds
 }
@@ -296,4 +297,70 @@ export function createRateLimiter(options: {
     prefix: options.prefix || "ratelimit:generic",
     analytics: false,
   });
+}
+
+/**
+ * Standard HTTP 429 rate limit response with Retry-After header.
+ */
+export function rateLimitResponse(retryAfter: number = 60): NextResponse {
+  return NextResponse.json(
+    { error: "Too many requests. Please try again later." },
+    {
+      status: 429,
+      headers: {
+        "Retry-After": String(retryAfter),
+      },
+    }
+  );
+}
+
+/**
+ * Generic distributed rate limit check using Upstash Redis.
+ * Supports public IP limiting, or admin + IP limiting.
+ * Fails safely open if Redis is unavailable.
+ */
+export async function checkGenericRateLimit(
+  identifier: string,
+  limit: number,
+  windowSeconds: number,
+  prefix: string = "ratelimit:endpoint"
+): Promise<RateLimitResult> {
+  try {
+    const redis = getRedisClient();
+    if (!redis) {
+      return { success: true, allowed: true, remaining: limit };
+    }
+
+    const sanitizedId = identifier.replace(/[^a-zA-Z0-9_.-]/g, "_");
+    const key = `${prefix}:${sanitizedId}`;
+    const count = await redis.incr(key);
+
+    if (count === 1) {
+      await redis.expire(key, windowSeconds);
+    } else {
+      const ttl = await redis.ttl(key);
+      if (ttl < 0) {
+        await redis.expire(key, windowSeconds);
+      }
+    }
+
+    if (count > limit) {
+      const ttl = await redis.ttl(key);
+      return {
+        success: false,
+        allowed: false,
+        remaining: 0,
+        retryAfter: ttl > 0 ? ttl : windowSeconds,
+      };
+    }
+
+    return {
+      success: true,
+      allowed: true,
+      remaining: Math.max(0, limit - count),
+    };
+  } catch (error: any) {
+    console.error("[RateLimit] Generic rate limit check failed:", error?.message || "Unknown error");
+    return { success: true, allowed: true, remaining: limit };
+  }
 }

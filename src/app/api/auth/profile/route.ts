@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { getSessionAdminFromRequest } from "@/lib/auth";
+import { getClientIp, checkGenericRateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import { UpdateProfileSchema, safeValidate } from "@/lib/validations";
 
 export async function PUT(req: NextRequest) {
   try {
@@ -10,7 +12,27 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { name, email, currentPassword, newPassword } = await req.json();
+    // Distributed Rate Limit: 10 attempts / 15 minutes / admin + IP
+    const clientIp = getClientIp(req);
+    const identifier = `profile:${session.userId}:${clientIp}`;
+    const rateCheck = await checkGenericRateLimit(identifier, 10, 15 * 60, "ratelimit:profile");
+    if (!rateCheck.success) {
+      return rateLimitResponse(rateCheck.retryAfter ?? 900);
+    }
+
+    let body: any = {};
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
+    }
+
+    const validation = safeValidate(UpdateProfileSchema, body);
+    if (!validation.success) {
+      return validation.response;
+    }
+
+    const { name, email, currentPassword, newPassword } = validation.data;
 
     const user = await prisma.user.findUnique({
       where: { id: session.userId },

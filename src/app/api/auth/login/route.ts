@@ -7,6 +7,7 @@ import {
   recordLoginFailure,
   resetLoginRateLimit,
 } from "@/lib/rateLimit";
+import { LoginSchema, safeValidate } from "@/lib/validations";
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,12 +18,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
     }
 
-    const { email, password } = body;
+    const validation = safeValidate(LoginSchema, body);
+    if (!validation.success) {
+      return validation.response;
+    }
+
+    const { email, password } = validation.data;
 
     // 1. Distributed rate limit check (IP and account aware)
     const rateCheck = await checkLoginRateLimit(
       req,
-      typeof email === "string" ? email : undefined
+      email
     );
 
     if (!rateCheck.success) {

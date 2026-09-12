@@ -3,12 +3,26 @@ import prisma from "@/lib/db";
 import { getSessionAdminFromRequest } from "@/lib/auth";
 import { invalidateAppCache } from "@/lib/cache";
 import { revalidatePath } from "next/cache";
+import { getClientIp } from "@/lib/rateLimit";
+import { checkGenericRateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import {
+  safeValidate,
+  validationErrorResponse,
+  UpdateWhatsAppSettingsSchema,
+} from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 
 // GET /api/whatsapp - Fetch current whatsapp settings
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const clientIp = getClientIp(req);
+    const rlKey = `ratelimit:whatsapp:get:${clientIp}`;
+    const rl = await checkGenericRateLimit(rlKey, 60, 60);
+    if (!rl.allowed) {
+      return rateLimitResponse(rl.retryAfter);
+    }
+
     let settings = await prisma.whatsAppSetting.findUnique({
       where: { id: "default" },
     });
@@ -37,9 +51,22 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
-    if (!body || typeof body !== "object") {
-      return NextResponse.json({ error: "Invalid request payload" }, { status: 400 });
+    const clientIp = getClientIp(req);
+    const rlKey = `ratelimit:whatsapp:put:${session.userId}:${clientIp}`;
+    const rl = await checkGenericRateLimit(rlKey, 20, 60);
+    if (!rl.allowed) {
+      return rateLimitResponse(rl.retryAfter);
+    }
+
+    const rawBody = await req.json().catch(() => ({}));
+    const bodyRes = safeValidate(UpdateWhatsAppSettingsSchema, rawBody);
+    if (!bodyRes.success) {
+      return validationErrorResponse(bodyRes.error);
+    }
+    const body = bodyRes.data;
+
+    if (body.id && body.id !== "default") {
+      return NextResponse.json({ error: "Cannot modify protected ID field" }, { status: 400 });
     }
 
     // Explicitly whitelist permitted writable fields
@@ -48,24 +75,13 @@ export async function PUT(req: NextRequest) {
       "defaultMessageTemplate",
       "callNumber",
       "isEnabled",
-    ];
-
-    if (body.id && body.id !== "default") {
-      return NextResponse.json({ error: "Cannot modify protected ID field" }, { status: 400 });
-    }
+    ] as const;
 
     const sanitizedData: Record<string, any> = {};
-    if (body.whatsappNumber !== undefined) {
-      sanitizedData.whatsappNumber = String(body.whatsappNumber).trim();
-    }
-    if (body.defaultMessageTemplate !== undefined) {
-      sanitizedData.defaultMessageTemplate = String(body.defaultMessageTemplate);
-    }
-    if (body.callNumber !== undefined) {
-      sanitizedData.callNumber = String(body.callNumber).trim();
-    }
-    if (body.isEnabled !== undefined) {
-      sanitizedData.isEnabled = Boolean(body.isEnabled);
+    for (const key of allowedFields) {
+      if (key in body && (body as any)[key] !== undefined) {
+        sanitizedData[key] = (body as any)[key];
+      }
     }
 
     const settings = await prisma.whatsAppSetting.upsert({
@@ -117,4 +133,3 @@ export async function PUT(req: NextRequest) {
 export async function POST(req: NextRequest) {
   return PUT(req);
 }
-

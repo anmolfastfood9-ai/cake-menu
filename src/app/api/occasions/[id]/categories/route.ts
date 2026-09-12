@@ -2,22 +2,46 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { clearOccasionCache } from "@/lib/festivals/occasionEngine";
 import { getSessionAdminFromRequest } from "@/lib/auth";
+import { getClientIp } from "@/lib/rateLimit";
+import { checkGenericRateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import {
+  safeValidate,
+  validationErrorResponse,
+  OccasionParamSchema,
+  CreateOccasionCategorySchema,
+  UpdateOccasionCategorySchema,
+  BulkReorderOccasionCategoriesSchema,
+  OccasionCategoryQuerySchema,
+} from "@/lib/validations";
 
 function generateSlug(text: string): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "") || "category";
+  return (
+    text
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "category"
+  );
 }
 
 // GET /api/occasions/[id]/categories
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = params;
+    const clientIp = getClientIp(request);
+    const rlKey = `ratelimit:occasions_cats:get:${clientIp}`;
+    const rl = await checkGenericRateLimit(rlKey, 60, 60);
+    if (!rl.allowed) {
+      return rateLimitResponse(rl.retryAfter);
+    }
+
+    const paramRes = safeValidate(OccasionParamSchema, params);
+    if (!paramRes.success) {
+      return validationErrorResponse(paramRes.error);
+    }
+    const { id } = paramRes.data;
 
     const categories = await prisma.occasionCategory.findMany({
       where: { occasionId: id },
@@ -58,16 +82,25 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
     }
 
-    const { id } = params;
-    const body = await request.json();
-    const { name, displayOrder } = body;
-
-    if (!name || typeof name !== "string" || !name.trim()) {
-      return NextResponse.json(
-        { error: "Category name is required" },
-        { status: 400 }
-      );
+    const clientIp = getClientIp(request);
+    const rlKey = `ratelimit:occasions_cats:post:${session.userId}:${clientIp}`;
+    const rl = await checkGenericRateLimit(rlKey, 30, 60);
+    if (!rl.allowed) {
+      return rateLimitResponse(rl.retryAfter);
     }
+
+    const paramRes = safeValidate(OccasionParamSchema, params);
+    if (!paramRes.success) {
+      return validationErrorResponse(paramRes.error);
+    }
+    const { id } = paramRes.data;
+
+    const rawBody = await request.json().catch(() => ({}));
+    const bodyRes = safeValidate(CreateOccasionCategorySchema, rawBody);
+    if (!bodyRes.success) {
+      return validationErrorResponse(bodyRes.error);
+    }
+    const { name, displayOrder } = bodyRes.data;
 
     const occasion = await prisma.occasion.findUnique({
       where: { id },
@@ -144,22 +177,36 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
     }
 
-    const { id: occasionId } = params;
-    const body = await request.json();
+    const clientIp = getClientIp(request);
+    const rlKey = `ratelimit:occasions_cats:put:${session.userId}:${clientIp}`;
+    const rl = await checkGenericRateLimit(rlKey, 30, 60);
+    if (!rl.allowed) {
+      return rateLimitResponse(rl.retryAfter);
+    }
+
+    const paramRes = safeValidate(OccasionParamSchema, params);
+    if (!paramRes.success) {
+      return validationErrorResponse(paramRes.error);
+    }
+    const { id: occasionId } = paramRes.data;
+
+    const rawBody = await request.json().catch(() => ({}));
 
     // Case 1: Reorder or Bulk Update Multiple Categories
-    if (Array.isArray(body.categories)) {
+    if (rawBody && Array.isArray(rawBody.categories)) {
+      const bulkRes = safeValidate(BulkReorderOccasionCategoriesSchema, rawBody);
+      if (!bulkRes.success) {
+        return validationErrorResponse(bulkRes.error);
+      }
+
       await prisma.$transaction(
-        body.categories.map((cat: any) =>
+        bulkRes.data.categories.map((cat) =>
           prisma.occasionCategory.update({
             where: { id: cat.id },
             data: {
-              ...(typeof cat.displayOrder === "number" && {
-                displayOrder: cat.displayOrder,
-              }),
-              ...(typeof cat.active === "boolean" && { active: cat.active }),
-              ...(typeof cat.name === "string" &&
-                cat.name.trim() && { name: cat.name.trim() }),
+              ...(cat.displayOrder !== undefined && { displayOrder: cat.displayOrder }),
+              ...(cat.active !== undefined && { active: cat.active }),
+              ...(cat.name !== undefined && { name: cat.name.trim() }),
             },
           })
         )
@@ -170,14 +217,11 @@ export async function PUT(
     }
 
     // Case 2: Update Single Category Details / Cake Assignments
-    const { categoryId, name, displayOrder, active, cakeIds } = body;
-
-    if (!categoryId) {
-      return NextResponse.json(
-        { error: "categoryId is required" },
-        { status: 400 }
-      );
+    const singleRes = safeValidate(UpdateOccasionCategorySchema, rawBody);
+    if (!singleRes.success) {
+      return validationErrorResponse(singleRes.error);
     }
+    const { categoryId, name, displayOrder, active, cakeIds } = singleRes.data;
 
     const existingCategory = await prisma.occasionCategory.findFirst({
       where: { id: categoryId, occasionId },
@@ -219,16 +263,15 @@ export async function PUT(
 
     const updatedCategory = await prisma.$transaction(async (tx) => {
       // 1. Update basic info if provided
-      const updated = await tx.occasionCategory.update({
+      await tx.occasionCategory.update({
         where: { id: categoryId },
         data: {
-          ...(typeof name === "string" &&
-            name.trim() && {
-              name: name.trim(),
-              slug: generateSlug(name.trim()),
-            }),
-          ...(typeof displayOrder === "number" && { displayOrder }),
-          ...(typeof active === "boolean" && { active }),
+          ...(name !== undefined && {
+            name: name.trim(),
+            slug: generateSlug(name.trim()),
+          }),
+          ...(displayOrder !== undefined && { displayOrder }),
+          ...(active !== undefined && { active }),
         },
       });
 
@@ -290,25 +333,36 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
     }
 
-    const { id: occasionId } = params;
-    const { searchParams } = new URL(request.url);
-    let categoryId = searchParams.get("categoryId");
+    const clientIp = getClientIp(request);
+    const rlKey = `ratelimit:occasions_cats:delete:${session.userId}:${clientIp}`;
+    const rl = await checkGenericRateLimit(rlKey, 30, 60);
+    if (!rl.allowed) {
+      return rateLimitResponse(rl.retryAfter);
+    }
 
-    if (!categoryId) {
+    const paramRes = safeValidate(OccasionParamSchema, params);
+    if (!paramRes.success) {
+      return validationErrorResponse(paramRes.error);
+    }
+    const { id: occasionId } = paramRes.data;
+
+    const { searchParams } = new URL(request.url);
+    let rawCategoryId = searchParams.get("categoryId");
+
+    if (!rawCategoryId) {
       try {
         const body = await request.json();
-        categoryId = body.categoryId;
+        rawCategoryId = body.categoryId;
       } catch (e) {
         // Body reading optional
       }
     }
 
-    if (!categoryId) {
-      return NextResponse.json(
-        { error: "categoryId is required" },
-        { status: 400 }
-      );
+    const queryRes = safeValidate(OccasionCategoryQuerySchema, { categoryId: rawCategoryId ?? "" });
+    if (!queryRes.success) {
+      return validationErrorResponse(queryRes.error);
     }
+    const { categoryId } = queryRes.data;
 
     const category = await prisma.occasionCategory.findFirst({
       where: { id: categoryId, occasionId },

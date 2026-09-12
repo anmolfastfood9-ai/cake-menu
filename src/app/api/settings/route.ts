@@ -3,12 +3,26 @@ import prisma from "@/lib/db";
 import { getSessionAdminFromRequest } from "@/lib/auth";
 import { invalidateAppCache, getCachedWebsiteSettings } from "@/lib/cache";
 import { revalidatePath } from "next/cache";
+import { getClientIp } from "@/lib/rateLimit";
+import { checkGenericRateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import {
+  safeValidate,
+  validationErrorResponse,
+  UpdateSettingsSchema,
+} from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 
 // GET /api/settings - Fetch current website settings
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const clientIp = getClientIp(req);
+    const rlKey = `ratelimit:settings:get:${clientIp}`;
+    const rl = await checkGenericRateLimit(rlKey, 60, 60);
+    if (!rl.allowed) {
+      return rateLimitResponse(rl.retryAfter);
+    }
+
     const settings = await getCachedWebsiteSettings();
     return NextResponse.json({ success: true, settings });
   } catch (error: any) {
@@ -28,10 +42,19 @@ async function handleUpdateSettings(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized. Please log in as admin." }, { status: 401 });
     }
 
-    const body = await req.json();
-    if (!body || typeof body !== "object") {
-      return NextResponse.json({ error: "Invalid request payload" }, { status: 400 });
+    const clientIp = getClientIp(req);
+    const rlKey = `ratelimit:settings:put:${session.userId}:${clientIp}`;
+    const rl = await checkGenericRateLimit(rlKey, 20, 60);
+    if (!rl.allowed) {
+      return rateLimitResponse(rl.retryAfter);
     }
+
+    const rawBody = await req.json().catch(() => ({}));
+    const bodyRes = safeValidate(UpdateSettingsSchema, rawBody);
+    if (!bodyRes.success) {
+      return validationErrorResponse(bodyRes.error);
+    }
+    const body = bodyRes.data;
 
     // Explicitly whitelist permitted writable fields
     const allowedFields = [
@@ -49,7 +72,7 @@ async function handleUpdateSettings(req: NextRequest) {
       "instagram",
       "facebook",
       "footerText",
-    ];
+    ] as const;
 
     if (body.id && body.id !== "default") {
       return NextResponse.json({ error: "Cannot modify protected ID field" }, { status: 400 });
@@ -57,8 +80,8 @@ async function handleUpdateSettings(req: NextRequest) {
 
     const sanitizedData: Record<string, any> = {};
     for (const key of allowedFields) {
-      if (key in body && body[key] !== undefined) {
-        sanitizedData[key] = typeof body[key] === "string" ? body[key].trim() : body[key];
+      if (key in body && (body as any)[key] !== undefined) {
+        sanitizedData[key] = (body as any)[key];
       }
     }
 
@@ -124,4 +147,3 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   return handleUpdateSettings(req);
 }
-

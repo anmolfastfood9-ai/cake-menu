@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { getSessionAdminFromRequest } from "@/lib/auth";
 import { invalidateAppCache } from "@/lib/cache";
+import { getClientIp } from "@/lib/rateLimit";
+import { checkGenericRateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import {
+  safeValidate,
+  validationErrorResponse,
+  CreateCategorySchema,
+  GetCategoriesQuerySchema,
+} from "@/lib/validations";
 
 function generateSlug(name: string): string {
   return name
@@ -15,9 +23,23 @@ function generateSlug(name: string): string {
 // GET /api/categories - List all categories
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const activeOnly = searchParams.get("activeOnly") === "true";
+    const clientIp = getClientIp(req);
+    const rlKey = `ratelimit:categories:get:${clientIp}`;
+    const rl = await checkGenericRateLimit(rlKey, 60, 60);
+    if (!rl.allowed) {
+      return rateLimitResponse(rl.retryAfter);
+    }
 
+    const { searchParams } = new URL(req.url);
+    const rawQuery = {
+      activeOnly: searchParams.get("activeOnly") ?? undefined,
+    };
+    const queryRes = safeValidate(GetCategoriesQuerySchema, rawQuery);
+    if (!queryRes.success) {
+      return validationErrorResponse(queryRes.error);
+    }
+
+    const activeOnly = queryRes.data.activeOnly === "true";
     const whereClause = activeOnly ? { active: true } : {};
 
     const categories = await prisma.category.findMany({
@@ -48,12 +70,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
-    const { name, slug: customSlug, description, image, icon, displayOrder = 0, active = true } = body;
-
-    if (!name) {
-      return NextResponse.json({ error: "Category name is required" }, { status: 400 });
+    const clientIp = getClientIp(req);
+    const rlKey = `ratelimit:categories:post:${session.userId}:${clientIp}`;
+    const rl = await checkGenericRateLimit(rlKey, 30, 60);
+    if (!rl.allowed) {
+      return rateLimitResponse(rl.retryAfter);
     }
+
+    const rawBody = await req.json().catch(() => ({}));
+    const bodyRes = safeValidate(CreateCategorySchema, rawBody);
+    if (!bodyRes.success) {
+      return validationErrorResponse(bodyRes.error);
+    }
+
+    const { name, slug: customSlug, description, image, icon, displayOrder = 0, active = true } = bodyRes.data;
 
     let slug = customSlug ? generateSlug(customSlug) : generateSlug(name);
     const existing = await prisma.category.findUnique({ where: { slug } });
@@ -65,10 +95,10 @@ export async function POST(req: NextRequest) {
       data: {
         name,
         slug,
-        description,
-        image,
-        icon,
-        displayOrder: Number(displayOrder) || 0,
+        description: description || null,
+        image: image || null,
+        icon: icon || null,
+        displayOrder: displayOrder ?? 0,
         active: Boolean(active),
       },
     });

@@ -27,11 +27,14 @@ export const ALLOWED_MIME_TYPES = [
 
 export const ALLOWED_FOLDERS = [
   "/cakes",
-  "/categories",
+  "/occasions",
+  "/general",
   "/branding",
   "/hero",
-  "/custom",
+  "/logo",
   "/festivals",
+  "/categories",
+  "/custom",
 ];
 
 /**

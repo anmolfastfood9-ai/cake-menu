@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { getSessionAdminFromRequest } from "@/lib/auth";
 import { invalidateAppCache, getCachedApiQuery } from "@/lib/cache";
+import { getClientIp, checkGenericRateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import {
+  CreateCakeSchema,
+  GetCakesQuerySchema,
+  safeValidate,
+} from "@/lib/validations";
 
 function generateSlug(name: string): string {
   return name
@@ -15,26 +21,48 @@ function generateSlug(name: string): string {
 // GET /api/cakes
 export async function GET(req: NextRequest) {
   try {
+    // 1. Distributed Public Rate Limit: 60 requests / minute / IP
+    const clientIp = getClientIp(req);
+    const rateCheck = await checkGenericRateLimit(
+      `cakes:get:${clientIp}`,
+      60,
+      60,
+      "ratelimit:cakes:get"
+    );
+    if (!rateCheck.success) {
+      return rateLimitResponse(rateCheck.retryAfter ?? 60);
+    }
+
     const { searchParams } = new URL(req.url);
-    const categorySlug = searchParams.get("category");
-    const categoryId = searchParams.get("categoryId");
-    const search = searchParams.get("search");
-    const tag = searchParams.get("tag"); // "featured", "bestseller", "new"
-    const productType = searchParams.get("productType");
-    const cakesOnly = searchParams.get("cakesOnly") === "true";
-    const availableOnly = searchParams.get("availableOnly") === "true";
+    const queryParamsRaw: Record<string, string> = {};
+    searchParams.forEach((val, key) => {
+      queryParamsRaw[key] = val;
+    });
+
+    const queryValidation = safeValidate(GetCakesQuerySchema, queryParamsRaw);
+    if (!queryValidation.success) {
+      return queryValidation.response;
+    }
+
+    const {
+      category: categorySlug,
+      categoryId,
+      search,
+      tag,
+      cakesOnly,
+      availableOnly,
+      page,
+      limit,
+    } = queryValidation.data;
 
     const whereClause: any = {};
 
-    if (availableOnly) {
+    if (availableOnly === "true") {
       whereClause.available = true;
     }
 
-    if (cakesOnly) {
-      whereClause.productType = "CAKE";
-    } else if (productType && productType !== "ALL") {
-      whereClause.productType = productType;
-    }
+    // Active productType model is CAKE ONLY
+    whereClause.productType = "CAKE";
 
     if (categoryId) {
       whereClause.categoryId = categoryId;
@@ -56,15 +84,16 @@ export async function GET(req: NextRequest) {
     if (tag === "bestseller") whereClause.bestseller = true;
     if (tag === "new") whereClause.isNew = true;
 
-    // Build cache key strictly from recognized parameters to prevent cache flooding/poisoning
+    // Build cache key strictly from recognized parameters
     const recognizedKeyParts: string[] = [];
     if (categorySlug) recognizedKeyParts.push(`cat:${categorySlug.toLowerCase().trim()}`);
     if (categoryId) recognizedKeyParts.push(`catId:${categoryId.trim()}`);
     if (search) recognizedKeyParts.push(`q:${search.toLowerCase().trim().slice(0, 50)}`);
     if (tag) recognizedKeyParts.push(`tag:${tag.toLowerCase().trim()}`);
-    if (productType) recognizedKeyParts.push(`pt:${productType.trim()}`);
     if (cakesOnly) recognizedKeyParts.push("cakesOnly:1");
     if (availableOnly) recognizedKeyParts.push("availOnly:1");
+    if (page) recognizedKeyParts.push(`p:${page}`);
+    if (limit) recognizedKeyParts.push(`l:${limit}`);
 
     const cacheKey = `api_cakes_${recognizedKeyParts.sort().join("|") || "all"}`;
     const cakes = await getCachedApiQuery(cacheKey, async () => {
@@ -82,6 +111,7 @@ export async function GET(req: NextRequest) {
           },
         },
         orderBy: [{ featured: "desc" }, { bestseller: "desc" }, { createdAt: "desc" }],
+        ...(limit ? { take: limit, skip: ((page || 1) - 1) * limit } : {}),
       });
     });
 
@@ -103,15 +133,33 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
+    // Distributed Rate Limit: 30 mutations / minute / admin + IP
+    const clientIp = getClientIp(req);
+    const identifier = `cake:post:${session.userId}:${clientIp}`;
+    const rateCheck = await checkGenericRateLimit(identifier, 30, 60, "ratelimit:cakes:post");
+    if (!rateCheck.success) {
+      return rateLimitResponse(rateCheck.retryAfter ?? 60);
+    }
+
+    let body: any = {};
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
+    }
+
+    const validation = safeValidate(CreateCakeSchema, body);
+    if (!validation.success) {
+      return validation.response;
+    }
+
     const {
       name,
-      productType = "CAKE",
       slug: customSlug,
       categoryId,
       description,
       coverImage,
-      images,
+      images = [],
       ingredients,
       preparationNotes,
       featured = false,
@@ -120,16 +168,9 @@ export async function POST(req: NextRequest) {
       available = true,
       rating = 4.9,
       customizationInfo,
-      prices = [],
+      prices,
       occasionIds = [],
-    } = body;
-
-    if (!name || !categoryId || !description || !coverImage) {
-      return NextResponse.json(
-        { error: "Name, category, description, and cover image are required" },
-        { status: 400 }
-      );
-    }
+    } = validation.data;
 
     let slug = customSlug ? generateSlug(customSlug) : generateSlug(name);
     const existing = await prisma.cake.findUnique({ where: { slug } });
@@ -140,56 +181,38 @@ export async function POST(req: NextRequest) {
     const cake = await prisma.cake.create({
       data: {
         name,
-        productType: productType || "CAKE",
+        productType: "CAKE",
         slug,
         categoryId,
         description,
         coverImage,
-        images: Array.isArray(images) ? JSON.stringify(images) : typeof images === "string" ? images : "[]",
+        images: JSON.stringify(images),
         ingredients,
         preparationNotes,
         featured: Boolean(featured),
         bestseller: Boolean(bestseller),
         isNew: Boolean(isNew),
         available: Boolean(available),
-        rating: Number(rating) || 4.9,
+        rating: typeof rating === "number" ? rating : 4.9,
         customizationInfo,
         prices: {
-          create: (prices.length > 0 ? prices : [{ weight: "1 kg", price: 999, isDefault: true }]).map(
-            (p: any, idx: number) => {
-              let tierGallery: string[] = [];
-              if (Array.isArray(p.images)) {
-                tierGallery = p.images;
-              } else if (typeof p.images === "string" && p.images.trim().length > 0) {
-                try {
-                  const parsed = JSON.parse(p.images);
-                  if (Array.isArray(parsed)) tierGallery = parsed;
-                } catch {
-                  tierGallery = [];
-                }
-              }
-
-              // Validate: strings only, non-empty, max 5
-              const cleanedTierImages = tierGallery
-                .filter((img) => typeof img === "string" && img.trim().length > 0)
-                .slice(0, 5);
-
-              return {
-                weight: p.weight || "1 kg",
-                price: Number(p.price) || 0,
-                originalPrice: p.originalPrice ? Number(p.originalPrice) : null,
-                isDefault: p.isDefault ?? idx === 0,
-                image: p.image || (cleanedTierImages.length > 0 ? cleanedTierImages[0] : null),
-                images: JSON.stringify(cleanedTierImages),
-              };
-            }
-          ),
-        },
-        occasions: occasionIds && occasionIds.length > 0 ? {
-          create: occasionIds.map((occId: string) => ({
-            occasionId: occId,
+          create: prices.map((p, idx) => ({
+            weight: p.weight,
+            price: p.price,
+            originalPrice: p.originalPrice ?? null,
+            isDefault: p.isDefault ?? idx === 0,
+            image: p.image || (p.images && p.images.length > 0 ? p.images[0] : null),
+            images: JSON.stringify(p.images || []),
           })),
-        } : undefined,
+        },
+        occasions:
+          occasionIds && occasionIds.length > 0
+            ? {
+                create: occasionIds.map((occId: string) => ({
+                  occasionId: occId,
+                })),
+              }
+            : undefined,
       },
       include: {
         category: true,

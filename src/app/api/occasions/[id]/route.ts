@@ -3,6 +3,14 @@ import prisma from "@/lib/db";
 import { getSessionAdminFromRequest } from "@/lib/auth";
 import { clearOccasionCache } from "@/lib/festivals/occasionEngine";
 import { invalidateAppCache } from "@/lib/cache";
+import { getClientIp } from "@/lib/rateLimit";
+import { checkGenericRateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import {
+  safeValidate,
+  validationErrorResponse,
+  OccasionParamSchema,
+  UpdateOccasionSchema,
+} from "@/lib/validations";
 
 // PUT /api/occasions/[id] - Update occasion content and status (Admin only)
 export async function PUT(
@@ -15,8 +23,25 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
     }
 
-    const { id } = params;
-    const body = await req.json();
+    const clientIp = getClientIp(req);
+    const rlKey = `ratelimit:occasions:put:${session.userId}:${clientIp}`;
+    const rl = await checkGenericRateLimit(rlKey, 20, 60);
+    if (!rl.allowed) {
+      return rateLimitResponse(rl.retryAfter);
+    }
+
+    const paramRes = safeValidate(OccasionParamSchema, params);
+    if (!paramRes.success) {
+      return validationErrorResponse(paramRes.error);
+    }
+    const { id } = paramRes.data;
+
+    const rawBody = await req.json().catch(() => ({}));
+    const bodyRes = safeValidate(UpdateOccasionSchema, rawBody);
+    if (!bodyRes.success) {
+      return validationErrorResponse(bodyRes.error);
+    }
+
     const {
       name,
       badgeText,
@@ -29,17 +54,17 @@ export async function PUT(
       eventDate,
       cakeIds,
       bannerImage,
-    } = body;
+    } = bodyRes.data;
 
     const updateData: any = {};
     if (name !== undefined) updateData.name = name;
     if (badgeText !== undefined) updateData.badgeText = badgeText;
     if (description !== undefined) updateData.description = description;
     if (accentColor !== undefined) updateData.accentColor = accentColor;
-    if (priority !== undefined) updateData.priority = Number(priority);
+    if (priority !== undefined) updateData.priority = priority;
     if (active !== undefined) updateData.active = Boolean(active);
-    if (daysBefore !== undefined) updateData.daysBefore = Math.max(0, Number(daysBefore));
-    if (daysAfter !== undefined) updateData.daysAfter = Math.max(0, Number(daysAfter));
+    if (daysBefore !== undefined) updateData.daysBefore = daysBefore;
+    if (daysAfter !== undefined) updateData.daysAfter = daysAfter;
     if (bannerImage !== undefined) updateData.bannerImage = bannerImage || null;
 
     // Update tagged cakes if provided
@@ -78,8 +103,8 @@ export async function PUT(
         ? new Date(`${eventDate}T00:00:00.000Z`)
         : existingOcc!.eventDate;
 
-      const numDaysBefore = daysBefore !== undefined ? Math.max(0, Number(daysBefore)) : occasion.daysBefore;
-      const numDaysAfter = daysAfter !== undefined ? Math.max(0, Number(daysAfter)) : occasion.daysAfter;
+      const numDaysBefore = daysBefore !== undefined ? daysBefore : occasion.daysBefore;
+      const numDaysAfter = daysAfter !== undefined ? daysAfter : occasion.daysAfter;
 
       const displayStart = new Date(
         targetEventDate.getTime() - numDaysBefore * 24 * 60 * 60 * 1000
@@ -121,6 +146,9 @@ export async function PUT(
 
     return NextResponse.json({ success: true, occasion });
   } catch (error: any) {
+    if (error?.code === "P2025") {
+      return NextResponse.json({ error: "Occasion not found" }, { status: 404 });
+    }
     console.error("Update occasion error:", error);
     return NextResponse.json(
       { error: "An internal server error occurred" },
@@ -140,7 +168,19 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
     }
 
-    const { id } = params;
+    const clientIp = getClientIp(req);
+    const rlKey = `ratelimit:occasions:delete:${session.userId}:${clientIp}`;
+    const rl = await checkGenericRateLimit(rlKey, 20, 60);
+    if (!rl.allowed) {
+      return rateLimitResponse(rl.retryAfter);
+    }
+
+    const paramRes = safeValidate(OccasionParamSchema, params);
+    if (!paramRes.success) {
+      return validationErrorResponse(paramRes.error);
+    }
+    const { id } = paramRes.data;
+
     await prisma.occasion.delete({
       where: { id },
     });
@@ -156,4 +196,3 @@ export async function DELETE(
     );
   }
 }
-

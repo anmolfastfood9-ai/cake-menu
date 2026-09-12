@@ -2,11 +2,31 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { getSessionAdminFromRequest } from "@/lib/auth";
 import { invalidateAppCache } from "@/lib/cache";
+import { getClientIp } from "@/lib/rateLimit";
+import { checkGenericRateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import {
+  safeValidate,
+  validationErrorResponse,
+  CakeIdParamSchema,
+  UpdateCakeSchema,
+} from "@/lib/validations";
 
 // GET /api/cakes/[id]
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { id } = params;
+    const clientIp = getClientIp(req);
+    const rlKey = `ratelimit:cakes:get_one:${clientIp}`;
+    const rl = await checkGenericRateLimit(rlKey, 60, 60);
+    if (!rl.allowed) {
+      return rateLimitResponse(rl.retryAfter);
+    }
+
+    const paramRes = safeValidate(CakeIdParamSchema, params);
+    if (!paramRes.success) {
+      return validationErrorResponse(paramRes.error);
+    }
+    const { id } = paramRes.data;
+
     const session = getSessionAdminFromRequest(req);
     const isAdmin = Boolean(session);
 
@@ -57,8 +77,25 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = params;
-    const body = await req.json();
+    const clientIp = getClientIp(req);
+    const rlKey = `ratelimit:cakes:put:${session.userId}:${clientIp}`;
+    const rl = await checkGenericRateLimit(rlKey, 30, 60);
+    if (!rl.allowed) {
+      return rateLimitResponse(rl.retryAfter);
+    }
+
+    const paramRes = safeValidate(CakeIdParamSchema, params);
+    if (!paramRes.success) {
+      return validationErrorResponse(paramRes.error);
+    }
+    const { id } = paramRes.data;
+
+    const rawBody = await req.json().catch(() => ({}));
+    const bodyRes = safeValidate(UpdateCakeSchema, rawBody);
+    if (!bodyRes.success) {
+      return validationErrorResponse(bodyRes.error);
+    }
+
     const {
       name,
       productType,
@@ -77,7 +114,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       customizationInfo,
       prices,
       occasionIds,
-    } = body;
+    } = bodyRes.data;
 
     const cake = await prisma.$transaction(async (tx) => {
       if (prices && Array.isArray(prices)) {
@@ -108,28 +145,18 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       if (bestseller !== undefined) updateData.bestseller = Boolean(bestseller);
       if (isNew !== undefined) updateData.isNew = Boolean(isNew);
       if (available !== undefined) updateData.available = Boolean(available);
-      if (rating !== undefined) updateData.rating = Number(rating);
+      if (rating !== undefined) updateData.rating = typeof rating === "number" ? rating : 4.9;
       if (customizationInfo !== undefined) updateData.customizationInfo = customizationInfo;
 
       if (prices && Array.isArray(prices)) {
         updateData.prices = {
-          create: prices.map((p: any, idx: number) => {
-            let tierGallery: string[] = [];
-            if (Array.isArray(p.images)) {
-              tierGallery = p.images;
-            } else if (typeof p.images === "string" && p.images.trim().length > 0) {
-              try {
-                const parsed = JSON.parse(p.images);
-                if (Array.isArray(parsed)) tierGallery = parsed;
-              } catch {
-                tierGallery = [];
-              }
-            }
+          create: prices.map((p, idx: number) => {
+            const tierGallery = Array.isArray(p.images) ? p.images : [];
 
-            // Validate: strings only, non-empty, max 5
+            // Max 10 gallery images per tier, non-empty
             const cleanedTierImages = tierGallery
               .filter((img) => typeof img === "string" && img.trim().length > 0)
-              .slice(0, 5);
+              .slice(0, 10);
 
             return {
               weight: p.weight || "1 kg",
@@ -168,6 +195,9 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
     return NextResponse.json({ success: true, cake });
   } catch (error: any) {
+    if (error?.code === "P2025") {
+      return NextResponse.json({ error: "Cake not found" }, { status: 404 });
+    }
     console.error("Update cake error:", error);
     return NextResponse.json(
       { error: "An internal server error occurred" },
@@ -184,7 +214,19 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = params;
+    const clientIp = getClientIp(req);
+    const rlKey = `ratelimit:cakes:delete:${session.userId}:${clientIp}`;
+    const rl = await checkGenericRateLimit(rlKey, 20, 60);
+    if (!rl.allowed) {
+      return rateLimitResponse(rl.retryAfter);
+    }
+
+    const paramRes = safeValidate(CakeIdParamSchema, params);
+    if (!paramRes.success) {
+      return validationErrorResponse(paramRes.error);
+    }
+    const { id } = paramRes.data;
+
     await prisma.cakePrice.deleteMany({ where: { cakeId: id } });
     await prisma.cake.delete({ where: { id } });
 

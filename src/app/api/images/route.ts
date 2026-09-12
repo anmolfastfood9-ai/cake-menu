@@ -1,7 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { getSessionAdminFromRequest } from "@/lib/auth";
-import { processImageUpload, deleteFromImageKit } from "@/lib/upload";
+import { processImageUpload, deleteFromImageKit, validateImageBuffer } from "@/lib/upload";
+import { getClientIp } from "@/lib/rateLimit";
+import { checkGenericRateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import {
+  safeValidate,
+  validationErrorResponse,
+  ImageFolderSchema,
+  DeleteImageQuerySchema,
+  MAX_FILES_PER_UPLOAD,
+  MAX_FILE_SIZE_BYTES,
+  ALLOWED_MIME_TYPES,
+} from "@/lib/validations";
 import fs from "fs";
 import path from "path";
 
@@ -12,6 +23,14 @@ export async function GET(req: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const clientIp = getClientIp(req);
+    const rlKey = `ratelimit:images:get:${session.userId}:${clientIp}`;
+    const rl = await checkGenericRateLimit(rlKey, 60, 60);
+    if (!rl.allowed) {
+      return rateLimitResponse(rl.retryAfter);
+    }
+
     const images = await prisma.imageMedia.findMany({
       orderBy: { createdAt: "desc" },
     });
@@ -30,25 +49,93 @@ export async function POST(req: NextRequest) {
   try {
     const session = getSessionAdminFromRequest(req);
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const formData = await req.formData();
-    const files = formData.getAll("files") as File[];
-    const folder = (formData.get("folder") as string) || "/cakes";
+    const clientIp = getClientIp(req);
+    const rlKey = `ratelimit:images:upload:${session.userId}:${clientIp}`;
+    const rl = await checkGenericRateLimit(rlKey, 15, 60);
+    if (!rl.allowed) {
+      return rateLimitResponse(rl.retryAfter);
+    }
 
-    if (!files || files.length === 0) {
-      // Check single file field
+    const formData = await req.formData().catch(() => null);
+    if (!formData) {
+      return NextResponse.json(
+        { error: "Invalid form data" },
+        { status: 400 }
+      );
+    }
+
+    const rawFiles = formData.getAll("files") as File[];
+    let files: File[] = rawFiles.filter((f) => f && typeof f.size === "number" && f.size > 0);
+
+    if (files.length === 0) {
       const single = formData.get("file") as File;
-      if (single) {
-        files.push(single);
+      if (single && typeof single.size === "number" && single.size > 0) {
+        files = [single];
       } else {
-        return NextResponse.json({ error: "No files provided for upload" }, { status: 400 });
+        return NextResponse.json(
+          { error: "No files provided for upload" },
+          { status: 400 }
+        );
       }
     }
 
-    const uploadedImages = [];
+    // 1. Enforce max files limit
+    if (files.length > MAX_FILES_PER_UPLOAD) {
+      return NextResponse.json(
+        {
+          error: `Too many files. Maximum ${MAX_FILES_PER_UPLOAD} files allowed per request`,
+        },
+        { status: 400 }
+      );
+    }
 
+    // 2. Enforce folder allowlist (prevents path traversal)
+    const rawFolder = (formData.get("folder") as string) || "/cakes";
+    const folderRes = safeValidate(ImageFolderSchema, rawFolder);
+    if (!folderRes.success) {
+      return validationErrorResponse(folderRes.error);
+    }
+    const folder = folderRes.data;
+
+    // 3. Pre-validate all files (size & binary magic bytes & allowed MIME)
+    for (const file of files) {
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        return NextResponse.json(
+          {
+            error: `File "${file.name}" exceeds maximum allowed size of 5 MB`,
+          },
+          { status: 400 }
+        );
+      }
+
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+      const validation = validateImageBuffer(buffer);
+
+      if (!validation.isValid || !validation.mimeType) {
+        return NextResponse.json(
+          {
+            error: validation.error || `Invalid image binary signature for "${file.name}"`,
+          },
+          { status: 400 }
+        );
+      }
+
+      if (!ALLOWED_MIME_TYPES.includes(validation.mimeType)) {
+        return NextResponse.json(
+          {
+            error: `Unsupported image format "${validation.mimeType}". Accept only JPEG, PNG, and WebP.`,
+          },
+          { status: 400 }
+        );
+      }
+    }
+
+    // 4. Process upload
+    const uploadedImages = [];
     for (const file of files) {
       try {
         const uploadResult = await processImageUpload(file, { folder });
@@ -56,7 +143,7 @@ export async function POST(req: NextRequest) {
           data: {
             url: uploadResult.url,
             filename: uploadResult.filename,
-            publicId: uploadResult.publicId, // ImageKit fileId
+            publicId: uploadResult.publicId,
             size: uploadResult.size,
             mimeType: uploadResult.mimeType,
           },
@@ -64,7 +151,7 @@ export async function POST(req: NextRequest) {
         uploadedImages.push(saved);
       } catch (uploadErr: any) {
         return NextResponse.json(
-          { error: uploadErr.message || "Image validation or upload failed" },
+          { error: uploadErr.message || "Image upload failed" },
           { status: 400 }
         );
       }
@@ -85,15 +172,23 @@ export async function DELETE(req: NextRequest) {
   try {
     const session = getSessionAdminFromRequest(req);
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const clientIp = getClientIp(req);
+    const rlKey = `ratelimit:images:delete:${session.userId}:${clientIp}`;
+    const rl = await checkGenericRateLimit(rlKey, 20, 60);
+    if (!rl.allowed) {
+      return rateLimitResponse(rl.retryAfter);
     }
 
     const { searchParams } = new URL(req.url);
-    const id = searchParams.get("id");
-
-    if (!id) {
-      return NextResponse.json({ error: "Image ID is required" }, { status: 400 });
+    const rawQuery = { id: searchParams.get("id") ?? undefined };
+    const queryRes = safeValidate(DeleteImageQuerySchema, rawQuery);
+    if (!queryRes.success) {
+      return validationErrorResponse(queryRes.error);
     }
+    const { id } = queryRes.data;
 
     const image = await prisma.imageMedia.findUnique({
       where: { id },
@@ -109,7 +204,6 @@ export async function DELETE(req: NextRequest) {
         await deleteFromImageKit(image.publicId);
       } catch (ikErr) {
         console.warn(`Failed to delete ImageKit asset (${image.publicId}):`, ikErr);
-        // We log and continue so the database row is still safely cleaned up
       }
     }
 
