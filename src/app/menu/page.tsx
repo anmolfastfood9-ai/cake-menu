@@ -16,7 +16,7 @@ export default async function MenuPage({
   searchParams,
 }: {
   searchParams?: { category?: string };
-} = {}) {
+}) {
   const [
     categories,
     cakes,
