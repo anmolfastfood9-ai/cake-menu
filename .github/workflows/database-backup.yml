@@ -26,7 +26,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install PostgreSQL 18 Client & age
+      - name: Install PostgreSQL 18 Client & age Encryption Tool
         shell: bash
         run: |
           set -euo pipefail
