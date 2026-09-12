@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  MessageCircle,
   Phone,
   Sparkles,
   Check,
@@ -12,6 +11,7 @@ import {
   HelpCircle,
   Smartphone,
 } from "lucide-react";
+import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { generateWhatsAppLink } from "@/lib/whatsapp";
 
 interface WhatsAppSettingsClientProps {
@@ -85,7 +85,7 @@ export default function WhatsAppSettingsClient({
   };
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="mx-auto max-w-4xl space-y-6 pb-32 sm:pb-12">
       {/* Header */}
       <div>
         <span className="text-xs font-bold uppercase tracking-widest text-emerald-400">
@@ -117,8 +117,8 @@ export default function WhatsAppSettingsClient({
         {/* Left Form: Configuration */}
         <div className="lg:col-span-7">
           <form onSubmit={handleSave} className="space-y-6 rounded-3xl border border-gold-500/20 bg-luxury-900/80 p-6 sm:p-8 shadow-xl">
-            <h2 className="font-serif text-base font-bold text-cream-100 flex items-center space-x-2 border-b border-luxury-800 pb-3">
-              <MessageCircle className="h-4 w-4 text-emerald-400" />
+            <h2 className="font-sans text-base font-bold text-cream-100 flex items-center space-x-2 border-b border-luxury-800 pb-3">
+              <WhatsAppIcon className="h-4 w-4 text-emerald-400" />
               <span>Contact Numbers & Messaging Template</span>
             </h2>
 
@@ -128,7 +128,7 @@ export default function WhatsAppSettingsClient({
                   Official WhatsApp Number <span className="text-gold-400">*</span>
                 </label>
                 <div className="relative">
-                  <MessageCircle className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-400" />
+                  <WhatsAppIcon className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-400" />
                   <input
                     type="text"
                     required
@@ -159,12 +159,39 @@ export default function WhatsAppSettingsClient({
                 </div>
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="block text-xs font-semibold text-cream-200">
                     Pre-filled WhatsApp Message Template
                   </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTemplate(
+                        "Hello Raman Sweet Cake, I would like to enquire about:\n\n🍰 *Cake:* {cake_name}\n⚖️ *Weight:* {weight}\n💰 *Price:* ₹{price}\n\nPlease confirm availability and preparation time."
+                      );
+                    }}
+                    className="text-[10px] text-gold-400 hover:underline"
+                  >
+                    Reset to Default
+                  </button>
                 </div>
+
+                {/* 1-Tap Emoji & Formatting Bar */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                  <span className="text-[10px] text-luxury-500 font-medium shrink-0">Quick Insert:</span>
+                  {["🍰", "🎂", "✨", "⚖️", "💰", "🎉", "📍", "⏳"].map((emoji) => (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={() => setTemplate((prev: string) => `${prev}${emoji}`)}
+                      className="h-7 w-7 rounded-lg border border-luxury-800 bg-luxury-950 text-xs hover:border-gold-500/50 hover:scale-110 active:scale-95 transition-all shrink-0 flex items-center justify-center"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+
                 <textarea
                   rows={6}
                   required
@@ -173,44 +200,63 @@ export default function WhatsAppSettingsClient({
                   className="w-full rounded-xl border border-luxury-700 bg-luxury-950 p-3 text-xs font-mono text-cream-100 focus:border-gold-500 focus:outline-none"
                 />
 
-                {/* Available Variables Guide */}
-                <div className="rounded-xl border border-luxury-800 bg-luxury-950/60 p-3 text-[11px] space-y-1.5 text-luxury-300">
-                  <span className="font-semibold text-gold-400">Dynamic Template Placeholders:</span>
-                  <div className="grid grid-cols-2 gap-1 font-mono text-[10px] text-cream-300">
-                    <div><code>{"{cake_name}"}</code> : Cake Title</div>
-                    <div><code>{"{weight}"}</code> : Selected Weight</div>
-                    <div><code>{"{price}"}</code> : Dynamic Price</div>
-                    <div><code>{"{restaurant_name}"}</code> : Bakery Name</div>
+                {/* Interactive Variable Chips */}
+                <div className="rounded-xl border border-luxury-800 bg-luxury-950/80 p-3 text-[11px] space-y-2">
+                  <span className="font-semibold text-gold-400 block">
+                    Tap to Insert Dynamic Placeholders:
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      { tag: "{cake_name}", label: "Cake Title" },
+                      { tag: "{weight}", label: "Selected Weight" },
+                      { tag: "{price}", label: "Dynamic Price" },
+                      { tag: "{restaurant_name}", label: "Bakery Name" },
+                    ].map((item) => (
+                      <button
+                        key={item.tag}
+                        type="button"
+                        onClick={() => setTemplate((prev: string) => `${prev} ${item.tag}`)}
+                        className="inline-flex items-center gap-1 rounded-lg border border-gold-500/30 bg-gold-500/10 px-2.5 py-1 text-[10px] font-mono font-semibold text-gold-300 hover:bg-gold-500/20 active:scale-95 transition-all"
+                        title={`Click to insert ${item.tag}`}
+                      >
+                        <span className="text-gold-400 font-bold">+</span>
+                        <span>{item.tag}</span>
+                        <span className="text-luxury-400 font-sans text-[9px]">({item.label})</span>
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-4 border-t border-luxury-800">
+            {/* Bottom Form Actions */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-luxury-800">
               <a
                 href={testWaLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center space-x-1 text-xs font-semibold text-emerald-400 hover:text-emerald-300"
+                className="flex items-center justify-center sm:justify-start space-x-1.5 text-xs font-semibold text-emerald-400 hover:text-emerald-300 py-1"
               >
                 <span>Test Live WhatsApp Message</span>
                 <ExternalLink className="h-3.5 w-3.5" />
               </a>
 
-              <button
-                type="submit"
-                disabled={saving}
-                className="flex items-center space-x-2 rounded-xl bg-gold-gradient px-6 py-2.5 text-xs font-bold text-luxury-950 shadow-gold-sm hover:opacity-95 transition-opacity"
-              >
-                {saving ? (
-                  <Sparkles className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    <Check className="h-4 w-4" />
-                    <span>Save Template</span>
-                  </>
-                )}
-              </button>
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="w-full sm:w-auto flex items-center justify-center space-x-2 rounded-xl bg-gold-gradient px-7 py-3 text-xs font-bold text-luxury-950 shadow-gold-sm hover:opacity-95 transition-opacity"
+                >
+                  {saving ? (
+                    <Sparkles className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Check className="h-4 w-4" />
+                      <span>Save Template & Numbers</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </form>
         </div>
@@ -255,7 +301,7 @@ export default function WhatsAppSettingsClient({
             </div>
 
             <p className="mt-4 text-[11px] text-luxury-400">
-              When a customer clicks <strong>"Order on WhatsApp"</strong> on any cake, this message is automatically pre-filled in their chat.
+              When a customer clicks <strong>&quot;Order on WhatsApp&quot;</strong> on any cake, this message is automatically pre-filled in their chat.
             </p>
           </div>
         </div>

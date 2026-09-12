@@ -1,33 +1,12 @@
-import AllCakesClient from "@/components/customer/AllCakesClient";
-import {
-  getCachedCategories,
-  getCachedAllCakes,
-  getCachedWebsiteSettings,
-  getCachedWhatsAppSetting,
-} from "@/lib/cache";
+import { redirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-
-export default async function AllCakesPage({
+export default function AllCakesPage({
   searchParams,
 }: {
   searchParams?: { category?: string };
 }) {
-  const [categories, cakes, settings, whatsappSetting] = await Promise.all([
-    getCachedCategories(),
-    getCachedAllCakes(),
-    getCachedWebsiteSettings(),
-    getCachedWhatsAppSetting(),
-  ]);
-
-  return (
-    <AllCakesClient
-      initialCategories={categories}
-      initialCakes={cakes}
-      settings={settings}
-      whatsappSetting={whatsappSetting}
-      selectedCategorySlug={searchParams?.category || "all"}
-    />
-  );
+  if (searchParams?.category && searchParams.category !== "all") {
+    redirect(`/menu?category=${encodeURIComponent(searchParams.category)}`);
+  }
+  redirect("/menu");
 }

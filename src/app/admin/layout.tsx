@@ -9,7 +9,6 @@ import {
   FolderTree,
   Image as ImageIcon,
   Settings,
-  MessageCircle,
   LogOut,
   ExternalLink,
   Menu as MenuIcon,
@@ -19,7 +18,10 @@ import {
   User,
   Calendar,
   QrCode,
+  ChefHat,
+  Plus,
 } from "lucide-react";
+import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 
 export default function AdminLayout({
   children,
@@ -66,26 +68,42 @@ export default function AdminLayout({
     { label: "Festivals & Occasions", href: "/admin/occasions", icon: Calendar },
     { label: "Media Library", href: "/admin/images", icon: ImageIcon },
     { label: "Website Settings", href: "/admin/settings", icon: Settings },
-    { label: "WhatsApp Template", href: "/admin/whatsapp", icon: MessageCircle },
+    { label: "WhatsApp Template", href: "/admin/whatsapp", icon: WhatsAppIcon },
     { label: "QR Code Generator", href: "/admin/qr", icon: QrCode },
     { label: "Admin Profile", href: "/admin/profile", icon: User },
   ];
 
   return (
-    <div className="min-h-screen bg-[#090807] text-[#FBF7EE] flex flex-col md:flex-row">
+    <div className="admin-scope min-h-screen bg-[#090807] text-[#FBF7EE] flex flex-col md:flex-row font-sans">
       {/* Sidebar Desktop */}
       <aside className="hidden md:flex w-64 flex-col justify-between border-r border-gold-500/15 bg-[#12100e] p-5 shrink-0">
         <div className="space-y-6">
           {/* Brand Header */}
-          <div className="flex items-center space-x-3 px-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold-500/20 text-gold-400 border border-gold-500/30 shadow-gold-sm">
-              <Sparkles className="h-5 w-5" />
+          <Link href="/admin" className="flex items-center space-x-3.5 px-2 group">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#181511] text-[#E5C378] border border-gold-500/30 shadow-gold-sm group-hover:border-gold-500/60 group-hover:scale-105 transition-all shrink-0">
+              <svg
+                className="h-6 w-6 text-[#E5C378]"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M6 13.5V15a0.8 0.8 0 0 0 0.8 0.8h10.4a0.8 0.8 0 0 0 0.8-0.8v-1.5" />
+                <path d="M7.5 17.8a9 9 0 0 0 9 0" />
+                <path d="M6 13.5A3.8 3.8 0 0 1 3.5 10a3.8 3.8 0 0 1 4.5-3.8 4.2 4.2 0 0 1 8 0 3.8 3.8 0 0 1 4.5 3.8 3.8 3.8 0 0 1-2.5 3.5" />
+              </svg>
             </div>
-            <div>
-              <span className="font-serif text-base font-bold text-cream-50 block leading-tight">Raman Sweet</span>
-              <span className="text-[9px] uppercase tracking-widest text-gold-400 font-bold">Luxury CMS Panel</span>
+            <div className="flex items-center overflow-visible">
+              <span
+                className="inline-block font-script text-[38px] text-transparent bg-clip-text bg-gradient-to-r from-[#FFFDF8] via-[#F3E5CA] to-[#E5C378] pl-2 pr-3 py-1.5 -ml-1 leading-normal tracking-wide drop-shadow-[0_2px_12px_rgba(212,175,55,0.25)] select-none group-hover:brightness-110 transition-all overflow-visible"
+                style={{ fontFamily: 'var(--font-script), "Great Vibes", "Alex Brush", cursive' }}
+              >
+                Raman
+              </span>
             </div>
-          </div>
+          </Link>
 
           {/* User Profile Pill */}
           {adminUser && (
@@ -93,14 +111,17 @@ export default function AdminLayout({
               href="/admin/profile"
               className="flex items-center space-x-2.5 rounded-xl border border-luxury-800 bg-[#161411] px-3 py-2 text-xs hover:border-gold-500/40 transition-colors"
             >
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gold-500/20 text-gold-400 font-bold text-xs">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gold-500/20 text-gold-400 font-bold text-xs shrink-0">
                 {adminUser.name ? adminUser.name.charAt(0).toUpperCase() : "A"}
               </div>
-              <div className="overflow-hidden">
-                <span className="font-semibold text-cream-100 block truncate text-[11px] leading-tight">
-                  {adminUser.name || "Chef Admin"}
-                </span>
-                <span className="text-[9.5px] text-luxury-400 truncate block">
+              <div className="overflow-hidden min-w-0 flex-1">
+                <div className="flex items-center space-x-1.5">
+                  <span className="font-semibold text-cream-100 block truncate text-[11.5px] leading-tight">
+                    {adminUser.name && adminUser.name.length > 20 ? "Raman (Admin)" : (adminUser.name || "Chef Admin")}
+                  </span>
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" title="Online" />
+                </div>
+                <span className="text-[9.5px] text-luxury-400 truncate block mt-0.5">
                   {adminUser.email}
                 </span>
               </div>
@@ -152,15 +173,34 @@ export default function AdminLayout({
       </aside>
 
       {/* Mobile Header Bar */}
-      <header className="flex md:hidden items-center justify-between border-b border-gold-500/15 bg-[#12100e] px-4 py-3">
-        <div className="flex items-center space-x-2">
-          <Sparkles className="h-5 w-5 text-gold-400" />
-          <span className="font-serif text-base font-bold text-cream-50">Raman Sweet Admin</span>
-        </div>
+      <header className="flex md:hidden items-center justify-between border-b border-gold-500/15 bg-[#12100e] px-4 py-2.5">
+        <Link href="/admin" className="flex items-center space-x-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#181511] text-[#E5C378] border border-gold-500/30 shrink-0">
+            <svg
+              className="h-4.5 w-4.5 text-[#E5C378]"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M6 13.5V15a0.8 0.8 0 0 0 0.8 0.8h10.4a0.8 0.8 0 0 0 0.8-0.8v-1.5" />
+              <path d="M7.5 17.8a9 9 0 0 0 9 0" />
+              <path d="M6 13.5A3.8 3.8 0 0 1 3.5 10a3.8 3.8 0 0 1 4.5-3.8 4.2 4.2 0 0 1 8 0 3.8 3.8 0 0 1 4.5 3.8 3.8 3.8 0 0 1-2.5 3.5" />
+            </svg>
+          </div>
+          <span
+            className="inline-block font-script text-[30px] text-transparent bg-clip-text bg-gradient-to-r from-[#FFFDF8] via-[#F3E5CA] to-[#E5C378] pl-1.5 pr-2.5 py-1 leading-normal tracking-wide overflow-visible"
+            style={{ fontFamily: 'var(--font-script), "Great Vibes", "Alex Brush", cursive' }}
+          >
+            Raman
+          </span>
+        </Link>
 
         <button
           onClick={() => setMobileNavOpen(!mobileNavOpen)}
-          className="rounded-lg border border-luxury-700 bg-luxury-900 p-1.5 text-luxury-300"
+          className="rounded-xl border border-luxury-700 bg-luxury-900 p-2 text-luxury-300 hover:text-cream-100"
         >
           {mobileNavOpen ? <X className="h-5 w-5" /> : <MenuIcon className="h-5 w-5" />}
         </button>
@@ -210,9 +250,63 @@ export default function AdminLayout({
       )}
 
       {/* Main Admin Content View */}
-      <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-[#090807]">
+      <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-[#090807] pb-24 md:pb-8">
         {children}
       </main>
+
+      {/* Mobile Admin Bottom Navigation Dock */}
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-[#12100e]/95 backdrop-blur-xl border-t border-gold-500/20 px-3 py-1.5 flex items-center justify-around shadow-2xl">
+        <Link
+          href="/admin"
+          className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition-colors ${
+            pathname === "/admin" ? "text-gold-400 font-bold" : "text-luxury-400 hover:text-cream-100"
+          }`}
+        >
+          <LayoutDashboard className="h-5 w-5" />
+          <span className="text-[10px] mt-0.5">Dashboard</span>
+        </Link>
+
+        <Link
+          href="/admin/cakes"
+          className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition-colors ${
+            pathname === "/admin/cakes" ? "text-gold-400 font-bold" : "text-luxury-400 hover:text-cream-100"
+          }`}
+        >
+          <Cake className="h-5 w-5" />
+          <span className="text-[10px] mt-0.5">Cakes</span>
+        </Link>
+
+        {/* Central Prominent Add Cake Button */}
+        <Link
+          href="/admin/cakes/new"
+          className="flex flex-col items-center justify-center -mt-5"
+        >
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gold-gradient text-luxury-950 shadow-gold-md border-2 border-[#12100e] active:scale-95 transition-transform">
+            <Plus className="h-6 w-6 stroke-[2.5]" />
+          </div>
+          <span className="text-[10px] font-bold text-gold-300 mt-0.5">Add</span>
+        </Link>
+
+        <Link
+          href="/admin/qr"
+          className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition-colors ${
+            pathname === "/admin/qr" ? "text-gold-400 font-bold" : "text-luxury-400 hover:text-cream-100"
+          }`}
+        >
+          <QrCode className="h-5 w-5" />
+          <span className="text-[10px] mt-0.5">Table QR</span>
+        </Link>
+
+        <button
+          onClick={() => setMobileNavOpen(!mobileNavOpen)}
+          className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition-colors ${
+            mobileNavOpen ? "text-gold-400 font-bold" : "text-luxury-400 hover:text-cream-100"
+          }`}
+        >
+          <MenuIcon className="h-5 w-5" />
+          <span className="text-[10px] mt-0.5">More</span>
+        </button>
+      </nav>
     </div>
   );
 }

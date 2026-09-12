@@ -4,15 +4,20 @@ import { getActiveOccasion } from "@/lib/festivals/occasionEngine";
 
 import {
   getCachedCategories,
-  getCachedFeaturedCakes,
+  getCachedAllCakes,
   getCachedWebsiteSettings,
   getCachedWhatsAppSetting,
+  warmActiveOccasion,
 } from "@/lib/cache";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export default async function MenuPage() {
+export default async function MenuPage({
+  searchParams,
+}: {
+  searchParams?: { category?: string };
+}) {
   const [
     categories,
     cakes,
@@ -21,11 +26,20 @@ export default async function MenuPage() {
     activeOccasion,
   ] = await Promise.all([
     getCachedCategories(),
-    getCachedFeaturedCakes(),
+    getCachedAllCakes(),
     getCachedWebsiteSettings(),
     getCachedWhatsAppSetting(),
     getActiveOccasion(),
   ]);
+
+  // Pre-warm occasion detail pages in background for instant navigation
+  if (activeOccasion?.isMerged && activeOccasion?.mergedOccasions) {
+    for (const occ of activeOccasion.mergedOccasions) {
+      if (occ.slug) warmActiveOccasion(occ.slug);
+    }
+  } else if (activeOccasion?.occasion?.slug) {
+    warmActiveOccasion(activeOccasion.occasion.slug);
+  }
 
   return (
     <MenuClient
@@ -34,6 +48,7 @@ export default async function MenuPage() {
       settings={settings || undefined}
       whatsappSetting={whatsappSetting || undefined}
       activeOccasion={activeOccasion || undefined}
+      initialSelectedCategory={searchParams?.category || "all"}
     />
   );
 }

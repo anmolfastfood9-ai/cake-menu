@@ -22,6 +22,7 @@ export const ALLOWED_MIME_TYPES = [
   "image/png",
   "image/webp",
   "image/avif",
+  "image/svg+xml",
 ];
 
 export const ALLOWED_FOLDERS = [
@@ -30,11 +31,14 @@ export const ALLOWED_FOLDERS = [
   "/branding",
   "/hero",
   "/custom",
+  "/festivals",
 ];
 
 /**
  * Validates actual file buffer magic numbers / binary signatures.
- * Strictly rejects SVGs, corrupted files, and unapproved formats.
+ * Prioritizes binary signatures (JPEG, PNG, WebP, AVIF) to prevent false-positive
+ * rejections on images containing XML metadata (XMP chunks from Photoshop/Canva).
+ * Safely permits clean, script-free SVG vector graphics.
  */
 export function validateImageBuffer(buffer: Buffer): {
   isValid: boolean;
@@ -45,25 +49,12 @@ export function validateImageBuffer(buffer: Buffer): {
     return { isValid: false, error: "File is too small or corrupted" };
   }
 
-  // 1. Strict SVG Detection (Text based search in header)
-  const headerSample = buffer.slice(0, 512).toString("utf8").toLowerCase();
-  if (
-    headerSample.includes("<svg") ||
-    headerSample.includes("<?xml") ||
-    headerSample.includes("xmlns=\"http://www.w3.org/2000/svg")
-  ) {
-    return {
-      isValid: false,
-      error: "SVG uploads are strictly disallowed for security reasons",
-    };
-  }
-
-  // 2. JPEG: FF D8 FF
+  // 1. JPEG: FF D8 FF (High priority check - true binary magic bytes)
   if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
     return { isValid: true, mimeType: "image/jpeg" };
   }
 
-  // 3. PNG: 89 50 4E 47 0D 0A 1A 0A
+  // 2. PNG: 89 50 4E 47 0D 0A 1A 0A (High priority check - true binary magic bytes)
   if (
     buffer[0] === 0x89 &&
     buffer[1] === 0x50 &&
@@ -77,14 +68,14 @@ export function validateImageBuffer(buffer: Buffer): {
     return { isValid: true, mimeType: "image/png" };
   }
 
-  // 4. WebP: RIFF (bytes 0-3) and WEBP (bytes 8-11)
+  // 3. WebP: RIFF (bytes 0-3) and WEBP (bytes 8-11)
   const riff = buffer.toString("ascii", 0, 4);
   const webp = buffer.toString("ascii", 8, 12);
   if (riff === "RIFF" && webp === "WEBP") {
     return { isValid: true, mimeType: "image/webp" };
   }
 
-  // 5. AVIF: ftyp (bytes 4-7) with avif/mif1/avis (bytes 8-11)
+  // 4. AVIF: ftyp (bytes 4-7) with avif/mif1/avis (bytes 8-11)
   const ftyp = buffer.toString("ascii", 4, 8);
   if (ftyp === "ftyp") {
     const brand = buffer.toString("ascii", 8, 12);
@@ -93,9 +84,33 @@ export function validateImageBuffer(buffer: Buffer): {
     }
   }
 
+  // 5. SVG: Text-based vector graphic. Ensure it contains no executable scripts
+  const textSample = buffer.slice(0, 4096).toString("utf8").toLowerCase();
+  if (
+    textSample.includes("<svg") ||
+    (textSample.includes("<?xml") && textSample.includes("<svg")) ||
+    textSample.includes("xmlns=\"http://www.w3.org/2000/svg")
+  ) {
+    const fullText = buffer.toString("utf8").toLowerCase();
+    // Block <script> tags, javascript: URLs, data: URIs, and ALL on* event handlers
+    if (
+      fullText.includes("<script") ||
+      fullText.includes("javascript:") ||
+      /\bon\w+\s*=/i.test(fullText) ||          // all event handlers: onload, onmouseover, onfocus, etc.
+      /xlink:href\s*=\s*["']?\s*javascript:/i.test(fullText) ||
+      /href\s*=\s*["']?\s*data:/i.test(fullText)
+    ) {
+      return {
+        isValid: false,
+        error: "SVG file contains prohibited scripts, event handlers, or unsafe URIs",
+      };
+    }
+    return { isValid: true, mimeType: "image/svg+xml" };
+  }
+
   return {
     isValid: false,
-    error: "Unsupported image format. Allowed formats are JPEG, PNG, WebP, and AVIF.",
+    error: "Unsupported image format. Allowed formats are PNG, JPEG, WebP, AVIF, and clean SVG.",
   };
 }
 
@@ -214,12 +229,7 @@ export async function processImageUpload(
     throw new Error(`File "${file.name}" exceeds the maximum allowed size of 5 MB (${(file.size / (1024 * 1024)).toFixed(2)} MB uploaded)`);
   }
 
-  // 2. Client MIME check
-  if (file.type && file.type.toLowerCase().includes("svg")) {
-    throw new Error("SVG format is strictly prohibited for security reasons");
-  }
-
-  // 3. Read Buffer & Verify binary magic bytes
+  // 2. Read Buffer & Verify binary magic bytes / content security
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
 

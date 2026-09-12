@@ -49,6 +49,9 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ success: true, user: updatedUser });
   } catch (error: any) {
     console.error("Update profile error:", error);
-    return NextResponse.json({ error: error.message || "Failed to update profile" }, { status: 500 });
+    return NextResponse.json(
+      { error: "An internal server error occurred" },
+      { status: 500 }
+    );
   }
 }

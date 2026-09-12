@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { getSessionAdminFromRequest } from "@/lib/auth";
-import { invalidateAppCache } from "@/lib/cache";
+import { invalidateAppCache, getCachedWebsiteSettings } from "@/lib/cache";
 import { revalidatePath } from "next/cache";
 
 export const dynamic = "force-dynamic";
@@ -9,20 +9,14 @@ export const dynamic = "force-dynamic";
 // GET /api/settings - Fetch current website settings
 export async function GET() {
   try {
-    let settings = await prisma.websiteSetting.findUnique({
-      where: { id: "default" },
-    });
-
-    if (!settings) {
-      settings = await prisma.websiteSetting.create({
-        data: { id: "default" },
-      });
-    }
-
+    const settings = await getCachedWebsiteSettings();
     return NextResponse.json({ success: true, settings });
   } catch (error: any) {
     console.error("Fetch settings error:", error);
-    return NextResponse.json({ error: error.message || "Failed to fetch settings" }, { status: 500 });
+    return NextResponse.json(
+      { error: "An internal server error occurred" },
+      { status: 500 }
+    );
   }
 }
 
@@ -109,7 +103,10 @@ async function handleUpdateSettings(req: NextRequest) {
     return NextResponse.json({ success: true, settings });
   } catch (error: any) {
     console.error("Update settings error:", error);
-    return NextResponse.json({ error: error.message || "Failed to update settings" }, { status: 500 });
+    return NextResponse.json(
+      { error: "An internal server error occurred" },
+      { status: 500 }
+    );
   }
 }
 

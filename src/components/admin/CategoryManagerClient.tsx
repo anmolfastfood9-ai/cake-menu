@@ -11,6 +11,8 @@ import {
   Check,
   X,
   ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
   Cake,
 } from "lucide-react";
 
@@ -71,6 +73,64 @@ export default function CategoryManagerClient({
       }
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  const handleMove = async (index: number, direction: -1 | 1) => {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= categories.length) return;
+
+    const updated = [...categories];
+    const itemA = updated[index];
+    const itemB = updated[targetIndex];
+
+    updated[index] = itemB;
+    updated[targetIndex] = itemA;
+
+    const reordered = updated.map((cat, idx) => ({
+      ...cat,
+      displayOrder: idx + 1,
+    }));
+
+    setCategories(reordered);
+
+    try {
+      await Promise.all([
+        fetch(`/api/categories/${itemA.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ displayOrder: targetIndex + 1 }),
+        }),
+        fetch(`/api/categories/${itemB.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ displayOrder: index + 1 }),
+        }),
+      ]);
+    } catch (e) {
+      console.error("Failed to reorder categories", e);
+    }
+  };
+
+  const handleRenumberSequence = async () => {
+    const reordered = categories.map((cat, idx) => ({
+      ...cat,
+      displayOrder: idx + 1,
+    }));
+    setCategories(reordered);
+
+    try {
+      await Promise.all(
+        reordered.map((cat) =>
+          fetch(`/api/categories/${cat.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ displayOrder: cat.displayOrder }),
+          })
+        )
+      );
+    } catch (e) {
+      console.error("Failed to fix sequence", e);
     }
   };
 
@@ -146,7 +206,7 @@ export default function CategoryManagerClient({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-28 sm:pb-8">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -161,31 +221,65 @@ export default function CategoryManagerClient({
           </p>
         </div>
 
-        <button
-          onClick={openCreateModal}
-          className="flex items-center space-x-1.5 rounded-xl bg-gold-gradient px-4 py-2.5 text-xs font-bold text-luxury-950 shadow-gold-sm hover:scale-102 transition-transform"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Add Category</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={handleRenumberSequence}
+            className="flex items-center space-x-1.5 rounded-xl border border-gold-500/30 bg-luxury-800 px-3.5 py-2 text-xs font-semibold text-gold-300 hover:bg-gold-500 hover:text-luxury-950 transition-colors"
+            title="Clean and assign unique sequential orders 1, 2, 3..."
+          >
+            <ArrowUpDown className="h-3.5 w-3.5" />
+            <span>Fix Order Numbers (1–N)</span>
+          </button>
+
+          <button
+            onClick={openCreateModal}
+            className="flex items-center space-x-1.5 rounded-xl bg-gold-gradient px-4 py-2 text-xs font-bold text-luxury-950 shadow-gold-sm hover:scale-102 transition-transform"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Add Category</span>
+          </button>
+        </div>
       </div>
 
       {/* Categories Grid / List */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {categories.map((cat) => (
+        {categories.map((cat, idx) => (
           <div
             key={cat.id}
-            className="flex flex-col justify-between rounded-2xl border border-gold-500/20 bg-luxury-900/80 p-5 shadow-lg transition-all hover:border-gold-500/40"
+            className="flex flex-col justify-between rounded-2xl border border-gold-500/20 bg-luxury-900/80 p-4 sm:p-5 shadow-lg transition-all hover:border-gold-500/40"
           >
             <div>
-              <div className="flex items-center justify-between">
-                <span className="rounded-md bg-luxury-950 px-2 py-0.5 text-[10px] font-bold text-gold-400 border border-luxury-800">
-                  Order: #{cat.displayOrder}
-                </span>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="rounded-md bg-luxury-950 px-2 py-0.5 text-[10px] font-bold text-gold-400 border border-luxury-800">
+                    Order: #{cat.displayOrder}
+                  </span>
+                  <div className="flex items-center gap-0.5">
+                    <button
+                      type="button"
+                      disabled={idx === 0}
+                      onClick={() => handleMove(idx, -1)}
+                      className="p-1 rounded-md bg-luxury-950 border border-luxury-800 text-luxury-400 hover:text-gold-300 disabled:opacity-20 transition-colors"
+                      title="Move Up"
+                    >
+                      <ArrowUp className="h-3 w-3" />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={idx === categories.length - 1}
+                      onClick={() => handleMove(idx, 1)}
+                      className="p-1 rounded-md bg-luxury-950 border border-luxury-800 text-luxury-400 hover:text-gold-300 disabled:opacity-20 transition-colors"
+                      title="Move Down"
+                    >
+                      <ArrowDown className="h-3 w-3" />
+                    </button>
+                  </div>
+                </div>
 
                 <button
                   onClick={() => handleToggleActive(cat.id, cat.active)}
-                  className={`flex items-center space-x-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                  className={`flex items-center space-x-1 rounded-full px-2 py-0.5 text-[10px] font-semibold transition-colors ${
                     cat.active
                       ? "bg-emerald-950 text-emerald-400 border border-emerald-500/30"
                       : "bg-red-950 text-red-400 border border-red-500/30"
@@ -205,9 +299,9 @@ export default function CategoryManagerClient({
                     <FolderTree className="h-6 w-6" />
                   </div>
                 )}
-                <div>
-                  <h3 className="font-serif text-base font-bold text-cream-100">{cat.name}</h3>
-                  <span className="text-[10px] text-luxury-500 font-mono">/menu/category/{cat.slug}</span>
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-serif text-base font-bold text-cream-100 truncate">{cat.name}</h3>
+                  <span className="text-[10px] text-luxury-500 font-mono block truncate">/menu?category={cat.slug}</span>
                 </div>
               </div>
 
@@ -218,21 +312,26 @@ export default function CategoryManagerClient({
               )}
             </div>
 
-            <div className="mt-5 flex items-center justify-between border-t border-luxury-800 pt-3 text-xs">
-              <span className="text-luxury-400 font-medium">
+            <div className="mt-4 sm:mt-5 flex items-center justify-between border-t border-luxury-800 pt-3 text-xs">
+              <span className={`font-medium ${cat._count?.cakes === 0 ? "text-luxury-500" : "text-luxury-300"}`}>
                 {cat._count?.cakes ?? 0} {cat._count?.cakes === 1 ? "cake" : "cakes"}
+                {cat._count?.cakes === 0 && (
+                  <span className="ml-1.5 rounded bg-luxury-950 border border-luxury-800 px-1.5 py-0.5 text-[9px] text-amber-400/80">
+                    Empty
+                  </span>
+                )}
               </span>
 
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() => openEditModal(cat)}
-                  className="rounded-lg border border-gold-500/30 bg-luxury-800 px-2.5 py-1 text-gold-300 hover:bg-gold-500 hover:text-luxury-950 text-[11px] font-semibold"
+                  className="rounded-lg border border-gold-500/30 bg-luxury-800 px-2.5 py-1 text-gold-300 hover:bg-gold-500 hover:text-luxury-950 text-[11px] font-semibold transition-colors"
                 >
                   Edit
                 </button>
                 <button
                   onClick={() => handleDelete(cat.id, cat.name)}
-                  className="rounded-lg border border-luxury-700 bg-luxury-950 p-1 text-luxury-400 hover:text-red-400"
+                  className="rounded-lg border border-luxury-700 bg-luxury-950 p-1 text-luxury-400 hover:text-red-400 transition-colors"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>

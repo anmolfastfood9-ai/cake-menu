@@ -15,7 +15,17 @@ import {
   HelpCircle,
   Plus,
   Trash2,
+  Upload,
+  Image as ImageIcon,
+  RotateCcw,
 } from "lucide-react";
+import { checkHasBakedInText, FESTIVAL_CONFIG } from "@/components/customer/OccasionShowcase";
+
+function getOccasionBannerUrl(slug: string, customBanner?: string | null): string {
+  if (customBanner) return customBanner;
+  if (FESTIVAL_CONFIG[slug]?.banner) return FESTIVAL_CONFIG[slug].banner;
+  return `/images/festivals/${slug}-banner.jpg`;
+}
 
 interface OccasionRecord {
   id: string;
@@ -24,6 +34,7 @@ interface OccasionRecord {
   type: string;
   description?: string;
   badgeText?: string;
+  bannerImage?: string | null;
   accentColor?: string;
   priority: number;
   active: boolean;
@@ -51,6 +62,7 @@ export default function AdminOccasionsPage() {
     name: "",
     badgeText: "",
     description: "",
+    bannerImage: "",
     accentColor: "#D4AF37",
     priority: 50,
     eventDate: "",
@@ -68,6 +80,7 @@ export default function AdminOccasionsPage() {
     type: "CUSTOM",
     badgeText: "",
     description: "",
+    bannerImage: "",
     accentColor: "#D4AF37",
     priority: 75,
     eventDate: new Date().toISOString().slice(0, 10),
@@ -77,7 +90,26 @@ export default function AdminOccasionsPage() {
     active: true,
   });
 
+  const [uploadingBanner, setUploadingBanner] = useState(false);
+  const [bannerUploadError, setBannerUploadError] = useState<string | null>(null);
+  const [editBannerHasText, setEditBannerHasText] = useState<boolean>(true);
+  const [createBannerHasText, setCreateBannerHasText] = useState<boolean>(true);
+  const [editCakeSearch, setEditCakeSearch] = useState("");
+  const [createCakeSearch, setCreateCakeSearch] = useState("");
+
+  // Year-Round Default Banner State (active when no festival is scheduled)
+  const [defaultBannerImage, setDefaultBannerImage] = useState<string>("/images/festivals/generic-luxury-banner.jpg");
+  const [defaultBannerTitle, setDefaultBannerTitle] = useState<string>("Raman Sweet Signature Collection");
+  const [defaultBannerSubtitle, setDefaultBannerSubtitle] = useState<string>("100% EGGLESS • HANDCRAFTED ARTISANAL BAKES");
+  const [bannerHasText, setBannerHasText] = useState<boolean>(false);
+  const [savingDefaultBanner, setSavingDefaultBanner] = useState(false);
+  const [uploadingDefaultBanner, setUploadingDefaultBanner] = useState(false);
+  const [defaultBannerSuccess, setDefaultBannerSuccess] = useState(false);
+  const [defaultBannerError, setDefaultBannerError] = useState<string | null>(null);
+
   const [error, setError] = useState<string | null>(null);
+
+
 
   const fetchOccasions = async () => {
     try {
@@ -95,13 +127,52 @@ export default function AdminOccasionsPage() {
 
   useEffect(() => {
     fetchOccasions();
-    fetch("/api/cakes")
+    fetch("/api/cakes?cakesOnly=true")
       .then((res) => res.json())
       .then((data) => {
         if (data.cakes) setCakesList(data.cakes);
       })
       .catch(console.error);
+
+    fetch("/api/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.settings) {
+          if (data.settings.heroImage) setDefaultBannerImage(data.settings.heroImage);
+          if (data.settings.heroTitle !== undefined) {
+            if (data.settings.heroTitle === "__NO_TEXT__" || data.settings.heroTitle === "") {
+              setBannerHasText(true);
+              setDefaultBannerTitle("");
+            } else {
+              setBannerHasText(false);
+              setDefaultBannerTitle(data.settings.heroTitle || "Raman Sweet Signature Collection");
+            }
+          }
+          if (data.settings.heroSubtitle) setDefaultBannerSubtitle(data.settings.heroSubtitle);
+        }
+      })
+      .catch(console.error);
   }, []);
+
+  const handleToggleBannerHasText = async (hasText: boolean) => {
+    setBannerHasText(hasText);
+    const saveTitle = hasText ? "__NO_TEXT__" : (defaultBannerTitle || "Raman Sweet Signature Collection");
+    try {
+      await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          heroImage: defaultBannerImage.trim(),
+          heroTitle: saveTitle,
+          heroSubtitle: defaultBannerSubtitle.trim(),
+        }),
+      });
+      setDefaultBannerSuccess(true);
+      setTimeout(() => setDefaultBannerSuccess(false), 3000);
+    } catch (err: any) {
+      console.error("Failed to toggle banner text mode:", err);
+    }
+  };
 
   const handleToggleActive = async (occ: OccasionRecord) => {
     try {
@@ -120,6 +191,153 @@ export default function AdminOccasionsPage() {
     }
   };
 
+  const handleBannerUpload = async (file: File, isEdit: boolean) => {
+    if (!file) return;
+    setUploadingBanner(true);
+    setBannerUploadError(null);
+    try {
+      const formData = new FormData();
+      formData.append("files", file);
+      formData.append("folder", "/festivals");
+
+      const res = await fetch("/api/images", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to upload banner");
+
+      const uploadedUrl = data.images?.[0]?.url;
+      if (uploadedUrl) {
+        if (isEdit) {
+          setEditForm((prev) => ({ ...prev, bannerImage: uploadedUrl }));
+          setEditBannerHasText(true);
+        } else {
+          setCreateForm((prev) => ({ ...prev, bannerImage: uploadedUrl }));
+          setCreateBannerHasText(true);
+        }
+      }
+    } catch (err: any) {
+      setBannerUploadError(err.message || "Failed to upload banner");
+    } finally {
+      setUploadingBanner(false);
+    }
+  };
+
+  const handleDefaultBannerUpload = async (file: File) => {
+    if (!file) return;
+    setUploadingDefaultBanner(true);
+    setDefaultBannerError(null);
+    setDefaultBannerSuccess(false);
+    try {
+      const formData = new FormData();
+      formData.append("files", file);
+      formData.append("folder", "/festivals");
+
+      const res = await fetch("/api/images", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to upload banner");
+
+      const uploadedUrl = data.images?.[0]?.url;
+      if (uploadedUrl) {
+        setDefaultBannerImage(uploadedUrl);
+
+        // Auto-save immediately to settings so customer view updates without extra clicks
+        const saveTitle = bannerHasText ? "__NO_TEXT__" : defaultBannerTitle.trim();
+        const saveRes = await fetch("/api/settings", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            heroImage: uploadedUrl.trim(),
+            heroTitle: saveTitle,
+            heroSubtitle: defaultBannerSubtitle.trim(),
+          }),
+        });
+
+        if (!saveRes.ok) {
+          const errData = await saveRes.json().catch(() => ({}));
+          throw new Error(errData.error || "Uploaded banner, but failed to persist to settings");
+        }
+
+        setDefaultBannerSuccess(true);
+        setTimeout(() => setDefaultBannerSuccess(false), 4000);
+      }
+    } catch (err: any) {
+      setDefaultBannerError(err.message || "Failed to upload banner");
+    } finally {
+      setUploadingDefaultBanner(false);
+    }
+  };
+
+  const handleResetDefaultBanner = async () => {
+    const master8k = "/images/festivals/8k/generic-luxury-banner-8k.jpg";
+    const defaultTitle = "Raman Sweet Signature Collection";
+    const defaultSubtitle = "100% EGGLESS • HANDCRAFTED ARTISANAL BAKES";
+    setDefaultBannerImage(master8k);
+    setDefaultBannerTitle(defaultTitle);
+    setDefaultBannerSubtitle(defaultSubtitle);
+    setBannerHasText(false);
+    setSavingDefaultBanner(true);
+    setDefaultBannerError(null);
+    setDefaultBannerSuccess(false);
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          heroImage: master8k,
+          heroTitle: defaultTitle,
+          heroSubtitle: defaultSubtitle,
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to reset default banner");
+      }
+
+      setDefaultBannerSuccess(true);
+      setTimeout(() => setDefaultBannerSuccess(false), 4000);
+    } catch (err: any) {
+      setDefaultBannerError(err.message || "Failed to reset banner");
+    } finally {
+      setSavingDefaultBanner(false);
+    }
+  };
+
+  const handleSaveDefaultBanner = async () => {
+    setSavingDefaultBanner(true);
+    setDefaultBannerError(null);
+    setDefaultBannerSuccess(false);
+    try {
+      const saveTitle = bannerHasText ? "__NO_TEXT__" : defaultBannerTitle.trim();
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          heroImage: defaultBannerImage.trim(),
+          heroTitle: saveTitle,
+          heroSubtitle: defaultBannerSubtitle.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update default banner");
+
+      setDefaultBannerSuccess(true);
+      setTimeout(() => setDefaultBannerSuccess(false), 3000);
+    } catch (err: any) {
+      setDefaultBannerError(err.message || "Failed to save default banner");
+    } finally {
+      setSavingDefaultBanner(false);
+    }
+  };
+
   const handleOpenEdit = (occ: OccasionRecord) => {
     setEditingOccasion(occ);
     const evDate = occ.currentOccurrence?.eventDate
@@ -129,6 +347,7 @@ export default function AdminOccasionsPage() {
       name: occ.name,
       badgeText: occ.badgeText || "",
       description: occ.description || "",
+      bannerImage: occ.bannerImage || "",
       accentColor: occ.accentColor || "#D4AF37",
       priority: occ.priority || 50,
       eventDate: evDate,
@@ -136,6 +355,47 @@ export default function AdminOccasionsPage() {
       daysAfter: occ.daysAfter ?? 1,
       selectedCakeIds: occ.cakeIds || [],
     });
+    const bannerUrl = getOccasionBannerUrl(occ.slug, occ.bannerImage);
+    let hasText = true;
+    if (bannerUrl.includes("#overlay=true") || bannerUrl.includes("#text=true")) {
+      hasText = false;
+    } else if (bannerUrl.includes("#notext")) {
+      hasText = true;
+    } else {
+      hasText = checkHasBakedInText(bannerUrl, occ.badgeText);
+    }
+    setEditBannerHasText(hasText);
+    setBannerUploadError(null);
+    setEditCakeSearch("");
+  };
+
+  const handleToggleEditBannerText = async (newHasText: boolean) => {
+    setEditBannerHasText(newHasText);
+    if (!editingOccasion) return;
+
+    let finalBanner = editForm.bannerImage ? editForm.bannerImage.trim() : "";
+    if (finalBanner) {
+      const cleanUrl = finalBanner.split("#")[0];
+      finalBanner = newHasText ? `${cleanUrl}#notext` : `${cleanUrl}#overlay=true`;
+    } else {
+      const defaultUrl = getOccasionBannerUrl(editingOccasion.slug);
+      finalBanner = newHasText ? `${defaultUrl}#notext` : `${defaultUrl}#overlay=true`;
+    }
+
+    setEditForm((prev) => ({ ...prev, bannerImage: finalBanner }));
+
+    try {
+      await fetch(`/api/occasions/${editingOccasion.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bannerImage: finalBanner,
+        }),
+      });
+      fetchOccasions();
+    } catch (err) {
+      console.error("Failed to auto-save banner text toggle:", err);
+    }
   };
 
   const handleSaveEdit = async (e: React.FormEvent) => {
@@ -143,6 +403,15 @@ export default function AdminOccasionsPage() {
     if (!editingOccasion) return;
     setSaving(true);
     try {
+      let finalBanner = editForm.bannerImage ? editForm.bannerImage.trim() : "";
+      if (finalBanner) {
+        const cleanUrl = finalBanner.split("#")[0];
+        finalBanner = editBannerHasText ? `${cleanUrl}#notext` : `${cleanUrl}#overlay=true`;
+      } else {
+        const defaultUrl = getOccasionBannerUrl(editingOccasion.slug);
+        finalBanner = editBannerHasText ? `${defaultUrl}#notext` : `${defaultUrl}#overlay=true`;
+      }
+
       const res = await fetch(`/api/occasions/${editingOccasion.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -150,6 +419,7 @@ export default function AdminOccasionsPage() {
           name: editForm.name,
           badgeText: editForm.badgeText,
           description: editForm.description,
+          bannerImage: finalBanner || null,
           accentColor: editForm.accentColor,
           priority: editForm.priority,
           eventDate: editForm.eventDate || undefined,
@@ -181,6 +451,14 @@ export default function AdminOccasionsPage() {
     }
     setCreating(true);
     try {
+      let finalBanner = createForm.bannerImage ? createForm.bannerImage.trim() : "";
+      if (finalBanner) {
+        finalBanner = finalBanner.split("#")[0];
+        if (createBannerHasText) {
+          finalBanner = `${finalBanner}#notext`;
+        }
+      }
+
       const res = await fetch("/api/occasions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -189,6 +467,7 @@ export default function AdminOccasionsPage() {
           type: createForm.type,
           badgeText: createForm.badgeText,
           description: createForm.description,
+          bannerImage: finalBanner || null,
           accentColor: createForm.accentColor,
           priority: createForm.priority,
           eventDate: createForm.eventDate,
@@ -209,6 +488,7 @@ export default function AdminOccasionsPage() {
         type: "CUSTOM",
         badgeText: "",
         description: "",
+        bannerImage: "",
         accentColor: "#D4AF37",
         priority: 75,
         eventDate: new Date().toISOString().slice(0, 10),
@@ -253,7 +533,7 @@ export default function AdminOccasionsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-32 sm:pb-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -378,6 +658,180 @@ export default function AdminOccasionsPage() {
         </div>
       </div>
 
+      {/* Year-Round Default Banner (Active when no festival is scheduled) */}
+      <div className="rounded-3xl border border-gold-500/30 bg-[#14120f] p-5 sm:p-6 shadow-2xl space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-luxury-800 pb-3.5">
+          <div>
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-gold-400" />
+              <h2 className="font-serif text-lg font-bold text-cream-100">
+                Year-Round Default Banner
+              </h2>
+            </div>
+            <p className="text-xs text-luxury-400 mt-0.5">
+              Displays on customer /menu on normal days when no festival or occasion is active on the calendar.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {defaultBannerSuccess && (
+              <span className="flex items-center gap-1 text-xs font-semibold text-emerald-400 animate-fade-in">
+                <Check className="h-3.5 w-3.5" /> Saved Live!
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={handleSaveDefaultBanner}
+              disabled={savingDefaultBanner}
+              className="rounded-xl bg-gold-gradient px-4 py-2 text-xs font-bold text-luxury-950 shadow-gold-sm hover:opacity-95 disabled:opacity-50 transition-opacity"
+            >
+              {savingDefaultBanner ? "Saving Banner..." : "Save Default Banner"}
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+          {/* Left: Interactive 16:4 Live Preview */}
+          <div className="lg:col-span-6 space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold text-cream-200">Customer View Live Preview</span>
+              <span className="rounded bg-gold-500/15 border border-gold-500/30 px-2 py-0.5 text-[9.5px] font-semibold text-gold-300">
+                16:4 Aspect Ratio
+              </span>
+            </div>
+            <div className="relative aspect-[16/4.5] w-full overflow-hidden rounded-2xl border border-gold-500/60 bg-[#0B0806] shadow-xl group">
+              <img
+                src={defaultBannerImage || "/images/festivals/generic-luxury-banner.jpg"}
+                alt="Default Banner Live Preview"
+                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.01]"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = "/images/festivals/generic-luxury-banner.jpg";
+                }}
+              />
+              {/* Center Radial Overlay: Only rendered when banner does NOT have text */}
+              {!bannerHasText ? (
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(6,5,4,0.60)_0%,rgba(6,5,4,0.25)_55%,transparent_100%)] flex flex-col items-center justify-center text-center p-3 select-none">
+                  <div className="mb-0.5 text-[#E6C675] drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
+                    <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 0l2.5 8.5L23 11l-8.5 2.5L12 22l-2.5-8.5L1 11l8.5-2.5L12 0z" />
+                    </svg>
+                  </div>
+                  <h4 className="font-serif text-sm sm:text-lg font-bold text-[#FFFDF7] drop-shadow-[0_2px_10px_rgba(0,0,0,0.95)]">
+                    {defaultBannerTitle || "Raman Sweet Signature Collection"}
+                  </h4>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="h-[1px] w-6 bg-gradient-to-r from-transparent to-[#D4AF37]" />
+                    <span className="text-[8px] sm:text-[9.5px] uppercase tracking-[0.2em] text-[#E6C675] font-semibold">
+                      {defaultBannerSubtitle || "100% EGGLESS • HANDCRAFTED ARTISANAL BAKES"}
+                    </span>
+                    <span className="h-[1px] w-6 bg-gradient-to-l from-transparent to-[#D4AF37]" />
+                  </div>
+                  <div className="mt-1.5 rounded-full border border-[#D4AF37]/85 bg-black/45 px-3 py-0.5 text-[8px] sm:text-[9px] font-bold tracking-wider text-[#F7EDD2] shadow">
+                    EXPLORE CAKES →
+                  </div>
+                </div>
+              ) : (
+                <div className="absolute top-2 right-2 rounded bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 text-[9px] font-semibold text-amber-300">
+                  Clean Artwork Mode (No Text Overlay)
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right: Controls & Text Fields */}
+          <div className="lg:col-span-6 space-y-3.5">
+            {/* Toggle: Banner has text */}
+            <div className="flex items-center justify-between p-3 rounded-xl border border-gold-500/30 bg-gold-500/10">
+              <div className="pr-3">
+                <span className="text-xs font-bold text-gold-300 block">
+                  Banner Image Me Pehle Se Text Hai?
+                </span>
+                <span className="text-[10px] text-luxury-300 leading-tight block mt-0.5">
+                  Agar aapke banner me text/logo pehle se designed hai to ise ON karein (extra HTML text overlay hide ho jayega).
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleToggleBannerHasText(!bannerHasText)}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                  bannerHasText ? "bg-amber-500" : "bg-luxury-800"
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                    bannerHasText ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {bannerHasText ? (
+              <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-300">
+                ✦ <strong>Clean Artwork Mode Active</strong>: Banner par koi extra HTML text ya button nahi aayega. Aapka original design 100% clean aur border-to-border dikhega.
+              </div>
+            ) : (
+              <>
+                <div>
+                  <label className="block text-xs font-semibold text-cream-200 mb-1">
+                    Banner Headline Title
+                  </label>
+                  <input
+                    type="text"
+                    value={defaultBannerTitle}
+                    onChange={(e) => setDefaultBannerTitle(e.target.value)}
+                    placeholder="e.g. Raman Sweet Signature Collection"
+                    className="w-full rounded-xl border border-luxury-700 bg-luxury-950 px-3.5 py-2.5 text-xs text-cream-100 focus:border-gold-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-cream-200 mb-1">
+                    Sub-Headline Description
+                  </label>
+                  <input
+                    type="text"
+                    value={defaultBannerSubtitle}
+                    onChange={(e) => setDefaultBannerSubtitle(e.target.value)}
+                    placeholder="e.g. 100% EGGLESS • HANDCRAFTED ARTISANAL BAKES"
+                    className="w-full rounded-xl border border-luxury-700 bg-luxury-950 px-3.5 py-2.5 text-xs text-cream-100 focus:border-gold-500 focus:outline-none"
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Upload & Reset Buttons */}
+            <div className="flex flex-wrap items-center gap-2.5 pt-1">
+              <label className="cursor-pointer inline-flex items-center gap-1.5 rounded-xl border border-gold-500/40 bg-gold-500/10 px-3.5 py-2 text-xs font-semibold text-gold-300 hover:bg-gold-500/20 transition-colors">
+                <Upload className="h-4 w-4" />
+                <span>{uploadingDefaultBanner ? "Uploading..." : "Upload New Default Banner"}</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={uploadingDefaultBanner}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleDefaultBannerUpload(file);
+                  }}
+                />
+              </label>
+
+              <button
+                type="button"
+                onClick={handleResetDefaultBanner}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-luxury-700 bg-luxury-950 px-3 py-2 text-xs text-luxury-300 hover:text-gold-400 hover:border-gold-500/40 transition-colors"
+                title="Reset to 8K Luxury Master"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                <span>Reset to 8K Master</span>
+              </button>
+            </div>
+            {defaultBannerError && (
+              <p className="text-xs text-red-400">{defaultBannerError}</p>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Occasions List */}
       <div className="rounded-3xl border border-gold-500/20 bg-[#14120f] p-5 sm:p-6 shadow-2xl">
         <div className="flex items-center justify-between mb-4">
@@ -446,6 +900,26 @@ export default function AdminOccasionsPage() {
                     </div>
                   </div>
 
+                  {/* Middle: Banner Thumbnail Preview */}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="relative w-24 sm:w-32 aspect-[16/5] rounded-lg overflow-hidden border border-gold-500/30 bg-black/80 shadow-sm group">
+                      <img
+                        src={getOccasionBannerUrl(occ.slug, occ.bannerImage)}
+                        alt={occ.name}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "/images/festivals/generic-luxury-banner.jpg";
+                        }}
+                      />
+                      <span className={`absolute bottom-0.5 right-1 rounded px-1 py-0.2 text-[8px] font-medium backdrop-blur-[2px] ${
+                        occ.bannerImage ? "bg-amber-950/80 text-amber-300 border border-amber-500/40" : "bg-black/70 text-gold-300"
+                      }`}>
+                        {occ.bannerImage ? "Custom" : "System 8K"}
+                        {(occ.bannerImage?.includes("#notext") || checkHasBakedInText(getOccasionBannerUrl(occ.slug, occ.bannerImage), occ.badgeText)) ? " • Clean" : ""}
+                      </span>
+                    </div>
+                  </div>
+
                   {/* Right: Tagged Cakes, Switch & Actions */}
                   <div className="flex items-center gap-3 sm:gap-4 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-luxury-800">
                     {/* Tagged Cakes */}
@@ -503,8 +977,8 @@ export default function AdminOccasionsPage() {
 
       {/* Edit Content Drawer / Modal */}
       {editingOccasion && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm overflow-y-auto">
-          <div className="w-full max-w-lg rounded-3xl border border-gold-500/30 bg-[#14120f] p-6 shadow-2xl space-y-4 my-8 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-3 sm:p-4 backdrop-blur-sm overflow-y-auto">
+          <div className="w-full max-w-lg rounded-3xl border border-gold-500/30 bg-[#14120f] p-4 sm:p-6 shadow-2xl space-y-4 my-4 sm:my-8 max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-luxury-800 pb-3">
               <div className="flex items-center space-x-2">
                 <Sliders className="h-4 w-4 text-gold-400" />
@@ -658,73 +1132,259 @@ export default function AdminOccasionsPage() {
                 </div>
               </div>
 
+              {/* Festival Banner Artwork (Wide 16:4 / 16:5 Ratio) */}
+              <div className="rounded-2xl border border-gold-500/25 bg-luxury-900/60 p-3.5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="block text-xs font-bold text-gold-400">
+                      Festival Banner Artwork
+                    </label>
+                    <p className="text-[10px] text-luxury-400">
+                      Upload custom 16:4 banner or use built-in 8K Master.
+                    </p>
+                  </div>
+                  {editForm.bannerImage ? (
+                    <span className="rounded bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 text-[9px] font-semibold text-amber-300">
+                      Custom Banner Active
+                    </span>
+                  ) : (
+                    <span className="rounded bg-gold-500/15 border border-gold-500/30 px-2 py-0.5 text-[9px] font-semibold text-gold-300">
+                      Using System 8K Master
+                    </span>
+                  )}
+                </div>
+
+                {/* Interactive Live Preview */}
+                <div className="relative aspect-[16/4.5] w-full overflow-hidden rounded-xl border border-gold-500/60 bg-[#0B0806] shadow-lg group">
+                  <img
+                    src={getOccasionBannerUrl(editingOccasion.slug, editForm.bannerImage)}
+                    alt="Banner Live Preview"
+                    className="h-full w-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "/images/festivals/generic-luxury-banner.jpg";
+                    }}
+                  />
+                  {!editBannerHasText ? (
+                    <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center p-2">
+                      <span className="text-[9px] uppercase tracking-widest text-[#E6C675] font-medium">
+                        {editForm.badgeText || "FESTIVE SPECIAL"}
+                      </span>
+                      <h4 className="font-serif text-sm sm:text-base font-bold text-[#FFFDF7] drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
+                        {editForm.name || editingOccasion.name}
+                      </h4>
+                      <div className="mt-1 rounded-full border border-gold-400/80 bg-black/50 px-2.5 py-0.5 text-[8px] font-bold text-gold-300">
+                        VIEW CAKES →
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="absolute top-2 right-2 rounded bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 text-[9px] font-semibold text-amber-300">
+                      Clean Artwork Mode (No Text Overlay)
+                    </div>
+                  )}
+                </div>
+
+                {/* Toggle: Banner Image has baked-in text */}
+                <div
+                  onClick={() => handleToggleEditBannerText(!editBannerHasText)}
+                  className="flex items-center justify-between p-3 rounded-xl border border-gold-500/30 bg-gold-500/10 cursor-pointer hover:bg-gold-500/15 transition-colors select-none"
+                >
+                  <div className="pr-3">
+                    <span className="text-xs font-bold text-gold-300 block">
+                      Banner Image Me Pehle Se Text Hai?
+                    </span>
+                    <span className="text-[10px] text-luxury-300 leading-tight block mt-0.5">
+                      Agar occasion banner me title/badge pehle se designed hai to ise ON karein (extra HTML text overlay hide ho jayega).
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleEditBannerText(!editBannerHasText);
+                    }}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                      editBannerHasText ? "bg-amber-500" : "bg-luxury-800"
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                        editBannerHasText ? "translate-x-5" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* Instant Status Pill */}
+                {editBannerHasText ? (
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-2.5 text-xs text-amber-300 flex items-center gap-2">
+                    <span className="text-amber-400">✦</span>
+                    <span><strong>Clean Artwork Mode Active</strong>: Banner par koi extra HTML text overlay ya button nahi aayega.</span>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-gold-500/30 bg-gold-500/10 p-2.5 text-xs text-gold-300 flex items-center gap-2">
+                    <span className="text-gold-400">✦</span>
+                    <span><strong>Text Overlay Mode Active</strong>: 3D Gold Title, ornaments aur button banner ke upar luxury style me render honge.</span>
+                  </div>
+                )}
+
+                {/* Upload & Reset Controls */}
+                <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                  <label className="cursor-pointer inline-flex items-center gap-1.5 rounded-xl border border-gold-500/40 bg-gold-500/10 px-3 py-1.5 text-xs font-semibold text-gold-300 hover:bg-gold-500/20 transition-colors">
+                    <Upload className="h-3.5 w-3.5" />
+                    <span>{uploadingBanner ? "Uploading..." : "Upload New Banner"}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={uploadingBanner}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleBannerUpload(file, true);
+                      }}
+                    />
+                  </label>
+
+                  {editForm.bannerImage && (
+                    <button
+                      type="button"
+                      onClick={() => setEditForm((prev) => ({ ...prev, bannerImage: "" }))}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-luxury-700 bg-luxury-950 px-2.5 py-1.5 text-xs text-luxury-300 hover:text-gold-400 hover:border-gold-500/40 transition-colors"
+                      title="Revert to system pre-generated 8K/4K master banner"
+                    >
+                      <RotateCcw className="h-3.5 w-3.5" />
+                      <span>Reset to System 8K Master</span>
+                    </button>
+                  )}
+                </div>
+                {bannerUploadError && (
+                  <p className="text-[11px] text-red-400">{bannerUploadError}</p>
+                )}
+              </div>
+
               {/* Tag Pure Veg Cakes */}
               {cakesList.length > 0 && (
-                <div className="space-y-1.5 pt-1">
-                  <label className="block text-xs font-semibold text-cream-200">
-                    Tag Pure Veg Cakes ({editForm.selectedCakeIds.length} Selected)
-                  </label>
-                  <p className="text-[10px] text-luxury-400">
-                    Select cakes to showcase in this collection.
-                  </p>
-                  <div className="max-h-36 overflow-y-auto space-y-1.5 rounded-xl border border-luxury-800 bg-luxury-950/80 p-2">
-                    {cakesList.map((cake) => {
-                      const isChecked = editForm.selectedCakeIds.includes(cake.id);
-                      return (
-                        <label
-                          key={cake.id}
-                          className={`flex items-center justify-between p-1.5 rounded-lg text-xs cursor-pointer transition-colors ${
-                            isChecked ? "bg-gold-500/15 text-gold-300" : "hover:bg-luxury-900 text-cream-200"
-                          }`}
-                        >
-                          <div className="flex items-center space-x-2 truncate">
-                            <input
-                              type="checkbox"
-                              checked={isChecked}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setEditForm({
-                                    ...editForm,
-                                    selectedCakeIds: [...editForm.selectedCakeIds, cake.id],
-                                  });
-                                } else {
-                                  setEditForm({
-                                    ...editForm,
-                                    selectedCakeIds: editForm.selectedCakeIds.filter((id) => id !== cake.id),
-                                  });
-                                }
-                              }}
-                              className="rounded border-luxury-700 bg-luxury-900 text-gold-500 focus:ring-0"
-                            />
-                            {cake.coverImage && (
-                              <img src={cake.coverImage} alt={cake.name} className="h-6 w-6 rounded object-cover" />
+                <div className="space-y-2 pt-1">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="block text-xs font-semibold text-cream-200">
+                        Tag Pure Veg Cakes ({editForm.selectedCakeIds.length} Selected)
+                      </label>
+                      <p className="text-[10px] text-luxury-400">
+                        Select cakes to showcase in this collection.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setEditForm({
+                            ...editForm,
+                            selectedCakeIds: cakesList.map((c) => c.id),
+                          })
+                        }
+                        className="rounded-lg border border-gold-500/30 bg-gold-500/10 px-2.5 py-1 text-[10px] font-semibold text-gold-300 hover:bg-gold-500/20 transition-colors"
+                      >
+                        Select All ({cakesList.length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setEditForm({
+                            ...editForm,
+                            selectedCakeIds: [],
+                          })
+                        }
+                        className="rounded-lg border border-luxury-700 bg-luxury-900 px-2.5 py-1 text-[10px] font-medium text-luxury-400 hover:text-cream-200 transition-colors"
+                      >
+                        Clear All
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Quick Search Filter */}
+                  <input
+                    type="text"
+                    placeholder="Search cakes by name or category..."
+                    value={editCakeSearch}
+                    onChange={(e) => setEditCakeSearch(e.target.value)}
+                    className="w-full rounded-xl border border-luxury-700 bg-luxury-950 px-3.5 py-2 text-xs text-cream-100 placeholder:text-luxury-500 focus:border-gold-500 focus:outline-none"
+                  />
+
+                  <div className="max-h-56 overflow-y-auto space-y-1 rounded-xl border border-luxury-800 bg-luxury-950/80 p-2">
+                    {cakesList
+                      .filter(
+                        (cake) =>
+                          cake.name.toLowerCase().includes(editCakeSearch.toLowerCase()) ||
+                          (cake.category?.name &&
+                            cake.category.name.toLowerCase().includes(editCakeSearch.toLowerCase()))
+                      )
+                      .map((cake) => {
+                        const isChecked = editForm.selectedCakeIds.includes(cake.id);
+                        return (
+                          <label
+                            key={cake.id}
+                            className={`flex items-center justify-between p-2 rounded-xl text-xs cursor-pointer transition-colors ${
+                              isChecked
+                                ? "bg-gold-500/15 text-gold-300 border border-gold-500/30"
+                                : "hover:bg-luxury-900 text-cream-200 border border-transparent"
+                            }`}
+                          >
+                            <div className="flex items-center space-x-2.5 min-w-0">
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setEditForm({
+                                      ...editForm,
+                                      selectedCakeIds: [...editForm.selectedCakeIds, cake.id],
+                                    });
+                                  } else {
+                                    setEditForm({
+                                      ...editForm,
+                                      selectedCakeIds: editForm.selectedCakeIds.filter(
+                                        (id) => id !== cake.id
+                                      ),
+                                    });
+                                  }
+                                }}
+                                className="h-4 w-4 rounded accent-gold-500 shrink-0"
+                              />
+                              {cake.coverImage && (
+                                <img
+                                  src={cake.coverImage}
+                                  alt={cake.name}
+                                  className="h-7 w-7 rounded-lg object-cover shrink-0"
+                                />
+                              )}
+                              <span className="truncate font-medium">{cake.name}</span>
+                            </div>
+                            {cake.category?.name && (
+                              <span className="text-[10px] text-luxury-400 bg-luxury-900 px-2 py-0.5 rounded-md shrink-0 ml-2 border border-luxury-800">
+                                {cake.category.name}
+                              </span>
                             )}
-                            <span className="truncate">{cake.name}</span>
-                          </div>
-                          {cake.category?.name && (
-                            <span className="text-[10px] text-luxury-500 shrink-0 ml-2">
-                              {cake.category.name}
-                            </span>
-                          )}
-                        </label>
-                      );
-                    })}
+                          </label>
+                        );
+                      })}
                   </div>
                 </div>
               )}
 
-              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-luxury-800">
+
+
+              <div className="grid grid-cols-2 gap-3 pt-3 border-t border-luxury-800">
                 <button
                   type="button"
                   onClick={() => setEditingOccasion(null)}
-                  className="rounded-xl border border-luxury-700 px-4 py-2 text-xs font-semibold text-luxury-300 hover:text-cream-100"
+                  className="w-full py-2.5 rounded-xl border border-luxury-700 text-xs font-semibold text-luxury-300 hover:text-cream-100 hover:bg-luxury-900 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="rounded-xl bg-gold-gradient px-5 py-2 text-xs font-bold text-luxury-950 shadow-gold-sm hover:opacity-95 disabled:opacity-50"
+                  className="w-full py-2.5 rounded-xl bg-gold-gradient text-xs font-bold text-luxury-950 shadow-gold-sm hover:opacity-95 disabled:opacity-50 transition-opacity"
                 >
                   {saving ? "Saving Changes..." : "Save Changes"}
                 </button>
@@ -736,8 +1396,8 @@ export default function AdminOccasionsPage() {
 
       {/* Create Custom Occasion Modal */}
       {createModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm overflow-y-auto">
-          <div className="w-full max-w-lg rounded-3xl border border-gold-500/30 bg-[#14120f] p-6 shadow-2xl space-y-4 my-8 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-3 sm:p-4 backdrop-blur-sm overflow-y-auto">
+          <div className="w-full max-w-lg rounded-3xl border border-gold-500/30 bg-[#14120f] p-4 sm:p-6 shadow-2xl space-y-4 my-4 sm:my-8 max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-luxury-800 pb-3">
               <div className="flex items-center space-x-2">
                 <Sparkles className="h-4 w-4 text-gold-400" />
@@ -917,74 +1577,251 @@ export default function AdminOccasionsPage() {
                 </div>
               </div>
 
+              {/* Festival Banner Artwork (Wide 16:4 / 16:5 Ratio) */}
+              <div className="rounded-2xl border border-gold-500/25 bg-luxury-900/60 p-3.5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="block text-xs font-bold text-gold-400">
+                      Festival Banner Artwork (Optional)
+                    </label>
+                    <p className="text-[10px] text-luxury-400">
+                      Upload custom 16:4 banner or system luxury fallback will be used.
+                    </p>
+                  </div>
+                  {createForm.bannerImage && (
+                    <span className="rounded bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 text-[9px] font-semibold text-amber-300">
+                      Custom Banner Added
+                    </span>
+                  )}
+                </div>
+
+                {/* Interactive Live Preview */}
+                <div className="relative aspect-[16/4.5] w-full overflow-hidden rounded-xl border border-gold-500/60 bg-[#0B0806] shadow-lg group">
+                  <img
+                    src={createForm.bannerImage || "/images/festivals/generic-luxury-banner.jpg"}
+                    alt="Banner Live Preview"
+                    className="h-full w-full object-cover"
+                  />
+                  {!createBannerHasText ? (
+                    <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center p-2">
+                      <span className="text-[9px] uppercase tracking-widest text-[#E6C675] font-medium">
+                        {createForm.badgeText || "FESTIVE SPECIAL"}
+                      </span>
+                      <h4 className="font-serif text-sm sm:text-base font-bold text-[#FFFDF7] drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
+                        {createForm.name || "Special Celebration"}
+                      </h4>
+                      <div className="mt-1 rounded-full border border-gold-400/80 bg-black/50 px-2.5 py-0.5 text-[8px] font-bold text-gold-300">
+                        VIEW CAKES →
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="absolute top-2 right-2 rounded bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 text-[9px] font-semibold text-amber-300">
+                      Clean Artwork Mode (No Text Overlay)
+                    </div>
+                  )}
+                </div>
+
+                {/* Toggle: Banner Image has baked-in text */}
+                <div
+                  onClick={() => setCreateBannerHasText(!createBannerHasText)}
+                  className="flex items-center justify-between p-3 rounded-xl border border-gold-500/30 bg-gold-500/10 cursor-pointer hover:bg-gold-500/15 transition-colors select-none"
+                >
+                  <div className="pr-3">
+                    <span className="text-xs font-bold text-gold-300 block">
+                      Banner Image Me Pehle Se Text Hai?
+                    </span>
+                    <span className="text-[10px] text-luxury-300 leading-tight block mt-0.5">
+                      Agar occasion banner me title/badge pehle se designed hai to ise ON karein (extra HTML text overlay hide ho jayega).
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCreateBannerHasText(!createBannerHasText);
+                    }}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                      createBannerHasText ? "bg-amber-500" : "bg-luxury-800"
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                        createBannerHasText ? "translate-x-5" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* Instant Status Pill */}
+                {createBannerHasText ? (
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-2.5 text-xs text-amber-300 flex items-center gap-2">
+                    <span className="text-amber-400">✦</span>
+                    <span><strong>Clean Artwork Mode Active</strong>: Banner par koi extra HTML text overlay ya button nahi aayega.</span>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-gold-500/30 bg-gold-500/10 p-2.5 text-xs text-gold-300 flex items-center gap-2">
+                    <span className="text-gold-400">✦</span>
+                    <span><strong>Text Overlay Mode Active</strong>: 3D Gold Title, ornaments aur button banner ke upar luxury style me render honge.</span>
+                  </div>
+                )}
+
+                {/* Upload Controls */}
+                <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                  <label className="cursor-pointer inline-flex items-center gap-1.5 rounded-xl border border-gold-500/40 bg-gold-500/10 px-3 py-1.5 text-xs font-semibold text-gold-300 hover:bg-gold-500/20 transition-colors">
+                    <Upload className="h-3.5 w-3.5" />
+                    <span>{uploadingBanner ? "Uploading..." : "Upload Banner Image"}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={uploadingBanner}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleBannerUpload(file, false);
+                      }}
+                    />
+                  </label>
+
+                  {createForm.bannerImage && (
+                    <button
+                      type="button"
+                      onClick={() => setCreateForm((prev) => ({ ...prev, bannerImage: "" }))}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-luxury-700 bg-luxury-950 px-2.5 py-1.5 text-xs text-luxury-300 hover:text-red-400 hover:border-red-500/40 transition-colors"
+                      title="Remove banner image"
+                    >
+                      <RotateCcw className="h-3.5 w-3.5" />
+                      <span>Remove Banner</span>
+                    </button>
+                  )}
+                </div>
+                {bannerUploadError && (
+                  <p className="text-[11px] text-red-400">{bannerUploadError}</p>
+                )}
+              </div>
+
               {/* Tag Curated Cakes */}
               {cakesList.length > 0 && (
-                <div className="space-y-1.5 pt-1">
-                  <label className="block text-xs font-semibold text-cream-200">
-                    Tag Pure Veg Cakes ({createForm.selectedCakeIds.length} Selected)
-                  </label>
-                  <p className="text-[10px] text-luxury-400">
-                    Select at least 1 cake so this occasion card displays on the customer menu.
-                  </p>
-                  <div className="max-h-36 overflow-y-auto space-y-1.5 rounded-xl border border-luxury-800 bg-luxury-950/80 p-2">
-                    {cakesList.map((cake) => {
-                      const isChecked = createForm.selectedCakeIds.includes(cake.id);
-                      return (
-                        <label
-                          key={cake.id}
-                          className={`flex items-center justify-between p-1.5 rounded-lg text-xs cursor-pointer transition-colors ${
-                            isChecked ? "bg-gold-500/15 text-gold-300" : "hover:bg-luxury-900 text-cream-200"
-                          }`}
-                        >
-                          <div className="flex items-center space-x-2 truncate">
-                            <input
-                              type="checkbox"
-                              checked={isChecked}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setCreateForm({
-                                    ...createForm,
-                                    selectedCakeIds: [...createForm.selectedCakeIds, cake.id],
-                                  });
-                                } else {
-                                  setCreateForm({
-                                    ...createForm,
-                                    selectedCakeIds: createForm.selectedCakeIds.filter((id) => id !== cake.id),
-                                  });
-                                }
-                              }}
-                              className="rounded border-luxury-700 bg-luxury-900 text-gold-500 focus:ring-0"
-                            />
-                            {cake.coverImage && (
-                              <img src={cake.coverImage} alt={cake.name} className="h-6 w-6 rounded object-cover" />
+                <div className="space-y-2 pt-1">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="block text-xs font-semibold text-cream-200">
+                        Tag Pure Veg Cakes ({createForm.selectedCakeIds.length} Selected)
+                      </label>
+                      <p className="text-[10px] text-luxury-400">
+                        Select at least 1 cake so this occasion card displays on the customer menu.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setCreateForm({
+                            ...createForm,
+                            selectedCakeIds: cakesList.map((c) => c.id),
+                          })
+                        }
+                        className="rounded-lg border border-gold-500/30 bg-gold-500/10 px-2.5 py-1 text-[10px] font-semibold text-gold-300 hover:bg-gold-500/20 transition-colors"
+                      >
+                        Select All ({cakesList.length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setCreateForm({
+                            ...createForm,
+                            selectedCakeIds: [],
+                          })
+                        }
+                        className="rounded-lg border border-luxury-700 bg-luxury-900 px-2.5 py-1 text-[10px] font-medium text-luxury-400 hover:text-cream-200 transition-colors"
+                      >
+                        Clear All
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Quick Search Filter */}
+                  <input
+                    type="text"
+                    placeholder="Search cakes by name or category..."
+                    value={createCakeSearch}
+                    onChange={(e) => setCreateCakeSearch(e.target.value)}
+                    className="w-full rounded-xl border border-luxury-700 bg-luxury-950 px-3.5 py-2 text-xs text-cream-100 placeholder:text-luxury-500 focus:border-gold-500 focus:outline-none"
+                  />
+
+                  <div className="max-h-56 overflow-y-auto space-y-1 rounded-xl border border-luxury-800 bg-luxury-950/80 p-2">
+                    {cakesList
+                      .filter(
+                        (cake) =>
+                          cake.name.toLowerCase().includes(createCakeSearch.toLowerCase()) ||
+                          (cake.category?.name &&
+                            cake.category.name.toLowerCase().includes(createCakeSearch.toLowerCase()))
+                      )
+                      .map((cake) => {
+                        const isChecked = createForm.selectedCakeIds.includes(cake.id);
+                        return (
+                          <label
+                            key={cake.id}
+                            className={`flex items-center justify-between p-2 rounded-xl text-xs cursor-pointer transition-colors ${
+                              isChecked
+                                ? "bg-gold-500/15 text-gold-300 border border-gold-500/30"
+                                : "hover:bg-luxury-900 text-cream-200 border border-transparent"
+                            }`}
+                          >
+                            <div className="flex items-center space-x-2.5 min-w-0">
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setCreateForm({
+                                      ...createForm,
+                                      selectedCakeIds: [...createForm.selectedCakeIds, cake.id],
+                                    });
+                                  } else {
+                                    setCreateForm({
+                                      ...createForm,
+                                      selectedCakeIds: createForm.selectedCakeIds.filter(
+                                        (id) => id !== cake.id
+                                      ),
+                                    });
+                                  }
+                                }}
+                                className="h-4 w-4 rounded accent-gold-500 shrink-0"
+                              />
+                              {cake.coverImage && (
+                                <img
+                                  src={cake.coverImage}
+                                  alt={cake.name}
+                                  className="h-7 w-7 rounded-lg object-cover shrink-0"
+                                />
+                              )}
+                              <span className="truncate font-medium">{cake.name}</span>
+                            </div>
+                            {cake.category?.name && (
+                              <span className="text-[10px] text-luxury-400 bg-luxury-900 px-2 py-0.5 rounded-md shrink-0 ml-2 border border-luxury-800">
+                                {cake.category.name}
+                              </span>
                             )}
-                            <span className="truncate">{cake.name}</span>
-                          </div>
-                          {cake.category?.name && (
-                            <span className="text-[10px] text-luxury-500 shrink-0 ml-2">
-                              {cake.category.name}
-                            </span>
-                          )}
-                        </label>
-                      );
-                    })}
+                          </label>
+                        );
+                      })}
                   </div>
                 </div>
               )}
 
               {/* Action Buttons */}
-              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-luxury-800">
+              <div className="grid grid-cols-2 gap-3 pt-3 border-t border-luxury-800">
                 <button
                   type="button"
                   onClick={() => setCreateModalOpen(false)}
-                  className="rounded-xl border border-luxury-700 px-4 py-2 text-xs font-semibold text-luxury-300 hover:text-cream-100"
+                  className="w-full py-2.5 rounded-xl border border-luxury-700 text-xs font-semibold text-luxury-300 hover:text-cream-100 hover:bg-luxury-900 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={creating}
-                  className="rounded-xl bg-gold-gradient px-5 py-2 text-xs font-bold text-luxury-950 shadow-gold-sm hover:opacity-95 disabled:opacity-50"
+                  className="w-full py-2.5 rounded-xl bg-gold-gradient text-xs font-bold text-luxury-950 shadow-gold-sm hover:opacity-95 disabled:opacity-50 transition-opacity"
                 >
                   {creating ? "Creating..." : "Create Occasion"}
                 </button>
@@ -993,6 +1830,9 @@ export default function AdminOccasionsPage() {
           </div>
         </div>
       )}
+
+
     </div>
   );
 }
+

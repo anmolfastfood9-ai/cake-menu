@@ -105,7 +105,7 @@ export default function QrGeneratorClient({
   };
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
+    <div className="mx-auto max-w-5xl space-y-6 pb-32 sm:pb-12">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-luxury-800 pb-5">
         <div>
@@ -152,14 +152,14 @@ export default function QrGeneratorClient({
                 <label className="block text-xs font-semibold text-cream-200 mb-1">
                   Preset Pages
                 </label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                   <button
                     type="button"
                     onClick={() => {
                       setCustomPath("/menu");
                       setTableNumber("");
                     }}
-                    className={`rounded-xl border p-2 text-xs font-semibold text-center transition-colors ${
+                    className={`rounded-xl border p-2 text-[11px] sm:text-xs font-semibold text-center transition-colors truncate ${
                       customPath === "/menu" && !tableNumber
                         ? "border-gold-400 bg-gold-500/15 text-gold-300"
                         : "border-luxury-800 bg-luxury-950 text-luxury-300 hover:border-gold-500/40"
@@ -174,13 +174,13 @@ export default function QrGeneratorClient({
                       setCustomPath("/menu/cakes");
                       setTableNumber("");
                     }}
-                    className={`rounded-xl border p-2 text-xs font-semibold text-center transition-colors ${
+                    className={`rounded-xl border p-2 text-[11px] sm:text-xs font-semibold text-center transition-colors truncate ${
                       customPath === "/menu/cakes"
                         ? "border-gold-400 bg-gold-500/15 text-gold-300"
                         : "border-luxury-800 bg-luxury-950 text-luxury-300 hover:border-gold-500/40"
                     }`}
                   >
-                    All Cakes Catalog
+                    All Cakes
                   </button>
 
                   <button
@@ -189,13 +189,13 @@ export default function QrGeneratorClient({
                       setCustomPath("/menu/order");
                       setTableNumber("");
                     }}
-                    className={`rounded-xl border p-2 text-xs font-semibold text-center transition-colors ${
+                    className={`rounded-xl border p-2 text-[11px] sm:text-xs font-semibold text-center transition-colors truncate ${
                       customPath === "/menu/order"
                         ? "border-gold-400 bg-gold-500/15 text-gold-300"
                         : "border-luxury-800 bg-luxury-950 text-luxury-300 hover:border-gold-500/40"
                     }`}
                   >
-                    Order Concierge
+                    Concierge
                   </button>
                 </div>
               </div>
@@ -266,21 +266,21 @@ export default function QrGeneratorClient({
                 <label className="block text-xs font-semibold text-cream-200 mb-1.5">
                   Color Scheme Presets
                 </label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                   <button
                     type="button"
                     onClick={() => {
                       setFgColor("#12100e");
                       setBgColor("#FFFFFF");
                     }}
-                    className={`rounded-xl border p-2 text-xs font-medium flex items-center justify-center space-x-2 ${
+                    className={`rounded-xl border p-2 text-[11px] sm:text-xs font-medium flex items-center justify-center space-x-1.5 transition-colors ${
                       fgColor === "#12100e" && bgColor === "#FFFFFF"
                         ? "border-gold-400 bg-gold-500/10 text-gold-300"
                         : "border-luxury-800 bg-luxury-950 text-luxury-300"
                     }`}
                   >
-                    <span className="h-3 w-3 rounded-full bg-black border border-white" />
-                    <span>Classic Black</span>
+                    <span className="h-2.5 w-2.5 sm:h-3 sm:w-3 shrink-0 rounded-full bg-black border border-white" />
+                    <span className="truncate">Black</span>
                   </button>
 
                   <button
@@ -289,14 +289,14 @@ export default function QrGeneratorClient({
                       setFgColor("#C59B27");
                       setBgColor("#12100e");
                     }}
-                    className={`rounded-xl border p-2 text-xs font-medium flex items-center justify-center space-x-2 ${
+                    className={`rounded-xl border p-2 text-[11px] sm:text-xs font-medium flex items-center justify-center space-x-1.5 transition-colors ${
                       fgColor === "#C59B27" && bgColor === "#12100e"
                         ? "border-gold-400 bg-gold-500/10 text-gold-300"
                         : "border-luxury-800 bg-luxury-950 text-luxury-300"
                     }`}
                   >
-                    <span className="h-3 w-3 rounded-full bg-gold-500" />
-                    <span>Luxury Gold</span>
+                    <span className="h-2.5 w-2.5 sm:h-3 sm:w-3 shrink-0 rounded-full bg-gold-500" />
+                    <span className="truncate">Gold</span>
                   </button>
 
                   <button
@@ -305,14 +305,14 @@ export default function QrGeneratorClient({
                       setFgColor("#78350F");
                       setBgColor("#FFFBEB");
                     }}
-                    className={`rounded-xl border p-2 text-xs font-medium flex items-center justify-center space-x-2 ${
+                    className={`rounded-xl border p-2 text-[11px] sm:text-xs font-medium flex items-center justify-center space-x-1.5 transition-colors ${
                       fgColor === "#78350F" && bgColor === "#FFFBEB"
                         ? "border-gold-400 bg-gold-500/10 text-gold-300"
                         : "border-luxury-800 bg-luxury-950 text-luxury-300"
                     }`}
                   >
-                    <span className="h-3 w-3 rounded-full bg-amber-800" />
-                    <span>Warm Cocoa</span>
+                    <span className="h-2.5 w-2.5 sm:h-3 sm:w-3 shrink-0 rounded-full bg-amber-800" />
+                    <span className="truncate">Cocoa</span>
                   </button>
                 </div>
               </div>
@@ -460,11 +460,11 @@ export default function QrGeneratorClient({
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center justify-center gap-3 pt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 w-full">
               <button
                 type="button"
                 onClick={handleDownloadPNG}
-                className="flex items-center space-x-1.5 rounded-xl bg-gold-gradient px-5 py-2.5 text-xs font-bold text-luxury-950 shadow-gold-sm hover:opacity-95 transition-opacity"
+                className="w-full flex items-center justify-center space-x-1.5 rounded-xl bg-gold-gradient py-3 px-4 text-xs font-bold text-luxury-950 shadow-gold-sm hover:opacity-95 active:scale-95 transition-all"
               >
                 <Download className="h-4 w-4" />
                 <span>Download PNG Image</span>
@@ -473,7 +473,7 @@ export default function QrGeneratorClient({
               <button
                 type="button"
                 onClick={handlePrintCard}
-                className="flex items-center space-x-1.5 rounded-xl border border-gold-500/30 bg-luxury-900 px-4 py-2.5 text-xs font-semibold text-gold-300 hover:border-gold-500"
+                className="w-full flex items-center justify-center space-x-1.5 rounded-xl border border-gold-500/30 bg-luxury-900 py-3 px-4 text-xs font-semibold text-gold-300 hover:border-gold-500 hover:bg-gold-500/10 active:scale-95 transition-all"
               >
                 <Printer className="h-4 w-4" />
                 <span>Print Table Card</span>

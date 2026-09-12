@@ -34,7 +34,10 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     return NextResponse.json({ success: true, category });
   } catch (error: any) {
     console.error("Update category error:", error);
-    return NextResponse.json({ error: error.message || "Failed to update category" }, { status: 500 });
+    return NextResponse.json(
+      { error: "An internal server error occurred" },
+      { status: 500 }
+    );
   }
 }
 
@@ -69,6 +72,9 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     return NextResponse.json({ success: true, message: "Category deleted successfully" });
   } catch (error: any) {
     console.error("Delete category error:", error);
-    return NextResponse.json({ error: error.message || "Failed to delete category" }, { status: 500 });
+    return NextResponse.json(
+      { error: "An internal server error occurred" },
+      { status: 500 }
+    );
   }
 }

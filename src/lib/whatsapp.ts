@@ -20,7 +20,7 @@ export function generateWhatsAppLink({
   // Clean phone number (remove +, spaces, hyphens)
   const cleanNumber = whatsappNumber.replace(/[^0-9]/g, "");
 
-  const customMsgLine = customMessage && customMessage.trim() ? `\n*Message on Cake:* "${customMessage.trim()}"` : "";
+  const customMsgLine = customMessage && customMessage.trim() ? `\n*Message:* "${customMessage.trim()}"` : "";
 
   let message = "";
   if (template) {

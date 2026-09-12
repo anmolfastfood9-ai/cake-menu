@@ -33,7 +33,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: true, categories });
   } catch (error: any) {
     console.error("Fetch categories error:", error);
-    return NextResponse.json({ error: error.message || "Failed to fetch categories" }, { status: 500 });
+    return NextResponse.json(
+      { error: "An internal server error occurred" },
+      { status: 500 }
+    );
   }
 }
 
@@ -75,6 +78,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, category }, { status: 201 });
   } catch (error: any) {
     console.error("Create category error:", error);
-    return NextResponse.json({ error: error.message || "Failed to create category" }, { status: 500 });
+    return NextResponse.json(
+      { error: "An internal server error occurred" },
+      { status: 500 }
+    );
   }
 }

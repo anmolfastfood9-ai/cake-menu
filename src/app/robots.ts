@@ -12,7 +12,6 @@ export default function robots(): MetadataRoute.Robots {
           "/menu",
           "/menu/cakes",
           "/menu/cake/",
-          "/menu/category/",
           "/menu/occasion/",
           "/menu/order",
         ],

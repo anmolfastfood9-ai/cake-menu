@@ -50,3 +50,6 @@ prisma/*.db-journal
 *.sqlite
 scripts/sqlite_backup.json
 scripts/
+/scratch/
+*.zip
+implementation_plan.md

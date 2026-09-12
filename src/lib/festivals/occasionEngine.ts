@@ -18,7 +18,9 @@ export interface ActiveOccasionResult {
     name: string;
     slug: string;
     badgeText?: string | null;
+    bannerImage?: string | null;
     accentColor?: string | null;
+    description?: string | null;
   }[];
 }
 
@@ -28,10 +30,21 @@ interface CacheEntry {
   result: ActiveOccasionResult | null;
 }
 
-const memoryCache = new Map<string, CacheEntry>();
-const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+const globalForOccasion = global as unknown as {
+  occasionMemoryCache?: Map<string, CacheEntry>;
+  occasionEnsuredYears?: Set<number>;
+};
 
-const ensuredYears = new Set<number>();
+if (!globalForOccasion.occasionMemoryCache) {
+  globalForOccasion.occasionMemoryCache = new Map();
+}
+if (!globalForOccasion.occasionEnsuredYears) {
+  globalForOccasion.occasionEnsuredYears = new Set();
+}
+
+const memoryCache = globalForOccasion.occasionMemoryCache;
+const ensuredYears = globalForOccasion.occasionEnsuredYears;
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 
 export function clearOccasionCache() {
   memoryCache.clear();
@@ -216,7 +229,9 @@ export async function getActiveOccasion(
       name: c.occasion.name,
       slug: c.occasion.slug,
       badgeText: c.occasion.badgeText,
+      bannerImage: c.occasion.bannerImage,
       accentColor: c.occasion.accentColor,
+      description: c.occasion.description,
     }));
 
     // Interleave top cakes from all active festivals
@@ -270,8 +285,16 @@ export async function getActiveOccasion(
  */
 export async function getOccasionBySlug(slug: string) {
   try {
-    const occasion = await prisma.occasion.findUnique({
-      where: { slug },
+    const normalizedSlug = (slug || "").toLowerCase().trim();
+    const occasion = await prisma.occasion.findFirst({
+      where: {
+        OR: [
+          { slug: { equals: normalizedSlug, mode: "insensitive" } },
+          { id: slug },
+          { calendarKey: { equals: normalizedSlug.replace(/-/g, "_"), mode: "insensitive" } },
+        ],
+        active: true,
+      },
       include: {
         cakes: {
           where: {

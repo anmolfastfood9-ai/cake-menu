@@ -35,6 +35,7 @@ model Category {
 
 model Cake {
   id                String         @id @default(cuid())
+  productType       String         @default("CAKE") // "CAKE" | "GIFT_BOX" | "DRY_FRUIT" | "SWEET" | "HAMPER" | "FESTIVAL_SPECIAL"
   name              String
   slug              String         @unique
   categoryId        String
@@ -50,13 +51,15 @@ model Cake {
   available         Boolean        @default(true)
   rating            Float          @default(4.9)
   customizationInfo String?        @default("Custom message on chocolate plaque, shape customization & tiered sizing available on request.")
-  prices            CakePrice[]
-  occasions         CakeOccasion[]
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
+  prices             CakePrice[]
+  occasions          CakeOccasion[]
+  occasionCategories OccasionCategoryCake[]
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
 
   @@index([categoryId])
   @@index([available])
+  @@index([productType])
   @@index([available, featured, bestseller])
 }
 
@@ -69,6 +72,7 @@ model CakePrice {
   originalPrice Float?   // Strike-through original price
   isDefault     Boolean  @default(false)
   image         String?  // Visual representation for this specific weight/tier (e.g. mini bento, 1kg classic, 2kg two-tier)
+  images        String   @default("[]") // Ordered multi-image gallery JSON array for this specific weight tier
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -89,10 +93,11 @@ model Occasion {
   calendarKey  String               @unique // e.g. "diwali", "holi", "mango_season"
   daysBefore   Int                  @default(7) // Window start: X days before eventDate
   daysAfter    Int                  @default(2) // Window end: Y days after eventDate
-  cakes        CakeOccasion[]
-  occurrences  FestivalOccurrence[]
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime             @updatedAt
+  cakes              CakeOccasion[]
+  categories         OccasionCategory[]
+  occurrences        FestivalOccurrence[]
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
 
   @@index([active])
   @@index([priority])
@@ -126,6 +131,40 @@ model CakeOccasion {
   @@unique([cakeId, occasionId])
   @@index([cakeId])
   @@index([occasionId])
+}
+
+model OccasionCategory {
+  id           String   @id @default(cuid())
+  occasionId   String
+  occasion     Occasion @relation(fields: [occasionId], references: [id], onDelete: Cascade)
+
+  name         String
+  slug         String
+  displayOrder Int      @default(0)
+  active       Boolean  @default(true)
+
+  cakes        OccasionCategoryCake[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([occasionId, slug])
+  @@index([occasionId])
+  @@index([displayOrder])
+}
+
+model OccasionCategoryCake {
+  id                 String           @id @default(cuid())
+  occasionCategoryId String
+  occasionCategory   OccasionCategory @relation(fields: [occasionCategoryId], references: [id], onDelete: Cascade)
+  cakeId             String
+  cake               Cake             @relation(fields: [cakeId], references: [id], onDelete: Cascade)
+  displayOrder       Int              @default(0)
+  createdAt          DateTime         @default(now())
+
+  @@unique([occasionCategoryId, cakeId])
+  @@index([occasionCategoryId])
+  @@index([cakeId])
 }
 
 model ImageMedia {

@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Cake, MessageCircle, Sparkles } from "lucide-react";
+import { Cake, Sparkles } from "lucide-react";
+import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 
 type ActiveTab = "menu" | "cakes" | "order";
 
@@ -12,7 +13,7 @@ interface MobileBottomNavProps {
 const items = [
   { key: "menu", label: "Menu", href: "/menu", icon: Cake },
   { key: "cakes", label: "Cakes", href: "/menu/cakes", icon: Sparkles },
-  { key: "order", label: "Order", href: "/menu/order", icon: MessageCircle },
+  { key: "order", label: "Order", href: "/menu/order", icon: WhatsAppIcon },
 ] as const;
 
 export default function MobileBottomNav({ active = "menu" }: MobileBottomNavProps) {

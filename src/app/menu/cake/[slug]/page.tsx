@@ -8,8 +8,7 @@ import {
   getCachedWhatsAppSetting,
 } from "@/lib/cache";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 60; // ISR: revalidate every 60s, memory cache handles freshness
 
 export async function generateMetadata({
   params,
@@ -78,15 +77,49 @@ export default async function CakeDetailPage({ params }: { params: { slug: strin
 
   // Filter related cakes in same category from memory in 0.01ms
   const relatedCakes = allCakes
-    .filter((c: any) => c.categoryId === cake.categoryId && c.id !== cake.id)
+    .filter((c: any) => c.categoryId === cake!.categoryId && c.id !== cake!.id)
     .slice(0, 3);
 
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://sweetdelights.com").replace(/\/$/, "");
+  const canonicalUrl = `${appUrl}/menu/cake/${cake!.slug}`;
+
+  // Schema.org Product structured data — only real stored data, no fabricated reviews
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: cake!.name,
+    description: cake!.description,
+    image: cake!.coverImage,
+    brand: {
+      "@type": "Brand",
+      name: settings?.restaurantName || "Raman Sweet Bakery",
+    },
+    offers: (cake!.prices || []).map((p: any) => ({
+      "@type": "Offer",
+      price: p.price,
+      priceCurrency: "INR",
+      availability: "https://schema.org/InStock",
+      url: canonicalUrl,
+    })),
+  };
+
   return (
-    <CakeDetailClient
-      cake={cake}
-      relatedCakes={relatedCakes}
-      settings={settings || undefined}
-      whatsappSetting={whatsappSetting || undefined}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd)
+            .replace(/</g, "\\u003c")
+            .replace(/>/g, "\\u003e")
+            .replace(/&/g, "\\u0026"),
+        }}
+      />
+      <CakeDetailClient
+        cake={cake}
+        relatedCakes={relatedCakes}
+        settings={settings || undefined}
+        whatsappSetting={whatsappSetting || undefined}
+      />
+    </>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Image from "next/image";
 import {
   Upload,
@@ -12,6 +12,10 @@ import {
   Eye,
   X,
   AlertCircle,
+  Search,
+  ExternalLink,
+  Layers,
+  Filter,
 } from "lucide-react";
 
 interface ImageLibraryClientProps {
@@ -25,6 +29,8 @@ export default function ImageLibraryClient({ initialImages = [] }: ImageLibraryC
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterType, setFilterType] = useState<"ALL" | "BANNERS" | "CAKES">("ALL");
 
   // File Upload Handler
   const handleUploadFiles = async (files: FileList | null) => {
@@ -102,8 +108,39 @@ export default function ImageLibraryClient({ initialImages = [] }: ImageLibraryC
     }
   };
 
+  // Filtered images list
+  const filteredImages = useMemo(() => {
+    return images.filter((img) => {
+      const filename = (img.filename || "").toLowerCase();
+      const url = (img.url || "").toLowerCase();
+      const query = searchQuery.toLowerCase().trim();
+
+      const matchesSearch = !query || filename.includes(query) || url.includes(query);
+      if (!matchesSearch) return false;
+
+      if (filterType === "BANNERS") {
+        return filename.includes("banner") || url.includes("banner");
+      }
+      if (filterType === "CAKES") {
+        return !filename.includes("banner") && !url.includes("banner");
+      }
+
+      return true;
+    });
+  }, [images, searchQuery, filterType]);
+
+  const bannerCount = useMemo(() => {
+    return images.filter(
+      (img) =>
+        (img.filename || "").toLowerCase().includes("banner") ||
+        (img.url || "").toLowerCase().includes("banner")
+    ).length;
+  }, [images]);
+
+  const cakeCount = images.length - bannerCount;
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-32 sm:pb-12">
       {/* Header */}
       <div>
         <span className="text-xs font-bold uppercase tracking-widest text-gold-400">
@@ -112,7 +149,7 @@ export default function ImageLibraryClient({ initialImages = [] }: ImageLibraryC
         <h1 className="font-serif text-2xl font-bold text-cream-50 sm:text-3xl">
           Image Library ({images.length})
         </h1>
-        <p className="text-xs text-luxury-400">
+        <p className="text-xs text-luxury-400 mt-1">
           Upload and manage cake photography. All images are hosted and ready for menu cards and galleries.
         </p>
       </div>
@@ -124,139 +161,270 @@ export default function ImageLibraryClient({ initialImages = [] }: ImageLibraryC
         </div>
       )}
 
-      {/* Drag & Drop Upload Zone */}
+      {/* Upload Zone */}
       <div
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
         onDrop={handleDrop}
-        className={`relative flex flex-col items-center justify-center rounded-3xl border-2 border-dashed p-8 text-center transition-all ${
+        className={`relative flex flex-col items-center justify-center rounded-3xl border-2 border-dashed p-6 sm:p-8 text-center transition-all ${
           dragActive
-            ? "border-gold-400 bg-gold-500/10 scale-101"
+            ? "border-gold-400 bg-gold-500/10 scale-[1.01]"
             : "border-gold-500/30 bg-luxury-900/60 hover:border-gold-500/60"
         }`}
       >
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gold-500/10 text-gold-400 shadow-gold-sm mb-3">
+        <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-gold-500/10 text-gold-400 shadow-gold-sm mb-3">
           {uploading ? (
-            <Sparkles className="h-7 w-7 animate-spin" />
+            <Sparkles className="h-6 w-6 sm:h-7 sm:w-7 animate-spin" />
           ) : (
-            <Upload className="h-7 w-7" />
+            <Upload className="h-6 w-6 sm:h-7 sm:w-7" />
           )}
         </div>
 
-        <h3 className="font-serif text-base font-bold text-cream-100">
-          {uploading ? "Uploading & Processing Confection Photos..." : "Drag & Drop Cake Images Here"}
+        <h3 className="font-serif text-sm sm:text-base font-bold text-cream-100">
+          {uploading ? "Uploading & Processing Photos..." : "Upload New Cake & Banner Photos"}
         </h3>
-        <p className="mt-1 text-xs text-luxury-400 max-w-sm">
-          Supports PNG, JPG, WEBP formats. Multi-file upload supported.
+        <p className="mt-1 text-[11px] sm:text-xs text-luxury-400 max-w-sm">
+          Supports PNG, JPG, WEBP. Drag & drop on desktop or tap below on mobile.
         </p>
 
-        <label className="mt-4 cursor-pointer rounded-xl bg-gold-gradient px-5 py-2.5 text-xs font-bold text-luxury-950 shadow-gold-sm hover:opacity-95 transition-opacity">
-          <span>Browse Files from Computer</span>
+        <label className="mt-4 cursor-pointer rounded-xl bg-gold-gradient px-5 py-2.5 text-xs font-bold text-luxury-950 shadow-gold-sm hover:opacity-95 active:scale-95 transition-all inline-flex items-center gap-2">
+          <Upload className="h-3.5 w-3.5" />
+          <span>Choose Photos / Camera</span>
           <input
             type="file"
             multiple
             accept="image/*"
             className="hidden"
+            disabled={uploading}
             onChange={(e) => handleUploadFiles(e.target.files)}
           />
         </label>
       </div>
 
-      {/* Images Grid */}
-      <div className="rounded-3xl border border-gold-500/20 bg-luxury-900/80 p-6 shadow-xl">
-        <h2 className="font-serif text-lg font-bold text-cream-50 mb-4">
-          All Uploaded Media Assets
-        </h2>
+      {/* Filter & Search Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-gold-500/20 bg-luxury-900/80 p-3 sm:p-4">
+        {/* Filter Tabs */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+          <button
+            type="button"
+            onClick={() => setFilterType("ALL")}
+            className={`rounded-xl px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-all ${
+              filterType === "ALL"
+                ? "bg-gold-500 text-luxury-950 font-bold shadow-gold-sm"
+                : "bg-luxury-950 text-luxury-400 hover:text-cream-100 border border-luxury-800"
+            }`}
+          >
+            All ({images.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilterType("BANNERS")}
+            className={`rounded-xl px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-all ${
+              filterType === "BANNERS"
+                ? "bg-gold-500 text-luxury-950 font-bold shadow-gold-sm"
+                : "bg-luxury-950 text-luxury-400 hover:text-cream-100 border border-luxury-800"
+            }`}
+          >
+            Banners ({bannerCount})
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilterType("CAKES")}
+            className={`rounded-xl px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-all ${
+              filterType === "CAKES"
+                ? "bg-gold-500 text-luxury-950 font-bold shadow-gold-sm"
+                : "bg-luxury-950 text-luxury-400 hover:text-cream-100 border border-luxury-800"
+            }`}
+          >
+            Cakes & Sweets ({cakeCount})
+          </button>
+        </div>
 
-        {images.length > 0 ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-            {images.map((img) => (
+        {/* Search Input */}
+        <div className="relative sm:w-64">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-luxury-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by filename..."
+            className="w-full rounded-xl border border-luxury-700 bg-luxury-950 pl-8 pr-8 py-1.5 text-xs text-cream-100 placeholder:text-luxury-500 focus:border-gold-500 focus:outline-none"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-luxury-400 hover:text-cream-100"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Images Grid */}
+      <div className="rounded-3xl border border-gold-500/20 bg-luxury-900/80 p-4 sm:p-6 shadow-xl">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-serif text-base sm:text-lg font-bold text-cream-50">
+            All Uploaded Media Assets ({filteredImages.length})
+          </h2>
+          {searchQuery && (
+            <span className="text-[11px] text-gold-400">
+              Matching &ldquo;{searchQuery}&rdquo;
+            </span>
+          )}
+        </div>
+
+        {filteredImages.length > 0 ? (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            {filteredImages.map((img) => (
               <div
                 key={img.id}
                 className="group relative flex flex-col overflow-hidden rounded-2xl border border-luxury-800 bg-luxury-950 transition-all hover:border-gold-500/50 hover:shadow-gold-sm"
               >
-                {/* Image Container */}
-                <div className="relative aspect-square w-full overflow-hidden bg-luxury-900">
+                {/* Image Container - Tap to Preview */}
+                <div
+                  onClick={() => setPreviewImage(img)}
+                  className="relative aspect-square w-full overflow-hidden bg-luxury-900 cursor-pointer"
+                >
                   <Image
                     src={img.url}
                     alt={img.filename}
                     fill
-                    sizes="200px"
-                    className="object-cover group-hover:scale-105 transition-transform"
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
                   />
 
-                  {/* Hover Actions Overlay */}
-                  <div className="absolute inset-0 flex items-center justify-center space-x-2 bg-luxury-950/70 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      type="button"
-                      onClick={() => setPreviewImage(img)}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg bg-luxury-900 text-cream-100 hover:text-gold-400 border border-luxury-700"
-                      title="Preview Full Size"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </button>
+                  {/* Top-right quick copy button */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCopyUrl(img);
+                    }}
+                    className={`absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-lg border backdrop-blur-md transition-all ${
+                      copiedId === img.id
+                        ? "bg-emerald-500 text-white border-emerald-400"
+                        : "bg-black/60 text-cream-200 border-luxury-700/80 hover:bg-gold-500 hover:text-luxury-950"
+                    }`}
+                    title="Copy Image URL"
+                  >
+                    {copiedId === img.id ? (
+                      <Check className="h-3.5 w-3.5" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5" />
+                    )}
+                  </button>
 
-                    <button
-                      type="button"
-                      onClick={() => handleCopyUrl(img)}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg bg-luxury-900 text-cream-100 hover:text-gold-400 border border-luxury-700"
-                      title="Copy URL"
-                    >
-                      {copiedId === img.id ? (
-                        <Check className="h-4 w-4 text-emerald-400" />
-                      ) : (
-                        <Copy className="h-4 w-4" />
-                      )}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteImage(img.id)}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg bg-luxury-900 text-luxury-400 hover:text-red-400 border border-luxury-700"
-                      title="Delete Image"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                  {/* Desktop Hover Actions Overlay */}
+                  <div className="hidden md:flex absolute inset-0 items-center justify-center space-x-2 bg-luxury-950/70 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    <span className="inline-flex items-center gap-1 rounded-lg bg-luxury-900/90 border border-gold-500/40 px-2.5 py-1 text-[11px] font-semibold text-gold-300 shadow">
+                      <Eye className="h-3.5 w-3.5" />
+                      <span>Preview</span>
+                    </span>
                   </div>
                 </div>
 
-                {/* Footer details */}
-                <div className="p-2.5">
-                  <span className="block text-[11px] font-semibold text-cream-200 truncate">
-                    {img.filename}
-                  </span>
-                  <span className="block text-[9px] text-luxury-400">
-                    {img.size ? `${(img.size / 1024).toFixed(0)} KB` : "Web Hosted"}
-                  </span>
+                {/* Footer details with direct 1-tap mobile touch controls */}
+                <div className="p-2 sm:p-2.5 space-y-1.5">
+                  <div className="flex items-start justify-between gap-1">
+                    <span
+                      className="block text-[11px] font-semibold text-cream-200 truncate"
+                      title={img.filename}
+                    >
+                      {img.filename}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[10px] text-luxury-400 pt-0.5 border-t border-luxury-900">
+                    <span className="font-mono text-[9px] text-luxury-500">
+                      {img.size ? `${(img.size / 1024).toFixed(0)} KB` : "Web"}
+                    </span>
+
+                    {/* Action buttons (always accessible on mobile & desktop) */}
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setPreviewImage(img)}
+                        className="p-1 rounded-md text-luxury-400 hover:text-gold-400 hover:bg-luxury-900 transition-colors"
+                        title="Preview Full Size"
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleCopyUrl(img)}
+                        className="p-1 rounded-md text-luxury-400 hover:text-gold-400 hover:bg-luxury-900 transition-colors"
+                        title="Copy Image URL"
+                      >
+                        {copiedId === img.id ? (
+                          <Check className="h-3.5 w-3.5 text-emerald-400" />
+                        ) : (
+                          <Copy className="h-3.5 w-3.5" />
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteImage(img.id)}
+                        className="p-1 rounded-md text-luxury-500 hover:text-red-400 hover:bg-red-950/40 transition-colors"
+                        title="Delete Image"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="py-16 text-center text-luxury-400 text-xs">
-            No images uploaded yet. Drag and drop your cake photos above!
+          <div className="py-16 text-center text-luxury-400 text-xs space-y-2">
+            <ImageIcon className="h-8 w-8 mx-auto text-luxury-600 mb-2" />
+            <p>
+              {searchQuery
+                ? `No images found matching "${searchQuery}".`
+                : "No images uploaded in this category."}
+            </p>
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="text-xs font-semibold text-gold-400 hover:underline"
+              >
+                Clear Search Filter
+              </button>
+            )}
           </div>
         )}
       </div>
 
       {/* Full Preview Modal */}
       {previewImage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-luxury-950/85 p-4 backdrop-blur-md">
-          <div className="relative max-w-2xl w-full rounded-3xl border border-gold-500/30 bg-luxury-900 p-6 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-luxury-800 pb-3 mb-4">
-              <span className="font-serif text-sm font-bold text-cream-50 truncate max-w-sm">
-                {previewImage.filename}
-              </span>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-3 sm:p-4 backdrop-blur-md overflow-y-auto">
+          <div className="relative max-w-2xl w-full rounded-3xl border border-gold-500/30 bg-[#14120f] p-4 sm:p-6 shadow-2xl space-y-4 my-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-luxury-800 pb-3">
+              <div className="min-w-0 pr-2">
+                <span className="font-serif text-sm sm:text-base font-bold text-cream-50 truncate block">
+                  {previewImage.filename}
+                </span>
+                <span className="text-[10px] text-luxury-400 font-mono">
+                  {previewImage.size ? `${(previewImage.size / 1024).toFixed(0)} KB` : "Web Hosted"}
+                </span>
+              </div>
               <button
                 onClick={() => setPreviewImage(null)}
-                className="rounded-lg p-1 text-luxury-400 hover:text-cream-100"
+                className="rounded-xl p-1.5 text-luxury-400 hover:text-cream-100 hover:bg-luxury-800 transition-colors shrink-0"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-gold-500/20 bg-luxury-950">
+            {/* Modal Image Box */}
+            <div className="relative aspect-video sm:aspect-[16/10] w-full overflow-hidden rounded-2xl border border-gold-500/20 bg-luxury-950 flex items-center justify-center">
               <Image
                 src={previewImage.url}
                 alt={previewImage.filename}
@@ -266,14 +434,44 @@ export default function ImageLibraryClient({ initialImages = [] }: ImageLibraryC
               />
             </div>
 
-            <div className="mt-4 flex items-center justify-between text-xs">
-              <span className="text-luxury-400 truncate max-w-xs">{previewImage.url}</span>
-              <button
-                onClick={() => handleCopyUrl(previewImage)}
-                className="flex items-center space-x-1.5 rounded-lg bg-gold-gradient px-3.5 py-1.5 font-bold text-luxury-950 shadow-gold-sm"
+            {/* URL Display */}
+            <div className="flex items-center gap-2 rounded-xl border border-luxury-800 bg-luxury-950 p-2.5">
+              <span className="text-xs text-luxury-400 font-mono truncate flex-1">
+                {previewImage.url}
+              </span>
+              <a
+                href={previewImage.url}
+                target="_blank"
+                rel="noreferrer"
+                className="text-luxury-400 hover:text-gold-400 p-1 shrink-0"
+                title="Open original file in new tab"
               >
-                {copiedId === previewImage.id ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                <span>{copiedId === previewImage.id ? "Copied!" : "Copy Image Link"}</span>
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            </div>
+
+            {/* Modal Action Buttons */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => handleCopyUrl(previewImage)}
+                className="col-span-1 sm:col-span-2 flex items-center justify-center space-x-1.5 rounded-xl bg-gold-gradient py-2.5 px-4 font-bold text-xs text-luxury-950 shadow-gold-sm hover:opacity-95 transition-opacity"
+              >
+                {copiedId === previewImage.id ? (
+                  <Check className="h-4 w-4" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+                <span>{copiedId === previewImage.id ? "Copied to Clipboard!" : "Copy Image Link"}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleDeleteImage(previewImage.id)}
+                className="flex items-center justify-center space-x-1.5 rounded-xl border border-red-500/40 bg-red-950/30 py-2.5 px-4 font-semibold text-xs text-red-400 hover:bg-red-900/40 transition-colors"
+              >
+                <Trash2 className="h-4 w-4" />
+                <span>Delete</span>
               </button>
             </div>
           </div>
@@ -282,3 +480,4 @@ export default function ImageLibraryClient({ initialImages = [] }: ImageLibraryC
     </div>
   );
 }
+

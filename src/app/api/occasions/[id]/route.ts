@@ -28,6 +28,7 @@ export async function PUT(
       daysAfter,
       eventDate,
       cakeIds,
+      bannerImage,
     } = body;
 
     const updateData: any = {};
@@ -39,6 +40,7 @@ export async function PUT(
     if (active !== undefined) updateData.active = Boolean(active);
     if (daysBefore !== undefined) updateData.daysBefore = Math.max(0, Number(daysBefore));
     if (daysAfter !== undefined) updateData.daysAfter = Math.max(0, Number(daysAfter));
+    if (bannerImage !== undefined) updateData.bannerImage = bannerImage || null;
 
     // Update tagged cakes if provided
     if (cakeIds !== undefined && Array.isArray(cakeIds)) {
@@ -121,7 +123,7 @@ export async function PUT(
   } catch (error: any) {
     console.error("Update occasion error:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to update occasion" },
+      { error: "An internal server error occurred" },
       { status: 500 }
     );
   }
@@ -149,7 +151,7 @@ export async function DELETE(
   } catch (error: any) {
     console.error("Delete occasion error:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to delete occasion" },
+      { error: "An internal server error occurred" },
       { status: 500 }
     );
   }

@@ -3,11 +3,10 @@ import prisma from "@/lib/db";
 import { ensureOccurrencesForYear, clearOccasionCache } from "@/lib/festivals/occasionEngine";
 import { invalidateAppCache } from "@/lib/cache";
 
-// GET /api/occasions - List all occasions with current year status and cake counts
+// GET /api/occasions - List all occasions with current year status and cake counts (Read-only)
 export async function GET() {
   try {
     const currentYear = new Date().getUTCFullYear();
-    await ensureOccurrencesForYear(currentYear);
 
     const occasions = await prisma.occasion.findMany({
       include: {
@@ -54,7 +53,7 @@ export async function GET() {
   } catch (error: any) {
     console.error("Fetch occasions error:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to fetch occasions" },
+      { error: "An internal server error occurred" },
       { status: 500 }
     );
   }
@@ -94,6 +93,7 @@ export async function POST(req: NextRequest) {
       daysBefore = 5,
       daysAfter = 1,
       cakeIds = [],
+      bannerImage,
     } = body;
 
     if (!name || !eventDate) {
@@ -122,6 +122,7 @@ export async function POST(req: NextRequest) {
         calendarKey,
         badgeText: badgeText || `🎉 ${name.toUpperCase()} SPECIAL`,
         description: description || `Handcrafted artisanal eggless cakes curated for ${name}.`,
+        bannerImage: bannerImage || null,
         accentColor: accentColor || "#D4AF37",
         priority: Number(priority) || 75,
         active: Boolean(active),
@@ -172,7 +173,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error("Create custom occasion error:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to create custom occasion" },
+      { error: "An internal server error occurred" },
       { status: 500 }
     );
   }

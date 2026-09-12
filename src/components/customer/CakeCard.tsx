@@ -1,8 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, MessageCircle } from "lucide-react";
+import { Heart } from "lucide-react";
+import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
+import { getNormalizedCakeImageUrl } from "@/lib/imageNormalization";
+
+import { useCakeFavorite } from "@/hooks/useFavorites";
 
 export interface CakePriceItem {
   id?: string;
@@ -16,6 +21,7 @@ export interface CakeItem {
   id: string;
   name: string;
   slug: string;
+  productType?: string;
   description: string;
   coverImage: string;
   images?: string;
@@ -41,13 +47,32 @@ interface CakeCardProps {
 }
 
 export default function CakeCard({ cake }: CakeCardProps) {
+  const { isFavorite, toggleFavorite } = useCakeFavorite(cake.id || cake.slug);
+
   const sortedPrices = [...(cake.prices || [])].sort(
     (a, b) => a.price - b.price
   );
 
-  const lowestPrice = sortedPrices[0]?.price || 1499;
+  const fallbackImage = "/images/ref_belgian_chocolate.png";
+  const normalizedCoverImage = getNormalizedCakeImageUrl(cake.coverImage);
+  const [imgSrc, setImgSrc] = useState<string>(normalizedCoverImage || fallbackImage);
+
+  const defaultPriceObj = sortedPrices.find((p) => p.isDefault) || sortedPrices[0];
+  const lowestPrice = defaultPriceObj?.price || sortedPrices[0]?.price || 1499;
+  const priceWeight = defaultPriceObj?.weight || sortedPrices[0]?.weight || "1 kg";
 
   const cakeHref = `/menu/cake/${cake.slug}`;
+
+  // Promotional badge: Priority: Bestseller (1) -> New (2) -> Signature/Featured (3)
+  // Strictly mapped to real DB flags only (no fake badges)
+  let primaryBadge: { label: string; icon: string } | null = null;
+  if (cake.bestseller === true) {
+    primaryBadge = { label: "Best Seller", icon: "★" };
+  } else if (cake.isNew === true) {
+    primaryBadge = { label: "New", icon: "✦" };
+  } else if (cake.featured === true) {
+    primaryBadge = { label: "Signature", icon: "✦" };
+  }
 
   return (
     <article
@@ -55,60 +80,65 @@ export default function CakeCard({ cake }: CakeCardProps) {
         group
         relative
         flex
+        h-full
         min-w-0
         flex-col
         overflow-hidden
-        rounded-[15px]
+        rounded-[16px]
         border
-        border-[#D4AF37]/35
-        bg-[#100E0B]
-        p-[5px]
-        shadow-[0_5px_18px_rgba(0,0,0,0.50)]
+        border-[#D4AF37]/25
+        bg-[#110E0B]
+        p-2
+        sm:p-2.5
+        shadow-[0_4px_16px_rgba(0,0,0,0.55)]
         transition-all
         duration-300
-        hover:border-[#D4AF37]/60
-        hover:shadow-[0_6px_22px_rgba(212,175,55,0.18)]
+        hover:border-[#D4AF37]/55
+        hover:shadow-[0_6px_20px_rgba(212,175,55,0.15)]
+        hover:-translate-y-0.5
       "
     >
       {/* ======================================================
-          IMAGE
-          Compact reference-style product area
+          1. CAKE IMAGE AREA
+          Refined 4:3 landscape ratio, leaves breathing room below
       ====================================================== */}
       <Link
         href={cakeHref}
+        prefetch={true}
         aria-label={`View ${cake.name}`}
         className="
           relative
           block
           w-full
-          aspect-[1/1]
+          aspect-[4/3]
           min-h-0
           overflow-hidden
           rounded-[11px]
-          bg-[#090807]
+          bg-[#080706]
         "
       >
         <Image
-          src={cake.coverImage}
+          src={imgSrc || fallbackImage}
           alt={cake.name}
           fill
           sizes="
-            (max-width: 430px) 44vw,
-            (max-width: 640px) 46vw,
-            (max-width: 1024px) 30vw,
-            240px
+            (max-width: 480px) 48vw,
+            (max-width: 768px) 46vw,
+            (max-width: 1024px) 32vw,
+            280px
           "
+          onError={() => setImgSrc(fallbackImage)}
           className="
-            object-cover
+            object-contain
             object-center
             transition-transform
             duration-500
             ease-out
-            group-hover:scale-[1.035]
+            group-hover:scale-[1.02]
           "
         />
 
-        {/* Very subtle dark bottom fade for text separation */}
+        {/* Subtle dark gradient fade: minimal so bottom of cake is never obscured */}
         <div
           aria-hidden="true"
           className="
@@ -116,61 +146,102 @@ export default function CakeCard({ cake }: CakeCardProps) {
             absolute
             inset-x-0
             bottom-0
-            h-12
+            h-3
             bg-gradient-to-t
-            from-black/35
+            from-[#110E0B]/40
             to-transparent
           "
         />
 
         {/* ====================================================
-            PURE VEG INDICATOR
+            TOP ROW OVERLAYS: Promotional Badge (Left) & Pure Veg (Right)
         ==================================================== */}
-        <div className="absolute left-1.5 top-1.5 z-10">
+        {/* 1. Left Side: Promotional Badge (Crystal-clear luxury pill) */}
+        {primaryBadge && (
+          <div className="absolute left-2 top-2 sm:left-2.5 sm:top-2.5 z-10 flex items-center pointer-events-none">
+            <span
+              className="
+                inline-flex
+                h-[18px]
+                sm:h-[20px]
+                items-center
+                gap-1.5
+                rounded-full
+                border
+                border-[#E5C365]
+                bg-[#0D0B08]/95
+                px-2.5
+                sm:px-3
+                text-[10px]
+                sm:text-[11px]
+                font-semibold
+                tracking-tight
+                text-[#FFF3CD]
+                shadow-[0_2px_8px_rgba(0,0,0,0.85)]
+              "
+            >
+              <span className="text-[9.5px] sm:text-[10.5px] text-[#F5C842] leading-none" aria-hidden="true">
+                {primaryBadge.icon}
+              </span>
+              <span className="leading-none whitespace-nowrap font-medium text-[#FFF3CD]">{primaryBadge.label}</span>
+            </span>
+          </div>
+        )}
+
+        {/* 2. Right Side: Pure Veg Indicator (Authentic Indian Veg Symbol: White square with green border & solid green circle) */}
+        <div
+          title="100% Pure Vegetarian"
+          aria-label="100% Pure Vegetarian"
+          className="
+            absolute
+            right-2
+            top-2
+            sm:right-2.5
+            sm:top-2.5
+            z-10
+            flex
+            items-center
+            justify-center
+            pointer-events-none
+          "
+        >
           <span
-            title="100% Pure Veg"
             className="
               flex
-              h-[15px]
-              w-[15px]
+              h-[16px]
+              w-[16px]
+              sm:h-[18px]
+              sm:w-[18px]
               items-center
               justify-center
-              rounded-[3px]
-              border
-              border-emerald-500/90
-              bg-black/80
-              p-[2px]
-              shadow-[0_0_8px_rgba(16,185,129,0.22)]
+              rounded-[2.5px]
+              border-[1.4px]
+              sm:border-[1.6px]
+              border-[#0F8A3C]
+              bg-white
+              shadow-[0_1px_4px_rgba(0,0,0,0.6)]
             "
           >
-            <span className="h-[6px] w-[6px] rounded-full bg-emerald-500" />
+            <span className="h-[7px] w-[7px] sm:h-[8px] sm:w-[8px] rounded-full bg-[#0F8A3C]" />
           </span>
         </div>
 
-        <button
-          type="button"
-          aria-label={`Save ${cake.name}`}
-          className="absolute right-1.5 top-1.5 z-10 flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-black/55 text-white/90 backdrop-blur-md transition hover:text-[#EBD699]"
-        >
-          <Heart className="h-3.5 w-3.5" />
-        </button>
-
-        {/* Optional availability state */}
+        {/* Unavailable overlay if not available */}
         {!cake.available && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50">
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/60 backdrop-blur-[2px]">
             <span
               className="
                 rounded-full
                 border
-                border-white/15
-                bg-black/75
+                border-white/20
+                bg-black/80
                 px-2.5
                 py-1
                 text-[9px]
                 font-semibold
                 uppercase
                 tracking-wider
-                text-white/85
+                text-white/90
               "
             >
               Currently Unavailable
@@ -180,96 +251,132 @@ export default function CakeCard({ cake }: CakeCardProps) {
       </Link>
 
       {/* ======================================================
-          CARD DETAILS
+          CARD CONTENT FLEX COLUMN
+          Image → Cake Name + Favorite Heart Row → Price + Order
       ====================================================== */}
-      <div className="flex min-w-0 flex-1 flex-col px-0.5 pb-0.5 pt-1.5">
-        {/* Cake name */}
-        <Link
-          href={cakeHref}
-          className="
-            min-w-0
-            min-h-[30px]
-            sm:min-h-[34px]
-          "
-        >
-          <h3
+      <div className="flex min-w-0 flex-1 flex-col pt-2 pb-0.5 px-0.5">
+        {/* Title + Heart Row: Flex items-center justify-between, 2 lines max, heart vertically centered */}
+        <div className="h-[37px] sm:h-[41px] flex items-center justify-between gap-1.5 min-w-0">
+          <Link
+            href={cakeHref}
+            prefetch={true}
+            className="block min-w-0 flex-1"
+          >
+            <h3
+              className="
+                font-sans
+                text-[13px]
+                sm:text-[14px]
+                font-semibold
+                leading-[1.25]
+                tracking-tight
+                text-[#F4EBD2]
+                line-clamp-2
+                transition-colors
+                group-hover:text-[#F5E29D]
+              "
+            >
+              {cake.name}
+            </h3>
+          </Link>
+
+          {/* 3. Favorite Heart (Far right of name row, minimal champagne-gold, transparent) */}
+          <button
+            type="button"
+            onClick={toggleFavorite}
+            aria-label={isFavorite ? `Remove ${cake.name} from favorites` : `Add ${cake.name} to favorites`}
             className="
-              line-clamp-2
-              font-serif
-              text-[11px]
-              font-semibold
-              leading-[1.22]
-              tracking-[-0.01em]
-              text-[#F0E2B5]
-              transition-colors
-              group-hover:text-[#F3D477]
-              sm:text-[12px]
+              shrink-0
+              flex
+              h-6
+              w-6
+              sm:h-7
+              sm:w-7
+              items-center
+              justify-center
+              bg-transparent
+              p-0
+              transition-transform
+              duration-200
+              active:scale-90
+              focus:outline-none
+              -mr-0.5
             "
           >
-            {cake.name}
-          </h3>
-        </Link>
+            <Heart
+              strokeWidth={1.5}
+              className={`h-[17px] w-[17px] sm:h-[19px] sm:w-[19px] transition-all duration-200 ${
+                isFavorite
+                  ? "fill-[#E7C96B] text-[#E7C96B] drop-shadow-[0_0_8px_rgba(231,201,107,0.7)]"
+                  : "fill-none text-[#E7C96B]/80 hover:text-[#F7E7B4] hover:drop-shadow-[0_0_6px_rgba(231,201,107,0.6)]"
+              }`}
+            />
+          </button>
+        </div>
 
-        {/* Price + Order */}
-        <div className="mt-1.5 flex min-w-0 items-center justify-between gap-1.5">
-          {/* Price */}
+        {/* Price Row (Pinned to bottom with mt-auto, always aligned) */}
+        <div className="mt-auto pt-2 flex min-w-0 items-center justify-between gap-1 sm:gap-1.5">
+          {/* 4. Price & Weight Pill: slightly increased internal spacing */}
           <span
             className="
               inline-flex
               min-w-0
               shrink
               items-center
-              justify-center
+              gap-1
+              sm:gap-1.5
               rounded-[6px]
               border
-              border-[#D4AF37]/55
-              bg-[#1B150C]
-              px-1.5
+              border-[#D4AF37]/45
+              bg-[#18130B]
+              px-2
               py-[3px]
-              font-mono
-              text-[9.5px]
-              font-bold
-              leading-none
-              text-[#EBD699]
-              shadow-[inset_0_0_8px_rgba(212,175,55,0.04)]
-              sm:px-2
-              sm:text-[10px]
+              sm:px-2.5
+              sm:py-[3.5px]
+              shadow-[inset_0_0_6px_rgba(212,175,55,0.06)]
             "
           >
-            ₹{lowestPrice.toLocaleString("en-IN")}
+            <span className="text-[8.5px] font-medium text-[#AFA393] sm:text-[9.5px] whitespace-nowrap">
+              {priceWeight}
+            </span>
+            <span className="text-[7.5px] text-[#D4AF37]/50">•</span>
+            <span className="font-price text-[10px] font-bold leading-none text-[#F5E29D] sm:text-[11px] whitespace-nowrap">
+              ₹{lowestPrice.toLocaleString("en-IN")}
+            </span>
           </span>
 
-          {/* Order */}
+          {/* 5. Order Button: +2px taller (27px / 29px), improved alignment and centering */}
           <Link
             href={cakeHref}
             className="
               inline-flex
-              h-[25px]
+              h-[27px]
+              sm:h-[29px]
               shrink-0
               items-center
               justify-center
-              rounded-[8px]
+              gap-1.5
+              rounded-[7px]
               border
               border-emerald-500/75
               bg-[#082017]
-              gap-1
-              px-2
+              px-2.5
+              sm:px-3
               text-[9.5px]
+              sm:text-[10.5px]
               font-semibold
               leading-none
               text-emerald-100
-              shadow-[0_0_9px_rgba(16,185,129,0.18)]
+              shadow-[0_0_8px_rgba(16,185,129,0.18)]
               transition-all
               hover:bg-[#0B2C1C]
-              hover:shadow-[0_0_12px_rgba(16,185,129,0.28)]
-              active:scale-[0.96]
-              sm:h-[26px]
-              sm:px-2.5
-              sm:text-[10px]
+              hover:shadow-[0_0_12px_rgba(16,185,129,0.3)]
+              hover:border-emerald-400
+              active:scale-[0.95]
             "
           >
-            <MessageCircle className="h-3 w-3" />
-            Order
+            <WhatsAppIcon className="h-3 w-3 text-emerald-300 shrink-0" />
+            <span className="leading-none pt-[0.5px]">Order</span>
           </Link>
         </div>
       </div>

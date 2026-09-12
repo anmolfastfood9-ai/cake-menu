@@ -1,6 +1,7 @@
 "use client";
 
-import { MessageCircle, Phone, Sparkles } from "lucide-react";
+import { Phone, Sparkles } from "lucide-react";
+import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { generateGeneralWhatsAppLink } from "@/lib/whatsapp";
 
 interface FloatingContactProps {
@@ -33,7 +34,7 @@ export default function FloatingContact({
           rel="noopener noreferrer"
           className="flex flex-[1.4] items-center justify-center space-x-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 py-2.5 text-xs font-bold text-white shadow-lg shadow-emerald-950/50 active:scale-98 transition-transform"
         >
-          <MessageCircle className="h-4 w-4" />
+          <WhatsAppIcon className="h-4 w-4 text-white" />
           <span>Chat on WhatsApp</span>
         </a>
       </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { User, Lock, Mail, Check, AlertCircle, Sparkles } from "lucide-react";
+import { User, Lock, Mail, Check, AlertCircle, Sparkles, Eye, EyeOff, ShieldCheck } from "lucide-react";
 
 export default function AdminProfilePage() {
   const [name, setName] = useState("");
@@ -9,6 +9,10 @@ export default function AdminProfilePage() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [showCurrentPw, setShowCurrentPw] = useState(false);
+  const [showNewPw, setShowNewPw] = useState(false);
+  const [showConfirmPw, setShowConfirmPw] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -76,18 +80,23 @@ export default function AdminProfilePage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-2xl space-y-6 pb-32 sm:pb-12">
       <div className="rounded-3xl border border-gold-500/20 bg-[#14120f] p-6 sm:p-8 shadow-2xl">
-        <div className="border-b border-luxury-800 pb-5">
-          <span className="text-xs font-bold uppercase tracking-widest text-gold-400">
-            Security & Credentials
-          </span>
-          <h1 className="font-serif text-2xl sm:text-3xl font-bold text-cream-50 mt-1">
-            Admin Profile
-          </h1>
-          <p className="text-xs text-luxury-400 mt-1">
-            Update your administrative credentials, display name, and login password.
-          </p>
+        <div className="flex items-center justify-between border-b border-luxury-800 pb-5">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-widest text-gold-400">
+              Security & Credentials
+            </span>
+            <h1 className="font-serif text-2xl sm:text-3xl font-bold text-cream-50 mt-1">
+              Admin Profile
+            </h1>
+            <p className="text-xs text-luxury-400 mt-1">
+              Update your administrative credentials, display name, and login password.
+            </p>
+          </div>
+          <div className="hidden sm:flex h-12 w-12 items-center justify-center rounded-2xl border border-gold-500/30 bg-gold-500/10 text-gold-400 font-serif text-lg font-bold shadow-gold-sm">
+            {name ? name.charAt(0).toUpperCase() : "R"}
+          </div>
         </div>
 
         {error && (
@@ -140,9 +149,12 @@ export default function AdminProfilePage() {
           </div>
 
           <div className="pt-4 border-t border-luxury-800 space-y-4">
-            <h3 className="font-serif text-sm font-bold text-cream-100">
-              Change Password (Leave blank to keep unchanged)
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="font-serif text-sm font-bold text-cream-100">
+                Change Password (Leave blank to keep unchanged)
+              </h3>
+              <ShieldCheck className="h-4 w-4 text-gold-400" />
+            </div>
 
             <div className="space-y-1.5">
               <label className="block text-xs font-semibold text-cream-200">
@@ -151,12 +163,19 @@ export default function AdminProfilePage() {
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-luxury-400" />
                 <input
-                  type="password"
+                  type={showCurrentPw ? "text" : "password"}
                   placeholder="Enter current password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="w-full rounded-xl border border-luxury-700 bg-luxury-950 py-2.5 pl-10 pr-4 text-xs text-cream-100 focus:border-gold-500 focus:outline-none"
+                  className="w-full rounded-xl border border-luxury-700 bg-luxury-950 py-2.5 pl-10 pr-10 text-xs text-cream-100 focus:border-gold-500 focus:outline-none"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPw(!showCurrentPw)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-luxury-400 hover:text-cream-100 p-1"
+                >
+                  {showCurrentPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
             </div>
 
@@ -165,26 +184,59 @@ export default function AdminProfilePage() {
                 <label className="block text-xs font-semibold text-cream-200">
                   New Password
                 </label>
-                <input
-                  type="password"
-                  placeholder="At least 6 characters"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full rounded-xl border border-luxury-700 bg-luxury-950 py-2.5 px-4 text-xs text-cream-100 focus:border-gold-500 focus:outline-none"
-                />
+                <div className="relative">
+                  <input
+                    type={showNewPw ? "text" : "password"}
+                    placeholder="At least 6 characters"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full rounded-xl border border-luxury-700 bg-luxury-950 py-2.5 pl-3.5 pr-10 text-xs text-cream-100 focus:border-gold-500 focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPw(!showNewPw)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-luxury-400 hover:text-cream-100 p-1"
+                  >
+                    {showNewPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-cream-200">
-                  Confirm New Password
-                </label>
-                <input
-                  type="password"
-                  placeholder="Repeat new password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full rounded-xl border border-luxury-700 bg-luxury-950 py-2.5 px-4 text-xs text-cream-100 focus:border-gold-500 focus:outline-none"
-                />
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-semibold text-cream-200">
+                    Confirm New Password
+                  </label>
+                  {newPassword && confirmPassword && (
+                    <span
+                      className={`text-[10px] font-semibold flex items-center gap-1 ${
+                        newPassword === confirmPassword ? "text-emerald-400" : "text-amber-400"
+                      }`}
+                    >
+                      {newPassword === confirmPassword ? "✓ Match" : "✕ Do not match"}
+                    </span>
+                  )}
+                </div>
+                <div className="relative">
+                  <input
+                    type={showConfirmPw ? "text" : "password"}
+                    placeholder="Repeat new password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className={`w-full rounded-xl border bg-luxury-950 py-2.5 pl-3.5 pr-10 text-xs text-cream-100 focus:outline-none ${
+                      confirmPassword && newPassword !== confirmPassword
+                        ? "border-amber-500/60 focus:border-amber-500"
+                        : "border-luxury-700 focus:border-gold-500"
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPw(!showConfirmPw)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-luxury-400 hover:text-cream-100 p-1"
+                  >
+                    {showConfirmPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -193,14 +245,14 @@ export default function AdminProfilePage() {
             <button
               type="submit"
               disabled={saving}
-              className="flex items-center space-x-2 rounded-xl bg-gold-gradient px-6 py-2.5 text-xs font-bold text-luxury-950 shadow-gold-sm hover:opacity-95 disabled:opacity-50"
+              className="w-full sm:w-auto flex items-center justify-center space-x-2 rounded-xl bg-gold-gradient px-7 py-3 text-xs font-bold text-luxury-950 shadow-gold-sm hover:opacity-95 disabled:opacity-50 transition-opacity"
             >
               {saving ? (
                 <Sparkles className="h-4 w-4 animate-spin" />
               ) : (
                 <>
                   <Check className="h-4 w-4" />
-                  <span>Update Profile</span>
+                  <span>Update Profile Credentials</span>
                 </>
               )}
             </button>

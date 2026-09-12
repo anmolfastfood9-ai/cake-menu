@@ -50,6 +50,7 @@ const config: Config = {
       fontFamily: {
         serif: ["var(--font-playfair)", "Georgia", "serif"],
         sans: ["var(--font-plus-jakarta)", "system-ui", "sans-serif"],
+        script: ["var(--font-script)", "'Great Vibes'", "'Alex Brush'", "cursive"],
       },
       backgroundImage: {
         "gold-gradient": "linear-gradient(135deg, #ECC86B 0%, #D4AF37 50%, #A37F1D 100%)",

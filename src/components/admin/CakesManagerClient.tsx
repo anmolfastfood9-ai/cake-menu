@@ -112,11 +112,11 @@ export default function CakesManagerClient({
               <span>100% Eggless</span>
             </span>
           </div>
-          <h1 className="font-serif text-2xl font-bold text-cream-50 sm:text-3xl mt-1">
-            Cakes & Dynamic Weights ({cakes.length})
+          <h1 className="font-sans text-2xl font-bold text-cream-50 sm:text-3xl mt-1">
+            Cake Catalog ({cakes.length})
           </h1>
           <p className="text-xs text-luxury-400">
-            Add new cake creations, update weight-wise prices, and toggle menu visibility.
+            Manage your artisanal 100% eggless cakes, prices, and availability.
           </p>
         </div>
 
@@ -135,19 +135,19 @@ export default function CakesManagerClient({
           <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-luxury-400" />
           <input
             type="text"
-            placeholder="Search by cake name or ingredients..."
+            placeholder="Search by product name or details..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full rounded-xl border border-luxury-700 bg-luxury-950/80 py-2 pl-10 pr-4 text-xs text-cream-100 placeholder-luxury-500 focus:border-gold-500 focus:outline-none"
           />
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
           {/* Category Filter */}
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="rounded-xl border border-luxury-700 bg-luxury-950 px-3 py-2 text-xs text-cream-200 focus:border-gold-500 focus:outline-none"
+            className="w-full sm:w-auto rounded-xl border border-luxury-700 bg-luxury-950 px-3 py-2 text-xs text-cream-200 focus:border-gold-500 focus:outline-none"
           >
             <option value="all">All Categories ({categories.length})</option>
             {categories.map((c) => (
@@ -161,7 +161,7 @@ export default function CakesManagerClient({
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as any)}
-            className="rounded-xl border border-luxury-700 bg-luxury-950 px-3 py-2 text-xs text-cream-200 focus:border-gold-500 focus:outline-none"
+            className="w-full sm:w-auto rounded-xl border border-luxury-700 bg-luxury-950 px-3 py-2 text-xs text-cream-200 focus:border-gold-500 focus:outline-none"
           >
             <option value="all">All Status</option>
             <option value="active">Active Only</option>
@@ -170,8 +170,8 @@ export default function CakesManagerClient({
         </div>
       </div>
 
-      {/* Cakes Table */}
-      <div className="overflow-hidden rounded-2xl border border-gold-500/20 bg-luxury-900/80 shadow-xl">
+      {/* Cakes Table (Desktop View) */}
+      <div className="hidden md:block overflow-hidden rounded-2xl border border-gold-500/20 bg-luxury-900/80 shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
@@ -204,7 +204,7 @@ export default function CakesManagerClient({
                           </div>
                           <div>
                             <div className="flex items-center space-x-2">
-                              <span className="font-serif text-sm font-bold text-cream-100">
+                              <span className="font-sans text-sm font-bold text-cream-100">
                                 {cake.name}
                               </span>
                               <Link
@@ -233,7 +233,7 @@ export default function CakesManagerClient({
                       {/* Weight Pricing */}
                       <td className="py-3.5 px-4">
                         <div className="space-y-1">
-                          <span className="font-bold text-gold-400">
+                          <span className="font-price font-bold text-gold-400">
                             ₹{sorted[0]?.price?.toLocaleString("en-IN") || 0}
                             {sorted.length > 1 && ` - ₹${sorted[sorted.length - 1]?.price?.toLocaleString("en-IN")}`}
                           </span>
@@ -349,6 +349,169 @@ export default function CakesManagerClient({
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Mobile Touch-Friendly Cake Cards (visible on phones/tablets) */}
+      <div className="md:hidden space-y-3.5">
+        {filteredCakes.length > 0 ? (
+          filteredCakes.map((cake, index) => {
+            const sorted = [...(cake.prices || [])].sort((a, b) => a.price - b.price);
+            const isDeleting = loadingAction === `delete-${cake.id}`;
+            const isTogglingAvailable = loadingAction === `${cake.id}-available`;
+
+            return (
+              <div
+                key={cake.id}
+                className="rounded-2xl border border-gold-500/20 bg-luxury-900/90 p-4 space-y-3.5 shadow-lg"
+              >
+                {/* Top: Image, Name, Category & Price */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start space-x-3 min-w-0 flex-1">
+                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-gold-500/30 bg-luxury-950">
+                      <Image
+                        src={cake.coverImage}
+                        alt={cake.name}
+                        fill
+                        sizes="56px"
+                        className="object-cover"
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <div className="flex items-center space-x-1.5">
+                        <span className="font-price font-bold text-luxury-500 text-[11px]">
+                          #{index + 1}
+                        </span>
+                        <span className="font-sans text-sm font-bold text-cream-100 truncate block">
+                          {cake.name}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="rounded bg-luxury-950 border border-luxury-700 px-2 py-0.5 text-[10px] font-medium text-gold-300">
+                          {cake.category?.name || "Unassigned"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-right shrink-0">
+                    <span className="font-price text-sm font-bold text-gold-400 block">
+                      ₹{sorted[0]?.price?.toLocaleString("en-IN") || 0}
+                    </span>
+                    {sorted.length > 1 && (
+                      <span className="text-[10px] text-luxury-400 block">
+                        up to ₹{sorted[sorted.length - 1]?.price?.toLocaleString("en-IN")}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Weight Tiers Pills */}
+                {sorted.length > 0 && (
+                  <div className="flex flex-wrap gap-1 pt-1">
+                    {sorted.map((p, idx) => (
+                      <span
+                        key={idx}
+                        className="rounded border border-luxury-800 bg-luxury-950 px-2 py-0.5 text-[10px] text-luxury-300"
+                      >
+                        {p.weight}: ₹{p.price}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Badges Toggles (Bestseller, Signature, New) */}
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  <button
+                    onClick={() => handleToggleFlag(cake.id, "bestseller", cake.bestseller)}
+                    className={`flex items-center space-x-1 rounded-lg px-2.5 py-1 text-[10px] font-semibold transition-all active:scale-95 ${
+                      cake.bestseller
+                        ? "bg-gold-500/20 text-gold-300 border border-gold-500/40"
+                        : "bg-luxury-950 text-luxury-500 border border-luxury-800"
+                    }`}
+                  >
+                    <Sparkles className="h-3 w-3" />
+                    <span>Bestseller</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleToggleFlag(cake.id, "featured", cake.featured)}
+                    className={`flex items-center space-x-1 rounded-lg px-2.5 py-1 text-[10px] font-semibold transition-all active:scale-95 ${
+                      cake.featured
+                        ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                        : "bg-luxury-950 text-luxury-500 border border-luxury-800"
+                    }`}
+                  >
+                    <Crown className="h-3 w-3" />
+                    <span>Signature</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleToggleFlag(cake.id, "isNew", cake.isNew)}
+                    className={`rounded-lg px-2.5 py-1 text-[10px] font-semibold transition-all active:scale-95 ${
+                      cake.isNew
+                        ? "bg-amber-900/60 text-amber-300 border border-amber-500/40"
+                        : "bg-luxury-950 text-luxury-500 border border-luxury-800"
+                    }`}
+                  >
+                    {cake.isNew ? "★ New" : "Standard"}
+                  </button>
+                </div>
+
+                {/* Bottom Row: 1-Tap Active Toggle + Edit / Delete / View */}
+                <div className="flex items-center justify-between pt-2.5 border-t border-luxury-800/80">
+                  <button
+                    onClick={() => handleToggleFlag(cake.id, "available", cake.available)}
+                    disabled={isTogglingAvailable}
+                    className={`flex items-center space-x-1.5 rounded-full px-3 py-1.5 text-xs font-bold transition-all active:scale-95 ${
+                      cake.available
+                        ? "bg-emerald-950/90 text-emerald-400 border border-emerald-500/40 active:bg-emerald-900"
+                        : "bg-red-950/90 text-red-400 border border-red-500/40 active:bg-red-900"
+                    } ${isTogglingAvailable ? "opacity-50" : ""}`}
+                  >
+                    <div
+                      className={`h-2 w-2 rounded-full ${
+                        cake.available ? "bg-emerald-400" : "bg-red-400"
+                      }`}
+                    />
+                    <span>{cake.available ? "Active on Menu" : "Hidden from Menu"}</span>
+                  </button>
+
+                  <div className="flex items-center space-x-1.5">
+                    <Link
+                      href={`/admin/cakes/${cake.id}/edit`}
+                      className="flex items-center space-x-1 rounded-xl border border-gold-500/30 bg-luxury-800 px-3 py-1.5 text-xs font-semibold text-gold-300 active:bg-gold-500 active:text-luxury-950"
+                    >
+                      <Edit2 className="h-3.5 w-3.5" />
+                      <span>Edit</span>
+                    </Link>
+
+                    <Link
+                      href={`/menu/cake/${cake.slug}`}
+                      target="_blank"
+                      className="flex h-8 w-8 items-center justify-center rounded-xl border border-luxury-700 bg-luxury-950 text-luxury-300 active:bg-luxury-800"
+                      title="View on Live Menu"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </Link>
+
+                    <button
+                      onClick={() => handleDeleteCake(cake.id, cake.name)}
+                      disabled={isDeleting}
+                      className="flex h-8 w-8 items-center justify-center rounded-xl border border-luxury-700 bg-luxury-950 text-red-400 hover:border-red-500 active:bg-red-950"
+                      title="Delete Cake"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="rounded-2xl border border-luxury-800 bg-luxury-900 p-8 text-center text-xs text-luxury-400">
+            No cakes found matching your search.
+          </div>
+        )}
       </div>
     </div>
   );

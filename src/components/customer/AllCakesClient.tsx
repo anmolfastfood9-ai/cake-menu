@@ -6,7 +6,9 @@ import Image from "next/image";
 import CakeCard, { CakeItem } from "@/components/customer/CakeCard";
 import Footer from "@/components/customer/Footer";
 import MobileBottomNav from "@/components/customer/MobileBottomNav";
-import { Search, ArrowLeft, MessageCircle, SlidersHorizontal, ChevronDown, X } from "lucide-react";
+import { DEFAULT_BRAND_NAME } from "@/components/customer/BrandIdentity";
+import { Search, ArrowLeft, SlidersHorizontal, ChevronDown, X } from "lucide-react";
+import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { generateGeneralWhatsAppLink } from "@/lib/whatsapp";
 
 interface AllCakesClientProps {
@@ -56,7 +58,7 @@ export default function AllCakesClient({
     }
   };
 
-  const restaurantName = settings?.restaurantName || "Sweet Delights";
+  const restaurantName = settings?.restaurantName || DEFAULT_BRAND_NAME;
   const whatsappNumber = whatsappSetting?.whatsappNumber || settings?.whatsapp || "919876543210";
   const phoneNumber = whatsappSetting?.callNumber || settings?.phone || "+91 98765 43210";
 
@@ -118,7 +120,7 @@ export default function AllCakesClient({
           </Link>
 
           <div className="text-center">
-            <h1 className="font-serif text-lg font-bold text-[#F0DEA3]">All Cakes</h1>
+            <h1 className="font-sans text-lg font-bold text-[#F0DEA3]">All Cakes</h1>
             <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-emerald-400">100% Eggless</p>
           </div>
 
@@ -129,7 +131,7 @@ export default function AllCakesClient({
             className="flex h-8 w-8 items-center justify-center rounded-full bg-[#25D366] text-white shadow-md"
             aria-label="Chat on WhatsApp"
           >
-            <MessageCircle className="h-4 w-4 fill-white text-white" />
+            <WhatsAppIcon className="h-4.5 w-4.5 text-white" />
           </a>
         </div>
       </header>
@@ -239,7 +241,7 @@ export default function AllCakesClient({
                 <span>Load More Cakes ↓</span>
               </button>
               <p className="text-[11px] text-luxury-400">
-                You've seen {Math.min(filteredCakes.length, visibleCount)} of {filteredCakes.length} cakes
+                You&apos;ve seen {Math.min(filteredCakes.length, visibleCount)} of {filteredCakes.length} cakes
               </p>
             </div>
           )}
@@ -249,6 +251,8 @@ export default function AllCakesClient({
       {/* Global Footer */}
       <Footer
         restaurantName={restaurantName}
+        tagline={settings?.tagline}
+        logo={settings?.logo}
         phone={phoneNumber}
         whatsapp={whatsappNumber}
         address={settings?.address}

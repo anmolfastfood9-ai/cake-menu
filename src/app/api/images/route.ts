@@ -5,9 +5,13 @@ import { processImageUpload, deleteFromImageKit } from "@/lib/upload";
 import fs from "fs";
 import path from "path";
 
-// GET /api/images - List all uploaded media
-export async function GET() {
+// GET /api/images - List all uploaded media (Admin only)
+export async function GET(req: NextRequest) {
   try {
+    const session = getSessionAdminFromRequest(req);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const images = await prisma.imageMedia.findMany({
       orderBy: { createdAt: "desc" },
     });
@@ -15,7 +19,7 @@ export async function GET() {
   } catch (error: any) {
     console.error("Fetch images error:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to fetch images" },
+      { error: "An internal server error occurred" },
       { status: 500 }
     );
   }
@@ -70,7 +74,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error("Image upload route error:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to upload image(s)" },
+      { error: "An internal server error occurred" },
       { status: 500 }
     );
   }
@@ -130,7 +134,7 @@ export async function DELETE(req: NextRequest) {
   } catch (error: any) {
     console.error("Delete image route error:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to delete image" },
+      { error: "An internal server error occurred" },
       { status: 500 }
     );
   }
