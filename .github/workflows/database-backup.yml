@@ -54,20 +54,20 @@ jobs:
         run: |
           set -euo pipefail
 
+          echo "psql:"
+          /usr/lib/postgresql/18/bin/psql --version
+
           echo "pg_dump:"
           /usr/lib/postgresql/18/bin/pg_dump --version
 
           echo "pg_restore:"
           /usr/lib/postgresql/18/bin/pg_restore --version
 
-          echo "psql:"
-          /usr/lib/postgresql/18/bin/psql --version
-
-          echo "Binary:"
-          /usr/lib/postgresql/18/bin/pg_dump
-
-          which pg_dump
-          readlink -f "$(which pg_dump)"
+          PSQL_VER=$(/usr/lib/postgresql/18/bin/psql --version)
+          if ! echo "$PSQL_VER" | grep -q "18\."; then
+            echo "ERROR: Expected PostgreSQL 18.x psql!"
+            exit 1
+          fi
 
           PG_DUMP_VER=$(/usr/lib/postgresql/18/bin/pg_dump --version)
           if ! echo "$PG_DUMP_VER" | grep -q "18\."; then
@@ -88,21 +88,28 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [ -z "${DATABASE_URL:-}" ]; then
-            echo "ERROR: DATABASE_URL secret is missing or empty!"
+          if [[ -z "${DATABASE_URL:-}" ]]; then
+            echo "ERROR: DATABASE_URL secret is missing or empty"
             exit 1
           fi
 
+          if [[ ! "$DATABASE_URL" =~ ^postgres(ql)?:// ]]; then
+            echo "ERROR: DATABASE_URL is not a PostgreSQL connection URI"
+            exit 1
+          fi
+
+          echo "DATABASE_URL is configured"
+
           SERVER_VERSION=$(
-            /usr/lib/postgresql/18/bin/psql "$DATABASE_URL" \
+            /usr/lib/postgresql/18/bin/psql \
+              --dbname="$DATABASE_URL" \
               -tAc "SHOW server_version;"
           )
 
           echo "PostgreSQL server major version: ${SERVER_VERSION%%.*}"
-          echo "PostgreSQL server exact version: $SERVER_VERSION"
 
           if [[ "${SERVER_VERSION%%.*}" != "18" ]]; then
-            echo "ERROR: Expected PostgreSQL 18 server."
+            echo "ERROR: Expected PostgreSQL 18 server"
             exit 1
           fi
 
@@ -124,15 +131,14 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [ -z "${DATABASE_URL:-}" ]; then
-            echo "ERROR: DATABASE_URL secret is missing or empty!"
+          if [[ -z "${DATABASE_URL:-}" ]]; then
+            echo "ERROR: DATABASE_URL secret is missing or empty"
             exit 1
           fi
 
           mkdir -p backups
           DUMP_PATH="backups/${{ steps.meta.outputs.dump_name }}"
 
-          # Use absolute PostgreSQL 18 binary
           /usr/lib/postgresql/18/bin/pg_dump \
             --dbname="$DATABASE_URL" \
             --format=custom \
@@ -157,7 +163,6 @@ jobs:
 
           DUMP_PATH="backups/${{ steps.meta.outputs.dump_name }}"
 
-          # Use absolute PostgreSQL 18 binary
           /usr/lib/postgresql/18/bin/pg_restore --list "$DUMP_PATH" > /dev/null
           echo "pg_restore table-of-contents validation passed."
 
