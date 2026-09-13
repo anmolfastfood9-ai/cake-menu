@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Phone,
@@ -12,7 +12,7 @@ import {
   Smartphone,
 } from "lucide-react";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
-import { generateWhatsAppLink } from "@/lib/whatsapp";
+import { generateWhatsAppLink, normalizeWhatsAppNumber } from "@/lib/whatsapp";
 
 interface WhatsAppSettingsClientProps {
   initialSetting?: any;
@@ -31,12 +31,27 @@ export default function WhatsAppSettingsClient({
   const [callNumber, setCallNumber] = useState(initialSetting?.callNumber || "+91 98765 43210");
   const [template, setTemplate] = useState(
     initialSetting?.defaultMessageTemplate ||
-      "Hello Raman Sweet Cake, I would like to enquire about:\n\n🍰 *Cake:* {cake_name}\n⚖️ *Weight:* {weight}\n💰 *Price:* ₹{price}\n\nPlease confirm availability and preparation time."
+      "🎂 NEW CAKE ENQUIRY\n━━━━━━━━━━━━━━━━━━\n\n{restaurant_name}\n100% Eggless • Pure Vegetarian\n\n🍰 Cake\n{cake_name}\n\n⚖️ Selected Weight\n{weight}\n\n💰 Price\n₹{price}\n\n━━━━━━━━━━━━━━━━━━\nPlease confirm availability and order details."
   );
 
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Sync state whenever initialSetting prop updates
+  useEffect(() => {
+    if (initialSetting) {
+      if (initialSetting.whatsappNumber !== undefined) {
+        setWhatsappNumber(initialSetting.whatsappNumber || "");
+      }
+      if (initialSetting.callNumber !== undefined) {
+        setCallNumber(initialSetting.callNumber || "");
+      }
+      if (initialSetting.defaultMessageTemplate !== undefined) {
+        setTemplate(initialSetting.defaultMessageTemplate);
+      }
+    }
+  }, [initialSetting]);
 
   // Simulated live preview message
   const previewMessage = template
@@ -61,18 +76,34 @@ export default function WhatsAppSettingsClient({
     setSuccess(false);
 
     try {
+      const cleanWa = normalizeWhatsAppNumber(whatsappNumber);
       const res = await fetch("/api/whatsapp", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          whatsappNumber,
-          callNumber,
+          whatsappNumber: cleanWa,
+          callNumber: callNumber.trim(),
           defaultMessageTemplate: template,
           isEnabled: true,
         }),
       });
 
-      if (!res.ok) throw new Error("Failed to save WhatsApp settings");
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data.success) {
+        const errorMsg =
+          data.error && data.details?.[0]?.message
+            ? `${data.error}: ${data.details[0].message}`
+            : data.error || data.message || "Failed to save WhatsApp settings";
+        throw new Error(errorMsg);
+      }
+
+      // Update state directly from database record
+      if (data.settings) {
+        if (data.settings.whatsappNumber) setWhatsappNumber(data.settings.whatsappNumber);
+        if (data.settings.callNumber !== undefined) setCallNumber(data.settings.callNumber);
+        if (data.settings.defaultMessageTemplate) setTemplate(data.settings.defaultMessageTemplate);
+      }
 
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
@@ -164,17 +195,17 @@ export default function WhatsAppSettingsClient({
                   <label className="block text-xs font-semibold text-cream-200">
                     Pre-filled WhatsApp Message Template
                   </label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTemplate(
-                        "Hello Raman Sweet Cake, I would like to enquire about:\n\n🍰 *Cake:* {cake_name}\n⚖️ *Weight:* {weight}\n💰 *Price:* ₹{price}\n\nPlease confirm availability and preparation time."
-                      );
-                    }}
-                    className="text-[10px] text-gold-400 hover:underline"
-                  >
-                    Reset to Default
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTemplate(
+                          "🎂 NEW CAKE ENQUIRY\n━━━━━━━━━━━━━━━━━━\n\n{restaurant_name}\n100% Eggless • Pure Vegetarian\n\n🍰 Cake\n{cake_name}\n\n⚖️ Selected Weight\n{weight}\n\n💰 Price\n₹{price}\n\n━━━━━━━━━━━━━━━━━━\nPlease confirm availability and order details."
+                        );
+                      }}
+                      className="text-[10px] text-gold-400 hover:underline"
+                    >
+                      Reset to Default
+                    </button>
                 </div>
 
                 {/* 1-Tap Emoji & Formatting Bar */}

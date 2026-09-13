@@ -10,6 +10,7 @@ import {
   validationErrorResponse,
   UpdateWhatsAppSettingsSchema,
 } from "@/lib/validations";
+import { normalizeWhatsAppNumber } from "@/lib/whatsapp";
 
 export const dynamic = "force-dynamic";
 
@@ -82,6 +83,13 @@ export async function PUT(req: NextRequest) {
       if (key in body && (body as any)[key] !== undefined) {
         sanitizedData[key] = (body as any)[key];
       }
+    }
+
+    if (sanitizedData.whatsappNumber) {
+      sanitizedData.whatsappNumber = normalizeWhatsAppNumber(sanitizedData.whatsappNumber);
+    }
+    if (sanitizedData.callNumber !== undefined && typeof sanitizedData.callNumber === "string") {
+      sanitizedData.callNumber = sanitizedData.callNumber.trim();
     }
 
     const settings = await prisma.whatsAppSetting.upsert({

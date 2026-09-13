@@ -23,6 +23,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
+import { normalizeWhatsAppNumber } from "@/lib/whatsapp";
 
 interface SettingsClientProps {
   initialSettings?: any;
@@ -185,6 +186,7 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
     setSuccess(false);
 
     try {
+      const cleanWa = whatsapp ? normalizeWhatsAppNumber(whatsapp) : "";
       const payload = {
         restaurantName: restaurantName.trim(),
         tagline: tagline.trim(),
@@ -194,7 +196,7 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
         heroImage: heroImage.trim(),
         about: about.trim(),
         phone: phone.trim(),
-        whatsapp: whatsapp.trim(),
+        whatsapp: cleanWa,
         address: address.trim(),
         openingHours: openingHours.trim(),
         instagram: instagram.trim(),
@@ -211,7 +213,11 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok || !data.success) {
-        throw new Error(data.error || "Failed to update settings in database");
+        const errorMsg =
+          data.error && data.details?.[0]?.message
+            ? `${data.error}: ${data.details[0].message} (${data.details[0].field})`
+            : data.error || data.message || "Failed to update settings in database";
+        throw new Error(errorMsg);
       }
 
       // Update state directly from authoritative database record
@@ -510,7 +516,7 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
               {/* Raw URL Input */}
               <div className="relative">
                 <input
-                  type="url"
+                  type="text"
                   value={heroImage}
                   placeholder="https://..."
                   onChange={(e) => setHeroImage(e.target.value)}
@@ -653,8 +659,9 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
                   Instagram Profile URL
                 </label>
                 <input
-                  type="url"
+                  type="text"
                   value={instagram}
+                  placeholder="https://instagram.com/..."
                   onChange={(e) => setInstagram(e.target.value)}
                   className="w-full rounded-xl border border-luxury-700 bg-luxury-950 px-4 py-2.5 text-xs text-cream-100 focus:border-gold-500 focus:outline-none"
                 />
@@ -665,8 +672,9 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
                   Facebook Page URL
                 </label>
                 <input
-                  type="url"
+                  type="text"
                   value={facebook}
+                  placeholder="https://facebook.com/..."
                   onChange={(e) => setFacebook(e.target.value)}
                   className="w-full rounded-xl border border-luxury-700 bg-luxury-950 px-4 py-2.5 text-xs text-cream-100 focus:border-gold-500 focus:outline-none"
                 />

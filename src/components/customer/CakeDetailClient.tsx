@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import Footer from "@/components/customer/Footer";
@@ -21,7 +21,7 @@ import {
   Ruler,
   UtensilsCrossed,
 } from "lucide-react";
-import { generateWhatsAppLink } from "@/lib/whatsapp";
+import { generateWhatsAppLink, normalizeWhatsAppNumber } from "@/lib/whatsapp";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { useCakeFavorite } from "@/hooks/useFavorites";
 import { getNormalizedCakeImageUrl, getCleanOriginalCakeImageUrl } from "@/lib/imageNormalization";
@@ -145,6 +145,16 @@ export default function CakeDetailClient({
   // Manual hero image selection within active gallery
   const [selectedHeroImage, setSelectedHeroImage] = useState<string | null>(null);
   const [customMessage, setCustomMessage] = useState<string>("");
+  const [occasionParam, setOccasionParam] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const p = new URLSearchParams(window.location.search).get("occasion");
+      if (p && p.trim()) {
+        setOccasionParam(p.trim());
+      }
+    }
+  }, []);
 
   // Favorites — persistent localStorage hook
   const { isFavorite, toggleFavorite } = useCakeFavorite(cake.id);
@@ -163,17 +173,50 @@ export default function CakeDetailClient({
   const whatsappNumber = whatsappSetting?.whatsappNumber || settings?.whatsapp || "919876543210";
   const phoneNumber = whatsappSetting?.callNumber || settings?.phone || "+91 98765 43210";
 
+  // Selected weight photo logic:
+  // 1. activePriceObj weight-specific gallery (tierGallery[0])
+  // 2. activePriceObj.image (weight-specific image)
+  // 3. cake.coverImage
+  // 4. generalGallery[0]
+  const rawSelectedPhoto =
+    tierGallery[0] ||
+    (activePriceObj?.image && typeof activePriceObj.image === "string" && activePriceObj.image.trim()) ||
+    (cake.coverImage && typeof cake.coverImage === "string" && cake.coverImage.trim()) ||
+    generalGallery[0] ||
+    null;
+
+  const selectedPhotoUrl =
+    rawSelectedPhoto && rawSelectedPhoto !== FALLBACK_IMAGE
+      ? (rawSelectedPhoto.startsWith("/")
+          ? `https://ramansweetbakery.vercel.app${rawSelectedPhoto}`
+          : rawSelectedPhoto)
+      : null;
+
+  const resolvedOccasion =
+    occasionParam ||
+    cake.occasionName ||
+    cake.occasion?.name ||
+    (typeof cake.occasion === "string" ? cake.occasion : null) ||
+    cake.occasions?.[0]?.occasion?.name ||
+    null;
+
   const waLink = generateWhatsAppLink({
     cakeName: cake.name,
+    slug: cake.slug,
     weight: activePriceObj.weight,
     price: activePriceObj.price,
     restaurantName,
     template: whatsappSetting?.defaultMessageTemplate,
     whatsappNumber,
     customMessage,
+    flavour: cake.flavour || cake.flavor || null,
+    customizationInfo: cake.customizationInfo || null,
+    occasion: resolvedOccasion,
+    imageUrl: selectedPhotoUrl,
+    cakeUrl: `https://ramansweetbakery.vercel.app/menu/cake/${cake.slug}`,
   });
 
-  const customCakeWaLink = `https://wa.me/${whatsappNumber.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+  const customCakeWaLink = `https://wa.me/${normalizeWhatsAppNumber(whatsappNumber)}?text=${encodeURIComponent(
     `Hello ${restaurantName},\n\n🎂 I would like to enquire about a *Custom Cake* design.\n\nPlease let me know how I can share my reference photo and requirements.`
   )}`;
 

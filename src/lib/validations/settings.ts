@@ -9,10 +9,20 @@ export const UpdateSettingsSchema = z.object({
   heroSubtitle: z.string().trim().max(500, "Hero subtitle too long").nullable().optional(),
   heroImage: z.string().trim().max(1000, "Hero image URL too long").nullable().optional(),
   about: z.string().trim().max(3000, "About section too long").nullable().optional(),
-  phone: z.string().trim().max(30, "Phone number too long").nullable().optional(),
+  phone: z
+    .union([
+      z.string().trim().max(50, "Phone number too long"),
+      z.literal(""),
+      z.null(),
+    ])
+    .nullable()
+    .optional(),
   whatsapp: z
     .union([
-      z.string().trim().regex(/^\+?[0-9\s-]{7,25}$/, "Invalid WhatsApp phone number format"),
+      z
+        .string()
+        .trim()
+        .regex(/^\+?[0-9\s\-().,/]{7,30}$/, "Invalid WhatsApp phone number format"),
       z.literal(""),
       z.null(),
     ])

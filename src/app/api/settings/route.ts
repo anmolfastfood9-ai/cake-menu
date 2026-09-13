@@ -10,6 +10,7 @@ import {
   validationErrorResponse,
   UpdateSettingsSchema,
 } from "@/lib/validations";
+import { normalizeWhatsAppNumber } from "@/lib/whatsapp";
 
 export const dynamic = "force-dynamic";
 
@@ -85,6 +86,13 @@ async function handleUpdateSettings(req: NextRequest) {
       }
     }
 
+    if (sanitizedData.whatsapp) {
+      sanitizedData.whatsapp = normalizeWhatsAppNumber(sanitizedData.whatsapp);
+    }
+    if (sanitizedData.phone !== undefined && typeof sanitizedData.phone === "string") {
+      sanitizedData.phone = sanitizedData.phone.trim();
+    }
+
     // 1. Primary write to WebsiteSetting table
     const settings = await prisma.websiteSetting.upsert({
       where: { id: "default" },
@@ -98,16 +106,20 @@ async function handleUpdateSettings(req: NextRequest) {
     // 2. Dual-sync phone & whatsapp into WhatsAppSetting table to ensure complete system-wide sync
     if (sanitizedData.whatsapp !== undefined || sanitizedData.phone !== undefined) {
       const waUpdate: Record<string, any> = {};
-      if (sanitizedData.whatsapp !== undefined) waUpdate.whatsappNumber = sanitizedData.whatsapp;
-      if (sanitizedData.phone !== undefined) waUpdate.callNumber = sanitizedData.phone;
+      if (sanitizedData.whatsapp !== undefined) {
+        waUpdate.whatsappNumber = sanitizedData.whatsapp ? normalizeWhatsAppNumber(sanitizedData.whatsapp) : "";
+      }
+      if (sanitizedData.phone !== undefined) {
+        waUpdate.callNumber = sanitizedData.phone || "";
+      }
 
       await prisma.whatsAppSetting.upsert({
         where: { id: "default" },
         update: waUpdate,
         create: {
           id: "default",
-          whatsappNumber: sanitizedData.whatsapp || "919876543210",
-          callNumber: sanitizedData.phone || "+91 98765 43210",
+          whatsappNumber: waUpdate.whatsappNumber || "919876543210",
+          callNumber: waUpdate.callNumber || "+91 98765 43210",
         },
       });
     }
