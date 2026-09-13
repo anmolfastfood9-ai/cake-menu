@@ -326,3 +326,124 @@ export async function getOccasionBySlug(slug: string) {
     return null;
   }
 }
+
+/**
+ * Resolves whether a specific occasion is currently active and within its festive window.
+ * Returns the occurrence and occasion details if active, or null if inactive/non-existent.
+ */
+export async function getActiveOccasionBySlug(
+  slug: string,
+  currentDate?: Date
+): Promise<{ occasion: Occasion; occurrence: FestivalOccurrence } | null> {
+  if (!slug) return null;
+  const target = currentDate || new Date();
+  const year = target.getUTCFullYear();
+  const month = target.getUTCMonth();
+
+  await ensureOccurrencesForYear(year);
+  if (month === 11) {
+    await ensureOccurrencesForYear(year + 1);
+  } else if (month === 0) {
+    await ensureOccurrencesForYear(year - 1);
+  }
+
+  const normalizedSlug = slug.toLowerCase().trim();
+
+  const occurrence = await prisma.festivalOccurrence.findFirst({
+    where: {
+      displayStart: { lte: target },
+      displayEnd: { gte: target },
+      occasion: {
+        active: true,
+        OR: [
+          { slug: { equals: normalizedSlug, mode: "insensitive" } },
+          { id: slug },
+          { calendarKey: { equals: normalizedSlug.replace(/-/g, "_"), mode: "insensitive" } },
+        ],
+        cakes: {
+          some: {
+            cake: {
+              available: true,
+              productType: "CAKE",
+              NOT: [
+                { slug: { contains: "test", mode: "insensitive" } },
+                { name: { contains: "test", mode: "insensitive" } },
+              ],
+            },
+          },
+        },
+      },
+    },
+    include: {
+      occasion: true,
+    },
+  });
+
+  if (!occurrence || !occurrence.occasion) {
+    return null;
+  }
+
+  return {
+    occasion: occurrence.occasion,
+    occurrence,
+  };
+}
+
+/**
+ * Resolves all occasions currently within their active festival window.
+ * Used for sitemap, customer navigation, and festive discovery.
+ */
+export async function getAllActiveOccasions(
+  currentDate?: Date
+): Promise<Occasion[]> {
+  const target = currentDate || new Date();
+  const year = target.getUTCFullYear();
+  const month = target.getUTCMonth();
+
+  await ensureOccurrencesForYear(year);
+  if (month === 11) {
+    await ensureOccurrencesForYear(year + 1);
+  } else if (month === 0) {
+    await ensureOccurrencesForYear(year - 1);
+  }
+
+  const occurrences = await prisma.festivalOccurrence.findMany({
+    where: {
+      displayStart: { lte: target },
+      displayEnd: { gte: target },
+      occasion: {
+        active: true,
+        cakes: {
+          some: {
+            cake: {
+              available: true,
+              productType: "CAKE",
+              NOT: [
+                { slug: { contains: "test", mode: "insensitive" } },
+                { name: { contains: "test", mode: "insensitive" } },
+              ],
+            },
+          },
+        },
+      },
+    },
+    include: {
+      occasion: true,
+    },
+    orderBy: {
+      occasion: { priority: "desc" },
+    },
+  });
+
+  const seen = new Set<string>();
+  const activeOccasions: Occasion[] = [];
+  for (const occ of occurrences) {
+    if (occ.occasion && !seen.has(occ.occasion.id)) {
+      seen.add(occ.occasion.id);
+      activeOccasions.push(occ.occasion);
+    }
+  }
+
+  return activeOccasions;
+}
+

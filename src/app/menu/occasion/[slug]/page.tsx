@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import OccasionClient from "@/components/customer/OccasionClient";
+import { getActiveOccasionBySlug } from "@/lib/festivals/occasionEngine";
 import {
   getCachedOccasion,
   getCachedWebsiteSettings,
@@ -15,12 +16,29 @@ export async function generateMetadata({
   params: { slug: string };
 }): Promise<Metadata> {
   const { slug } = params;
-  const occasion = await getCachedOccasion(slug);
+  const activeData = await getActiveOccasionBySlug(slug);
 
-  if (!occasion) {
+  if (!activeData) {
     return {
       title: "Festive Occasion | Raman Sweet Bakery",
       description: "Explore our handcrafted eggless festive cake collections.",
+      robots: {
+        index: false,
+        follow: false,
+      },
+    };
+  }
+
+  const occasion = await getCachedOccasion(slug);
+
+  if (!occasion || !occasion.active) {
+    return {
+      title: "Festive Occasion | Raman Sweet Bakery",
+      description: "Explore our handcrafted eggless festive cake collections.",
+      robots: {
+        index: false,
+        follow: false,
+      },
     };
   }
 
@@ -61,6 +79,12 @@ export default async function OccasionPage({
 }) {
   const { slug } = params;
 
+  // 1. Server-side validation: Strictly require that the occasion is currently active
+  const activeData = await getActiveOccasionBySlug(slug);
+  if (!activeData) {
+    notFound();
+  }
+
   const [occasion, settings, whatsappSetting] = await Promise.all([
     getCachedOccasion(slug),
     getCachedWebsiteSettings(),
@@ -81,13 +105,12 @@ export default async function OccasionPage({
         (!cake.productType || cake.productType.toUpperCase() === "CAKE")
     );
 
-  // Find the active or upcoming occurrence
-  const occurrences = (occasion as any).occurrences || [];
-  const currentYear = new Date().getFullYear();
-  const currentYearOccurrence = occurrences.find(
-    (o: any) => o.year === currentYear
-  );
-  const activeOccurrence = currentYearOccurrence || occurrences[0] || null;
+  // If no available cakes exist for this occasion, do not render an empty page
+  if (cakes.length === 0) {
+    notFound();
+  }
+
+  const activeOccurrence = activeData.occurrence;
 
   // Clean serialization for Client Component
   const serializedOccasion = {

@@ -1,5 +1,6 @@
 import { MetadataRoute } from "next";
 import prisma from "@/lib/db";
+import { getAllActiveOccasions } from "@/lib/festivals/occasionEngine";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://sweetdelights.com").replace(/\/$/, "");
@@ -27,9 +28,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   try {
-    // 1. Available Cakes
+    // 1. Available Cakes (strictly productType CAKE, excluding test/demo records)
     const cakes = await prisma.cake.findMany({
-      where: { available: true },
+      where: {
+        available: true,
+        productType: "CAKE",
+        NOT: [
+          { slug: { contains: "test", mode: "insensitive" } },
+          { name: { contains: "test", mode: "insensitive" } },
+        ],
+      },
       select: { slug: true, updatedAt: true },
     });
 
@@ -40,9 +48,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     }));
 
-    // 2. Active Categories
+    // 2. Active Categories with available cakes
     const categories = await prisma.category.findMany({
-      where: { active: true },
+      where: {
+        active: true,
+        cakes: {
+          some: {
+            available: true,
+            productType: "CAKE",
+            NOT: [
+              { slug: { contains: "test", mode: "insensitive" } },
+              { name: { contains: "test", mode: "insensitive" } },
+            ],
+          },
+        },
+      },
       select: { slug: true, updatedAt: true },
     });
 
@@ -53,13 +73,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     }));
 
-    // 3. Active Occasions
-    const occasions = await prisma.occasion.findMany({
-      where: { active: true },
-      select: { slug: true, updatedAt: true },
-    });
+    // 3. Currently Active Occasions belonging to the cake experience
+    const activeOccasions = await getAllActiveOccasions();
 
-    const occasionRoutes: MetadataRoute.Sitemap = occasions.map((occasion) => ({
+    const occasionRoutes: MetadataRoute.Sitemap = activeOccasions.map((occasion) => ({
       url: `${appUrl}/menu/occasion/${occasion.slug}`,
       lastModified: occasion.updatedAt,
       changeFrequency: "weekly",

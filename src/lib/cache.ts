@@ -126,7 +126,14 @@ export async function getCachedFeaturedCakes() {
     return memoryStore.featuredCakes.data;
   }
   const cakes = await prisma.cake.findMany({
-    where: { available: true, productType: "CAKE" },
+    where: {
+      available: true,
+      productType: "CAKE",
+      NOT: [
+        { slug: { contains: "test", mode: "insensitive" } },
+        { name: { contains: "test", mode: "insensitive" } },
+      ],
+    },
     include: {
       category: true,
       prices: {
@@ -149,7 +156,14 @@ export async function getCachedAllCakes() {
     return memoryStore.cakes.data;
   }
   const cakes = await prisma.cake.findMany({
-    where: { available: true, productType: "CAKE" },
+    where: {
+      available: true,
+      productType: "CAKE",
+      NOT: [
+        { slug: { contains: "test", mode: "insensitive" } },
+        { name: { contains: "test", mode: "insensitive" } },
+      ],
+    },
     include: {
       category: true,
       prices: {
@@ -252,6 +266,10 @@ export async function getCachedCake(slugOrId: string) {
           OR: [{ slug: rawKey }, { id: rawKey }, { slug: lowerKey }],
           available: true,
           productType: "CAKE",
+          NOT: [
+            { slug: { contains: "test", mode: "insensitive" } },
+            { name: { contains: "test", mode: "insensitive" } },
+          ],
         },
         include: {
           category: true,
@@ -288,6 +306,10 @@ export async function getCachedRelatedCakes(categoryId: string, excludeCakeId: s
           id: { not: excludeCakeId },
           available: true,
           productType: "CAKE",
+          NOT: [
+            { slug: { contains: "test", mode: "insensitive" } },
+            { name: { contains: "test", mode: "insensitive" } },
+          ],
         },
         select: {
           id: true,
