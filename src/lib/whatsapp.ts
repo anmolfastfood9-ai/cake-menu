@@ -87,7 +87,7 @@ export function buildCakeEnquiryMessage(params: WhatsAppMessageParams): string {
 
   // 1. Header block
   sections.push(
-    `🎂 NEW CAKE ENQUIRY\n${SEPARATOR}\n\n${brandName}\n100% Eggless • Pure Vegetarian`
+    `🎂 NEW CAKE ENQUIRY\n\n${SEPARATOR}\n\n${brandName}\n100% Eggless • Pure Vegetarian`
   );
 
   // 2. Cake
@@ -105,24 +105,13 @@ export function buildCakeEnquiryMessage(params: WhatsAppMessageParams): string {
     sections.push(`💰 Price\n₹${formattedPrice}`);
   }
 
-  // 5. Flavour (optional)
-  const flavour = params.flavour?.trim();
-  if (
-    flavour &&
-    flavour !== "null" &&
-    flavour !== "undefined" &&
-    flavour.toLowerCase() !== "n/a"
-  ) {
-    sections.push(`🎨 Flavour\n${flavour}`);
-  }
-
-  // 6. Custom Message (optional)
+  // 5. Custom Message (optional)
   const customMessage = sanitizeCustomMessage(params.customMessage);
   if (customMessage) {
     sections.push(`📝 Custom Message\n${customMessage}`);
   }
 
-  // 7. Customization (optional)
+  // 6. Customization (optional)
   const customization = params.customizationInfo?.trim();
   if (
     customization &&
@@ -133,7 +122,7 @@ export function buildCakeEnquiryMessage(params: WhatsAppMessageParams): string {
     sections.push(`✨ Customization\n${customization}`);
   }
 
-  // 8. Occasion (optional)
+  // 7. Occasion (optional)
   const occasion = params.occasion?.trim();
   if (
     occasion &&
@@ -144,7 +133,7 @@ export function buildCakeEnquiryMessage(params: WhatsAppMessageParams): string {
     sections.push(`📅 Occasion\n${occasion}`);
   }
 
-  // 9. Cake Photo (optional public production URL)
+  // 8. Cake Photo (optional public production URL)
   let photoUrl = params.imageUrl?.trim();
   if (photoUrl && photoUrl !== "null" && photoUrl !== "undefined") {
     if (photoUrl.startsWith("/")) {
@@ -160,7 +149,7 @@ export function buildCakeEnquiryMessage(params: WhatsAppMessageParams): string {
     }
   }
 
-  // 10. Cake Details URL (optional production URL)
+  // 9. Cake Details URL (optional production URL)
   let cakeUrl = params.cakeUrl?.trim();
   if (!cakeUrl && params.slug) {
     cakeUrl = `${PRODUCTION_APP_URL}/menu/cake/${encodeURIComponent(params.slug.trim())}`;
@@ -174,8 +163,8 @@ export function buildCakeEnquiryMessage(params: WhatsAppMessageParams): string {
     sections.push(`🔗 Cake Details\n${cakeUrl}`);
   }
 
-  // 11. Footer block
-  return `${sections.join("\n\n")}\n\n${SEPARATOR}\nPlease confirm availability and order details.`;
+  // 10. Footer block
+  return `${sections.join("\n\n")}\n\n${SEPARATOR}\n\nPlease confirm availability and order details.`;
 }
 
 /**
@@ -206,30 +195,7 @@ export function normalizeWhatsAppNumber(raw?: string | null): string {
  */
 export function generateWhatsAppLink(params: WhatsAppMessageParams): string {
   const cleanNumber = normalizeWhatsAppNumber(params.whatsappNumber);
-
-  let message = "";
-  if (params.template && !isLegacyTemplate(params.template)) {
-    // If admin defined a genuinely custom template, replace placeholders
-    message = params.template
-      .replace(/{cake_name}/g, params.cakeName || "Artisanal Cake")
-      .replace(/{weight}/g, normalizeWeight(params.weight) || "1 kg")
-      .replace(
-        /{price}/g,
-        params.price !== undefined && params.price !== null
-          ? formatIndianPrice(params.price)
-          : ""
-      )
-      .replace(/{restaurant_name}/g, params.restaurantName || "Raman Sweet Bakery")
-      .replace(/{flavour}/g, params.flavour || "")
-      .replace(/{custom_message}/g, sanitizeCustomMessage(params.customMessage))
-      .replace(/{customization}/g, params.customizationInfo || "")
-      .replace(/{occasion}/g, params.occasion || "")
-      .replace(/{photo_url}/g, params.imageUrl || "")
-      .replace(/{cake_url}/g, params.cakeUrl || "");
-  } else {
-    message = buildCakeEnquiryMessage(params);
-  }
-
+  const message = buildCakeEnquiryMessage(params);
   const encodedMessage = encodeURIComponent(message);
   return `https://wa.me/${cleanNumber}?text=${encodedMessage}`;
 }

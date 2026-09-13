@@ -186,7 +186,7 @@ export default function CakeDetailClient({
     null;
 
   const selectedPhotoUrl =
-    rawSelectedPhoto && rawSelectedPhoto !== FALLBACK_IMAGE
+    rawSelectedPhoto
       ? (rawSelectedPhoto.startsWith("/")
           ? `https://ramansweetbakery.vercel.app${rawSelectedPhoto}`
           : rawSelectedPhoto)
@@ -209,11 +209,10 @@ export default function CakeDetailClient({
     template: whatsappSetting?.defaultMessageTemplate,
     whatsappNumber,
     customMessage,
-    flavour: cake.flavour || cake.flavor || null,
     customizationInfo: cake.customizationInfo || null,
     occasion: resolvedOccasion,
     imageUrl: selectedPhotoUrl,
-    cakeUrl: `https://ramansweetbakery.vercel.app/menu/cake/${cake.slug}`,
+    cakeUrl: cake.slug ? `https://ramansweetbakery.vercel.app/menu/cake/${encodeURIComponent(cake.slug.trim())}` : undefined,
   });
 
   const customCakeWaLink = `https://wa.me/${normalizeWhatsAppNumber(whatsappNumber)}?text=${encodeURIComponent(
