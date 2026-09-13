@@ -20,9 +20,8 @@ From your private Cloudflare R2 or AWS S3 bucket, download the latest encrypted 
 # Example using AWS CLI or S3-compatible tool
 aws s3 cp s3://your-backup-bucket/backups/raman-sweet-bakery-prod-YYYY-MM-DD-HH-mm.dump.age .
 
-# Decrypt using age
-age -d -o raman-sweet-bakery-recovered.dump raman-sweet-bakery-prod-YYYY-MM-DD-HH-mm.dump.age
-# (When prompted, enter the BACKUP_ENCRYPTION_KEY)
+# Save your AGE_PRIVATE_KEY into a file (e.g. key.txt) and decrypt:
+age -d -i key.txt -o raman-sweet-bakery-recovered.dump raman-sweet-bakery-prod-YYYY-MM-DD-HH-mm.dump.age
 ```
 
 ---

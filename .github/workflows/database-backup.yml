@@ -169,23 +169,32 @@ jobs:
       - name: Encrypt Backup Archive using age
         shell: bash
         env:
-          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+          AGE_PRIVATE_KEY: ${{ secrets.AGE_PRIVATE_KEY }}
+          AGE_RECIPIENT: ${{ vars.AGE_RECIPIENT || 'age1twcek2hsxtw7y2sderr9shjaspydc96cwtlqqp6rhzz70f4vr4zq2qljtn' }}
         run: |
           set -euo pipefail
 
-          if [ -z "${BACKUP_ENCRYPTION_KEY:-}" ]; then
-            echo "ERROR: BACKUP_ENCRYPTION_KEY secret is missing or empty!"
+          if [[ -z "${AGE_PRIVATE_KEY:-}" ]]; then
+            echo "ERROR: AGE_PRIVATE_KEY secret is missing or empty"
+            exit 1
+          fi
+
+          if [[ -z "${AGE_RECIPIENT:-}" ]]; then
+            echo "ERROR: AGE_RECIPIENT is missing or empty"
             exit 1
           fi
 
           DUMP_PATH="backups/${{ steps.meta.outputs.dump_name }}"
           ARCHIVE_PATH="backups/${{ steps.meta.outputs.archive_name }}"
 
-          # Pass encryption passphrase via standard input securely without shell tracing
-          printf "%s" "$BACKUP_ENCRYPTION_KEY" | age -p -o "$ARCHIVE_PATH" "$DUMP_PATH"
+          # Non-interactive recipient-based encryption
+          age \
+            -r "$AGE_RECIPIENT" \
+            -o "$ARCHIVE_PATH" \
+            "$DUMP_PATH"
 
-          if [ ! -s "$ARCHIVE_PATH" ]; then
-            echo "ERROR: Encrypted archive is empty or missing!"
+          if [[ ! -s "$ARCHIVE_PATH" ]]; then
+            echo "ERROR: Encrypted archive is empty or missing"
             exit 1
           fi
 
@@ -198,22 +207,31 @@ jobs:
       - name: Self-Test Decryption Integrity
         shell: bash
         env:
-          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+          AGE_PRIVATE_KEY: ${{ secrets.AGE_PRIVATE_KEY }}
         run: |
           set -euo pipefail
 
           ARCHIVE_PATH="backups/${{ steps.meta.outputs.archive_name }}"
-          VERIFY_DUMP="backups/verify.dump"
+          TEST_DUMP_PATH="$RUNNER_TEMP/verify.dump"
+          IDENTITY_FILE="$RUNNER_TEMP/age-identity.txt"
 
-          # Decrypt into temporary verification file
-          printf "%s" "$BACKUP_ENCRYPTION_KEY" | age -d -o "$VERIFY_DUMP" "$ARCHIVE_PATH"
+          # Create temporary identity file securely with 600 permissions
+          printf '%s\n' "$AGE_PRIVATE_KEY" > "$IDENTITY_FILE"
+          chmod 600 "$IDENTITY_FILE"
+
+          # Non-interactive decryption using identity file
+          age \
+            -d \
+            -i "$IDENTITY_FILE" \
+            -o "$TEST_DUMP_PATH" \
+            "$ARCHIVE_PATH"
 
           # Use absolute PostgreSQL 18 binary to verify decrypted dump
-          /usr/lib/postgresql/18/bin/pg_restore --list "$VERIFY_DUMP" > /dev/null
-          echo "Verification passed: Archive is decryptable and contains valid PostgreSQL catalog."
+          /usr/lib/postgresql/18/bin/pg_restore --list "$TEST_DUMP_PATH" > /dev/null
+          echo "AGE decryption self-test passed."
 
-          # Clean up verification artifact
-          rm -f "$VERIFY_DUMP"
+          # Securely remove temporary identity file and decrypted verification dump
+          rm -f "$IDENTITY_FILE" "$TEST_DUMP_PATH"
 
       - name: Upload to Offsite Storage (Cloudflare R2 / AWS S3)
         if: ${{ github.event.inputs.dry_run != 'true' }}
