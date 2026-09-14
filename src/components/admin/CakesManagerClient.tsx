@@ -187,7 +187,7 @@ export default function CakesManagerClient({
             <tbody className="divide-y divide-luxury-800/60">
               {filteredCakes.length > 0 ? (
                 filteredCakes.map((cake) => {
-                  const sorted = [...(cake.prices || [])].sort((a, b) => a.price - b.price);
+                  const sorted = [...(cake.prices || [])].sort((a, b) => (a.price ?? 999999) - (b.price ?? 999999));
                   return (
                     <tr key={cake.id} className="hover:bg-luxury-800/40 transition-colors">
                       {/* Name & Photo */}
@@ -234,8 +234,12 @@ export default function CakesManagerClient({
                       <td className="py-3.5 px-4">
                         <div className="space-y-1">
                           <span className="font-price font-bold text-gold-400">
-                            ₹{sorted[0]?.price?.toLocaleString("en-IN") || 0}
-                            {sorted.length > 1 && ` - ₹${sorted[sorted.length - 1]?.price?.toLocaleString("en-IN")}`}
+                            {sorted[0]?.price != null
+                              ? `₹${sorted[0].price.toLocaleString("en-IN")}`
+                              : "Custom Quote"}
+                            {sorted.length > 1 && sorted[sorted.length - 1]?.price != null && (
+                              ` - ₹${sorted[sorted.length - 1].price!.toLocaleString("en-IN")}`
+                            )}
                           </span>
                           <div className="flex flex-wrap gap-1">
                             {sorted.map((p, idx) => (
@@ -243,7 +247,7 @@ export default function CakesManagerClient({
                                 key={idx}
                                 className="rounded border border-luxury-700 bg-luxury-950 px-1 py-0.2 text-[9px] text-luxury-300"
                               >
-                                {p.weight}: ₹{p.price}
+                                {p.weight}: {p.price != null ? `₹${p.price}` : "Quote"}
                               </span>
                             ))}
                           </div>
@@ -355,7 +359,7 @@ export default function CakesManagerClient({
       <div className="md:hidden space-y-3.5">
         {filteredCakes.length > 0 ? (
           filteredCakes.map((cake, index) => {
-            const sorted = [...(cake.prices || [])].sort((a, b) => a.price - b.price);
+            const sorted = [...(cake.prices || [])].sort((a, b) => (a.price ?? 999999) - (b.price ?? 999999));
             const isDeleting = loadingAction === `delete-${cake.id}`;
             const isTogglingAvailable = loadingAction === `${cake.id}-available`;
 
@@ -395,11 +399,13 @@ export default function CakesManagerClient({
 
                   <div className="text-right shrink-0">
                     <span className="font-price text-sm font-bold text-gold-400 block">
-                      ₹{sorted[0]?.price?.toLocaleString("en-IN") || 0}
+                      {sorted[0]?.price != null
+                        ? `₹${sorted[0].price.toLocaleString("en-IN")}`
+                        : "Custom Quote"}
                     </span>
-                    {sorted.length > 1 && (
+                    {sorted.length > 1 && sorted[sorted.length - 1]?.price != null && (
                       <span className="text-[10px] text-luxury-400 block">
-                        up to ₹{sorted[sorted.length - 1]?.price?.toLocaleString("en-IN")}
+                        up to ₹{sorted[sorted.length - 1].price!.toLocaleString("en-IN")}
                       </span>
                     )}
                   </div>
@@ -413,7 +419,7 @@ export default function CakesManagerClient({
                         key={idx}
                         className="rounded border border-luxury-800 bg-luxury-950 px-2 py-0.5 text-[10px] text-luxury-300"
                       >
-                        {p.weight}: ₹{p.price}
+                        {p.weight}: {p.price != null ? `₹${p.price}` : "Quote"}
                       </span>
                     ))}
                   </div>

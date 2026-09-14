@@ -93,9 +93,9 @@ export default function AllCakesClient({
     });
 
     if (sortBy === "price-asc") {
-      result.sort((a, b) => (a.prices[0]?.price || 0) - (b.prices[0]?.price || 0));
+      result.sort((a, b) => (a.prices[0]?.price ?? 999999) - (b.prices[0]?.price ?? 999999));
     } else if (sortBy === "price-desc") {
-      result.sort((a, b) => (b.prices[0]?.price || 0) - (a.prices[0]?.price || 0));
+      result.sort((a, b) => (b.prices[0]?.price ?? -1) - (a.prices[0]?.price ?? -1));
     } else if (sortBy === "rating") {
       result.sort((a, b) => (b.rating || 4.9) - (a.rating || 4.9));
     }

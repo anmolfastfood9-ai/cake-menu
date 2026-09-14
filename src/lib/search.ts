@@ -34,7 +34,11 @@ export function getCakeStartingPrice(cake: any): number {
  */
 export function matchesBudget(cake: any, budget: BudgetFilterId): boolean {
   if (budget === "all") return true;
-  const startingPrice = getCakeStartingPrice(cake);
+  const valid = (cake.prices || []).filter(
+    (p: any) => typeof p.price === "number" && !isNaN(p.price) && p.price > 0
+  );
+  if (valid.length === 0) return false;
+  const startingPrice = Math.min(...valid.map((p: any) => p.price));
   if (budget === "under-700") return startingPrice < 700;
   if (budget === "under-1000") return startingPrice >= 700 && startingPrice < 1000;
   if (budget === "1000-1500") return startingPrice >= 1000 && startingPrice <= 1500;

@@ -101,13 +101,15 @@ export default async function CakeDetailPage({ params }: { params: { slug: strin
       "@type": "Brand",
       name: settings?.restaurantName || "Raman Sweet Bakery",
     },
-    offers: (cake!.prices || []).map((p: any) => ({
-      "@type": "Offer",
-      price: p.price,
-      priceCurrency: "INR",
-      availability: "https://schema.org/InStock",
-      url: canonicalUrl,
-    })),
+    offers: (cake!.prices || [])
+      .filter((p: any) => p.price !== null && p.price !== undefined)
+      .map((p: any) => ({
+        "@type": "Offer",
+        price: p.price,
+        priceCurrency: "INR",
+        availability: "https://schema.org/InStock",
+        url: canonicalUrl,
+      })),
   };
 
   return (
