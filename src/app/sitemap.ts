@@ -67,12 +67,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       select: { slug: true, updatedAt: true },
     });
 
-    const categoryRoutes: MetadataRoute.Sitemap = categories.map((category) => ({
-      url: `${appUrl}/menu?category=${category.slug}`,
-      lastModified: category.updatedAt,
-      changeFrequency: "weekly",
-      priority: 0.7,
-    }));
+    const categoryRoutes: MetadataRoute.Sitemap = categories.flatMap((category) => [
+      {
+        url: `${appUrl}/menu/category/${category.slug}`,
+        lastModified: category.updatedAt,
+        changeFrequency: "weekly" as const,
+        priority: 0.8,
+      },
+      {
+        url: `${appUrl}/menu?category=${category.slug}`,
+        lastModified: category.updatedAt,
+        changeFrequency: "weekly" as const,
+        priority: 0.7,
+      },
+    ]);
 
     // 3. Currently Active Occasions belonging to the cake experience
     const activeOccasions = await getAllActiveOccasions();

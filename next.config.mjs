@@ -21,13 +21,7 @@ const contentSecurityPolicy = cspDirectives.join("; ");
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   async redirects() {
-    return [
-      {
-        source: "/menu/category/:slug",
-        destination: "/menu?category=:slug",
-        permanent: true,
-      },
-    ];
+    return [];
   },
   async headers() {
     return [

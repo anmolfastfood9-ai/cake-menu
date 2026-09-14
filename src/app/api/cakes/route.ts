@@ -207,12 +207,14 @@ export async function POST(req: NextRequest) {
         ratingLabel: ratingLabel || null,
         editorialQuote: editorialQuote || null,
         customizationInfo,
+        isCustomQuote: Boolean(validation.data.isCustomQuote || prices.some(p => p.isCustomQuote)),
         prices: {
           create: prices.map((p, idx) => ({
             weight: p.weight,
-            price: p.price,
-            originalPrice: p.originalPrice ?? null,
+            price: p.isCustomQuote ? null : p.price,
+            originalPrice: p.isCustomQuote ? null : (p.originalPrice ?? null),
             isDefault: p.isDefault ?? idx === 0,
+            isCustomQuote: Boolean(p.isCustomQuote),
             image: p.image || (p.images && p.images.length > 0 ? p.images[0] : null),
             images: JSON.stringify(p.images || []),
           })),

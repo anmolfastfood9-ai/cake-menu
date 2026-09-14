@@ -12,6 +12,8 @@ export interface WhatsAppMessageParams {
   occasion?: string | null;
   imageUrl?: string | null;
   cakeUrl?: string | null;
+  isCustomQuote?: boolean;
+  isLargeCake?: boolean;
 }
 
 export const SEPARATOR = "━━━━━━━━━━━━━━━━━━";
@@ -78,8 +80,17 @@ export function buildCakeEnquiryMessage(params: WhatsAppMessageParams): string {
   const brandName = (params.restaurantName || "Raman Sweet Bakery").trim();
   const cakeName = (params.cakeName || "Artisanal Cake").trim();
   const weight = normalizeWeight(params.weight);
+  const isCustomQuote =
+    params.isCustomQuote === true ||
+    params.price === "Custom Quote" ||
+    (typeof params.price === "string" && params.price.toLowerCase().includes("quote"));
+  const isLargeCakeEnquiry =
+    Boolean(params.isLargeCake) ||
+    isCustomQuote ||
+    (params.slug && (params.slug.includes("celebration") || params.slug.includes("party") || params.slug.includes("tiered") || params.slug.includes("custom-event")));
+
   const formattedPrice =
-    params.price !== undefined && params.price !== null
+    !isCustomQuote && params.price !== undefined && params.price !== null
       ? formatIndianPrice(params.price)
       : "";
 
@@ -90,6 +101,10 @@ export function buildCakeEnquiryMessage(params: WhatsAppMessageParams): string {
   if (isPhotoCake) {
     sections.push(
       `📸 CUSTOM PHOTO CAKE ORDER\n\n${SEPARATOR}\n\n${brandName}\n100% Eggless • Pure Vegetarian\n\nI want to order the Custom Edible Photo Cake.\nI will send my photo for the edible print.`
+    );
+  } else if (isCustomQuote && isLargeCakeEnquiry) {
+    sections.push(
+      `🎂 LARGE CAKE ENQUIRY\n\n${SEPARATOR}\n\n${brandName}\n100% Eggless • Pure Vegetarian`
     );
   } else {
     sections.push(
@@ -108,7 +123,9 @@ export function buildCakeEnquiryMessage(params: WhatsAppMessageParams): string {
   }
 
   // 4. Price
-  if (formattedPrice) {
+  if (isCustomQuote) {
+    sections.push(`💰 Price\nCustom Quote`);
+  } else if (formattedPrice) {
     sections.push(`💰 Price\n₹${formattedPrice}`);
   }
 
@@ -171,6 +188,9 @@ export function buildCakeEnquiryMessage(params: WhatsAppMessageParams): string {
   }
 
   // 10. Footer block
+  if (isCustomQuote && isLargeCakeEnquiry) {
+    return `${sections.join("\n\n")}\n\n${SEPARATOR}\n\nPlease confirm availability, design and final price.`;
+  }
   return `${sections.join("\n\n")}\n\n${SEPARATOR}\n\nPlease confirm availability and order details.`;
 }
 

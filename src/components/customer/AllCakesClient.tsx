@@ -139,6 +139,9 @@ export default function AllCakesClient({
           <div className="relative">
             <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-luxury-400" />
             <input
+              id="all-cakes-search"
+              name="search"
+              aria-label="Search cakes"
               type="text"
               placeholder="Search cakes..."
               value={searchQuery}

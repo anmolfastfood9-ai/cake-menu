@@ -237,7 +237,11 @@ export default function MenuClient({
             cakeDesc.includes("photo")
           );
         }
-        if (normSelected.includes("birthday") || normSelected.includes("celebration")) {
+        // Exact Large & Celebration category isolation
+        if (normSelected === "large-celebration-cakes" || normSelected === "large") {
+          return catSlug === "large-celebration-cakes" || catName.toLowerCase().includes("large");
+        }
+        if (normSelected.includes("birthday") || (normSelected !== "large-celebration-cakes" && normSelected.includes("celebration"))) {
           return (
             catSlug.includes("birthday") ||
             catSlug.includes("celebration") ||
@@ -713,7 +717,14 @@ export default function MenuClient({
                         }
                       `}
                     >
-                      {cat.name}
+                      {cat.slug === "large-celebration-cakes" ? (
+                        <>
+                          <span className="sm:hidden">Large &amp; Celebration</span>
+                          <span className="hidden sm:inline">{cat.name}</span>
+                        </>
+                      ) : (
+                        cat.name
+                      )}
                     </span>
                   </button>
                 );
@@ -730,6 +741,9 @@ export default function MenuClient({
           <div className="relative w-full">
             <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#D4AF37]/75 pointer-events-none" />
             <input
+              id="cake-search-input"
+              name="search"
+              aria-label="Search cakes, flavours or weight"
               type="text"
               placeholder="Search cakes, flavours or weight..."
               value={searchQuery}
@@ -824,7 +838,10 @@ export default function MenuClient({
                 ? `${BUDGET_OPTIONS.find((b) => b.id === selectedBudget)?.label || "Budget"} Cakes`
                 : selectedCategory === "all"
                 ? "Signature Cakes"
-                : `${categoriesList.find((c) => c.slug === selectedCategory)?.name || "Artisan"} Cakes`}
+                : (() => {
+                    const catName = categoriesList.find((c) => c.slug === selectedCategory)?.name || "Artisan";
+                    return catName.toLowerCase().endsWith("cakes") ? catName : `${catName} Cakes`;
+                  })()}
             </h2>
             <span className="inline-flex items-center rounded-full border border-[#D4AF37]/30 bg-[#16130E]/85 px-2 py-0.5 text-[9.5px] sm:text-[10.5px] font-medium text-[#E0CE9E] shadow-[0_2px_6px_rgba(0,0,0,0.35)]">
               {filteredCakes.length} {filteredCakes.length === 1 ? "Cake" : "Cakes"}

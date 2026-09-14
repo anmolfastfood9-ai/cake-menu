@@ -54,6 +54,7 @@ model Cake {
   ratingLabel       String?
   editorialQuote    String?
   customizationInfo String?        @default("Custom message on chocolate plaque, shape customization & tiered sizing available on request.")
+  isCustomQuote     Boolean        @default(false)
   prices             CakePrice[]
   occasions          CakeOccasion[]
   occasionCategories OccasionCategoryCake[]
@@ -71,8 +72,9 @@ model CakePrice {
   cakeId        String
   cake          Cake     @relation(fields: [cakeId], references: [id], onDelete: Cascade)
   weight        String   // e.g. "0.5 kg", "1 kg", "1.5 kg", "2 kg"
-  price         Float    // Price in ₹
+  price         Float?   // Price in ₹ (nullable for Custom Quote)
   originalPrice Float?   // Strike-through original price
+  isCustomQuote Boolean  @default(false)
   isDefault     Boolean  @default(false)
   image         String?  // Visual representation for this specific weight/tier (e.g. mini bento, 1kg classic, 2kg two-tier)
   images        String   @default("[]") // Ordered multi-image gallery JSON array for this specific weight tier

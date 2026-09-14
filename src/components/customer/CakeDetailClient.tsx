@@ -42,9 +42,11 @@ function getServingGuide(weight: string): string | null {
   if (!weight) return null;
   const lower = weight.toLowerCase().replace(/\s+/g, "");
 
+  if (lower.includes("10kg") || lower.includes("10 kg")) return "Large Celebration";
+
   let kg: number | null = null;
   const gMatch = lower.match(/^([\d.]+)g$/);
-  const kgMatch = lower.match(/^([\d.]+)kg$/);
+  const kgMatch = lower.match(/^([\d.]+)kg/);
 
   if (gMatch) {
     kg = parseFloat(gMatch[1]) / 1000;
@@ -56,15 +58,17 @@ function getServingGuide(weight: string): string | null {
 
   if (kg === null || isNaN(kg) || kg <= 0) return null;
 
-  // Bento mini lunchbox cake edge case
+  // Exact guest serving guide
   if (kg <= 0.3) return "Serves 1–2 Guests";
   if (kg <= 0.5) return "Serves 3–4 Guests";
   if (kg <= 1.0) return "Serves 6–8 Guests";
   if (kg <= 1.5) return "Serves 10–14 Guests";
   if (kg <= 2.0) return "Serves 16–20 Guests";
-  if (kg <= 3.0) return "Serves 24–30 Guests";
-  if (kg <= 4.0) return "Serves 35–45 Guests";
-  return `Serves ~${Math.round(kg * 12)}+ Guests`;
+  if (kg <= 3.0) return "Serves 20–24 Guests";
+  if (kg <= 4.0) return "Serves 26–32 Guests";
+  if (kg <= 5.0) return "Serves 34–40 Guests";
+  if (kg <= 7.0) return "Serves 48–56 Guests";
+  return "Large Celebration";
 }
 
 /**
@@ -111,7 +115,7 @@ export default function CakeDetailClient({
   });
 
   // Prices and selected weight
-  const sortedPrices = [...(cake.prices || [])].sort((a, b) => a.price - b.price);
+  const sortedPrices = [...(cake.prices || [])].sort((a, b) => (a.price ?? 999999) - (b.price ?? 999999));
   const defaultIndex = sortedPrices.findIndex((p) => p.isDefault);
   const [selectedWeightIndex, setSelectedWeightIndex] = useState<number>(
     defaultIndex !== -1 ? defaultIndex : 0
@@ -214,11 +218,21 @@ export default function CakeDetailClient({
     cake.occasions?.[0]?.occasion?.name ||
     null;
 
+  const isLargeCake =
+    cake.category?.slug === "large-celebration-cakes" ||
+    Boolean(cake.isCustomQuote) ||
+    Boolean(activePriceObj.isCustomQuote);
+  const isCustomQuoteTier = Boolean(
+    activePriceObj.isCustomQuote ||
+    activePriceObj.price == null ||
+    cake.isCustomQuote
+  );
+
   const waLink = generateWhatsAppLink({
     cakeName: cake.name,
     slug: cake.slug,
     weight: activePriceObj.weight,
-    price: activePriceObj.price,
+    price: isCustomQuoteTier ? "Custom Quote" : activePriceObj.price,
     restaurantName,
     template: whatsappSetting?.defaultMessageTemplate,
     whatsappNumber,
@@ -227,6 +241,8 @@ export default function CakeDetailClient({
     occasion: resolvedOccasion,
     imageUrl: selectedPhotoUrl,
     cakeUrl: cake.slug ? `https://ramansweetbakery.vercel.app/menu/cake/${encodeURIComponent(cake.slug.trim())}` : undefined,
+    isCustomQuote: isCustomQuoteTier,
+    isLargeCake,
   });
 
   const customCakeWaLink = `https://wa.me/${normalizeWhatsAppNumber(whatsappNumber)}?text=${encodeURIComponent(
@@ -238,12 +254,15 @@ export default function CakeDetailClient({
 
   // Discount calculation
   const hasDiscount =
+    !isCustomQuoteTier &&
     activePriceObj.originalPrice !== null &&
     activePriceObj.originalPrice !== undefined &&
+    activePriceObj.price !== null &&
+    activePriceObj.price !== undefined &&
     activePriceObj.originalPrice > activePriceObj.price;
 
   const discountPercent = hasDiscount
-    ? Math.round((1 - activePriceObj.price / activePriceObj.originalPrice!) * 100)
+    ? Math.round((1 - (activePriceObj.price ?? 0) / activePriceObj.originalPrice!) * 100)
     : null;
 
   // Dynamically generated authentic highlights from real cake data
@@ -457,21 +476,29 @@ export default function CakeDetailClient({
               <div className="price-rating-row flex items-baseline justify-between pt-1">
                 {/* Price Display */}
                 <div>
-                  <div className="flex items-baseline gap-2.5 leading-none">
-                    <span className="font-price text-2xl sm:text-3xl font-extrabold text-[#F5E29D] tracking-tight leading-none">
-                      ₹{activePriceObj.price.toLocaleString("en-IN")}
-                    </span>
-                    {hasDiscount && (
-                      <span className="font-price text-xs sm:text-sm text-zinc-400/85 line-through font-normal">
-                        ₹{activePriceObj.originalPrice!.toLocaleString("en-IN")}
+                  {isCustomQuoteTier ? (
+                    <div className="flex items-baseline gap-2.5 leading-none">
+                      <span className="font-price text-2xl sm:text-3xl font-extrabold text-[#F5E29D] tracking-tight leading-none">
+                        Custom Quote
                       </span>
-                    )}
-                    {discountPercent && (
-                      <span className="font-sans inline-flex items-center justify-center h-[24px] px-1.5 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-[10px] font-bold text-emerald-400 tracking-wide uppercase whitespace-nowrap leading-none align-middle">
-                        {discountPercent}% OFF
+                    </div>
+                  ) : (
+                    <div className="flex items-baseline gap-2.5 leading-none">
+                      <span className="font-price text-2xl sm:text-3xl font-extrabold text-[#F5E29D] tracking-tight leading-none">
+                        ₹{(activePriceObj.price ?? 0).toLocaleString("en-IN")}
                       </span>
-                    )}
-                  </div>
+                      {hasDiscount && (
+                        <span className="font-price text-xs sm:text-sm text-zinc-400/85 line-through font-normal">
+                          ₹{activePriceObj.originalPrice!.toLocaleString("en-IN")}
+                        </span>
+                      )}
+                      {discountPercent && (
+                        <span className="font-sans inline-flex items-center justify-center h-[24px] px-1.5 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-[10px] font-bold text-emerald-400 tracking-wide uppercase whitespace-nowrap leading-none align-middle">
+                          {discountPercent}% OFF
+                        </span>
+                      )}
+                    </div>
+                  )}
                   <span className="block font-sans text-xs text-[#A89F91] mt-1 font-normal">
                     for&nbsp;<span className="font-medium text-zinc-300">{activePriceObj.weight.replace(/(\d+)\s*(kg|g|gm)/i, "$1 $2")}</span>
                     {servingGuide && (
@@ -544,7 +571,7 @@ export default function CakeDetailClient({
                           {tier.weight.replace(/(\d+)\s*(kg|g)/i, "$1 $2")}
                         </span>
                         <span className={`mt-0.5 font-price text-[11px] sm:text-xs font-bold ${isSelected ? "text-[#F5E29D]" : "text-[#F8F2E6]"}`}>
-                          ₹{tier.price.toLocaleString("en-IN")}
+                          {tier.isCustomQuote || tier.price == null ? "Quote" : `₹${tier.price.toLocaleString("en-IN")}`}
                         </span>
                       </button>
                     );
@@ -555,12 +582,14 @@ export default function CakeDetailClient({
                 {/* Custom Message on Cake (Positioned immediately above What You Get) */}
                 <div className="space-y-1.5 pt-1">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-semibold text-[#D4CBBF]">
+                    <label htmlFor="cake-custom-message" className="text-xs font-semibold text-[#D4CBBF]">
                       Name / Message on Cake <span className="text-[#8C8275] font-normal">(Optional)</span>
                     </label>
                     <span className="text-[10px] text-[#D4AF37]">✦ Free Custom Message</span>
                   </div>
                   <input
+                    id="cake-custom-message"
+                    name="customMessage"
                     type="text"
                     value={customMessage}
                     onChange={(e) => setCustomMessage(e.target.value)}
@@ -615,11 +644,17 @@ export default function CakeDetailClient({
                       </span>
                       <div className="text-left">
                         <span className="block text-xs sm:text-sm font-bold leading-tight">
-                          {isPhotoCake ? "📸 Send Your Photo" : "Order on WhatsApp"}
+                          {isPhotoCake
+                            ? "📸 Send Your Photo"
+                            : isCustomQuoteTier || isLargeCake
+                            ? "Enquire on WhatsApp"
+                            : "Order on WhatsApp"}
                         </span>
                         <span className="text-[10px] text-white/90 font-medium">
                           {isPhotoCake
                             ? "Share your photo on WhatsApp"
+                            : isCustomQuoteTier
+                            ? "Custom design & pricing enquiry"
                             : "Quick enquiry • No payment needed"}
                         </span>
                       </div>

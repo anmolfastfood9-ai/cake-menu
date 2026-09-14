@@ -12,9 +12,10 @@ import { useCakeFavorite } from "@/hooks/useFavorites";
 export interface CakePriceItem {
   id?: string;
   weight: string;
-  price: number;
+  price?: number | null;
   originalPrice?: number | null;
   isDefault?: boolean;
+  isCustomQuote?: boolean;
 }
 
 export interface CakeItem {
@@ -32,6 +33,7 @@ export interface CakeItem {
   isNew: boolean;
   available: boolean;
   rating?: number;
+  isCustomQuote?: boolean;
   category?: {
     id: string;
     name: string;
@@ -49,11 +51,16 @@ interface CakeCardProps {
 export default function CakeCard({ cake }: CakeCardProps) {
   const { isFavorite, toggleFavorite } = useCakeFavorite(cake.id || cake.slug);
 
+  const isCustomQuoteCake = Boolean(
+    cake.isCustomQuote ||
+    (cake.prices && cake.prices.length > 0 && cake.prices.every((p) => p.isCustomQuote || p.price == null || p.price === 0))
+  );
+
   const validPrices = (cake.prices || []).filter(
     (p) => typeof p.price === "number" && !isNaN(p.price) && p.price > 0
   );
   const sortedPrices = [...validPrices].sort(
-    (a, b) => a.price - b.price
+    (a, b) => (a.price || 0) - (b.price || 0)
   );
 
   const fallbackImage = "/images/ref_belgian_chocolate.png";
@@ -61,10 +68,10 @@ export default function CakeCard({ cake }: CakeCardProps) {
   const [imgSrc, setImgSrc] = useState<string>(normalizedCoverImage || fallbackImage);
 
   const lowestPriceObj = sortedPrices[0] || { price: 1499, weight: "1 kg" };
-  const lowestPrice = lowestPriceObj.price;
+  const lowestPrice = lowestPriceObj.price || 1499;
 
   // Available weights in compact notation: e.g. "0.5 kg • 1 kg • 1.5 kg • 2 kg" or "250 g"
-  const availableWeightsText = sortedPrices
+  const availableWeightsText = (cake.prices || [])
     .map((p) => p.weight?.trim())
     .filter(Boolean)
     .join(" • ");
@@ -78,6 +85,7 @@ export default function CakeCard({ cake }: CakeCardProps) {
 
   // Deterministic Smart Badges (Strictly derived from verified DB attributes)
   const catSlug = (cake.category?.slug || "").toLowerCase();
+  const isLargeCelebration = catSlug === "large-celebration-cakes";
   const fullText = `${cake.name} ${cake.description || ""}`.toLowerCase();
 
   const isSmallCelebration =
@@ -97,10 +105,11 @@ export default function CakeCard({ cake }: CakeCardProps) {
     lowestPrice > 1500 || catSlug === "red-velvet-premium";
 
   // Promotional badge hierarchy: Exactly ONE badge per card
-  // Small Celebration -> Chocolate Lover -> Existing explicit admin flags -> Premium Choice
   let primaryBadge: { label: string; icon: string } | null = null;
   if (isSmallCelebration) {
     primaryBadge = { label: "Small Celebration", icon: "🍰" };
+  } else if (isLargeCelebration) {
+    primaryBadge = { label: "Grand Celebration", icon: "👑" };
   } else if (isChocolateLover) {
     primaryBadge = { label: "Chocolate Lover", icon: "🍫" };
   } else if (cake.bestseller === true) {
@@ -358,7 +367,7 @@ export default function CakeCard({ cake }: CakeCardProps) {
           </button>
         </div>
 
-        {/* Available Weights / Bento Callout Sub-row */}
+        {/* Available Weights / Bento Callout / Large Celebration Sub-row */}
         {isBento ? (
           <div className="mt-1 flex items-center justify-between text-[8.5px] sm:text-[9.5px] text-[#E5C365] font-semibold leading-tight">
             <span className="inline-flex items-center gap-1">
@@ -366,6 +375,22 @@ export default function CakeCard({ cake }: CakeCardProps) {
               <span>250 g Bento</span>
             </span>
             <span className="text-[#C5BAA8] font-medium">1–2 Guests</span>
+          </div>
+        ) : isCustomQuoteCake ? (
+          <div className="mt-1 flex items-center justify-between text-[8.5px] sm:text-[9.5px] text-[#E5C365] font-semibold leading-tight">
+            <span className="inline-flex items-center gap-1">
+              <span>👑</span>
+              <span>3 kg+</span>
+            </span>
+            <span className="text-[#C5BAA8] font-medium">Large Celebration</span>
+          </div>
+        ) : isLargeCelebration ? (
+          <div className="mt-1 flex items-center justify-between text-[8.5px] sm:text-[9.5px] text-[#E5C365] font-semibold leading-tight">
+            <span className="inline-flex items-center gap-1">
+              <span>👑</span>
+              <span>{lowestPriceObj.weight || "3 kg"}</span>
+            </span>
+            <span className="text-[#C5BAA8] font-medium">Serves 20–24</span>
           </div>
         ) : (
           availableWeightsText && (
@@ -380,7 +405,7 @@ export default function CakeCard({ cake }: CakeCardProps) {
 
         {/* Price Row (Pinned to bottom with mt-auto, always aligned) */}
         <div className="mt-auto pt-1.5 flex min-w-0 items-center justify-between gap-1 sm:gap-1.5">
-          {/* 4. Price Pill: "From ₹..." */}
+          {/* 4. Price Pill: "Custom Quote" or "From ₹..." */}
           <div
             className="
               inline-flex
@@ -400,12 +425,20 @@ export default function CakeCard({ cake }: CakeCardProps) {
               shadow-[inset_0_0_6px_rgba(212,175,55,0.06)]
             "
           >
-            <span className="text-[8px] sm:text-[9px] font-medium text-[#B8AA97] whitespace-nowrap shrink-0">
-              From
-            </span>
-            <span className="font-price text-[10px] sm:text-[11.5px] font-bold leading-none text-[#F5E29D] whitespace-nowrap shrink-0">
-              ₹{lowestPrice.toLocaleString("en-IN")}
-            </span>
+            {isCustomQuoteCake ? (
+              <span className="font-price text-[10px] sm:text-[11.5px] font-bold leading-none text-[#F5E29D] whitespace-nowrap shrink-0">
+                Custom Quote
+              </span>
+            ) : (
+              <>
+                <span className="text-[8px] sm:text-[9px] font-medium text-[#B8AA97] whitespace-nowrap shrink-0">
+                  From
+                </span>
+                <span className="font-price text-[10px] sm:text-[11.5px] font-bold leading-none text-[#F5E29D] whitespace-nowrap shrink-0">
+                  ₹{lowestPrice.toLocaleString("en-IN")}
+                </span>
+              </>
+            )}
           </div>
 
           {/* 5. Order Button: +2px taller (27px / 29px), improved alignment and centering */}

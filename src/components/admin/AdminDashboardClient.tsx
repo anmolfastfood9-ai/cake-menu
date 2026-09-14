@@ -551,6 +551,9 @@ export default function AdminDashboardClient({
             <div className="relative w-full sm:w-64">
               <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-luxury-400" />
               <input
+                id="admin-cake-search"
+                name="admin-cake-search"
+                aria-label="Search cakes by name"
                 type="text"
                 placeholder="Search cakes by name..."
                 value={searchQuery}

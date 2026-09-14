@@ -26,6 +26,7 @@ interface CakePriceRow {
   price: number | string;
   originalPrice?: number | string;
   isDefault?: boolean;
+  isCustomQuote?: boolean;
   image?: string | null;
   images?: string[];
 }
@@ -80,18 +81,19 @@ export default function CakeForm({ categories = [], initialData, isEditing = fal
           }
           return {
             weight: p.weight,
-            price: p.price,
+            price: p.price ?? "",
             originalPrice: p.originalPrice || "",
             isDefault: p.isDefault,
+            isCustomQuote: Boolean(p.isCustomQuote || p.price == null),
             image: p.image || null,
             images: tierImages,
           };
         })
       : [
-          { weight: "0.5 kg", price: 799, originalPrice: 899, isDefault: false, image: null, images: [] },
-          { weight: "1 kg", price: 1399, originalPrice: 1599, isDefault: true, image: null, images: [] },
-          { weight: "1.5 kg", price: 1999, originalPrice: 2299, isDefault: false, image: null, images: [] },
-          { weight: "2 kg", price: 2599, originalPrice: 2999, isDefault: false, image: null, images: [] },
+          { weight: "0.5 kg", price: 799, originalPrice: 899, isDefault: false, isCustomQuote: false, image: null, images: [] },
+          { weight: "1 kg", price: 1399, originalPrice: 1599, isDefault: true, isCustomQuote: false, image: null, images: [] },
+          { weight: "1.5 kg", price: 1999, originalPrice: 2299, isDefault: false, isCustomQuote: false, image: null, images: [] },
+          { weight: "2 kg", price: 2599, originalPrice: 2999, isDefault: false, isCustomQuote: false, image: null, images: [] },
         ]
   );
 
@@ -186,7 +188,7 @@ export default function CakeForm({ categories = [], initialData, isEditing = fal
   };
 
   const handleAddWeightRow = () => {
-    setPrices([...prices, { weight: "1 kg", price: 999, originalPrice: "", isDefault: false, image: null, images: [] }]);
+    setPrices([...prices, { weight: "1 kg", price: 999, originalPrice: "", isDefault: false, isCustomQuote: false, image: null, images: [] }]);
   };
 
   const handleRemoveWeightRow = (index: number) => {
@@ -250,6 +252,17 @@ export default function CakeForm({ categories = [], initialData, isEditing = fal
       return;
     }
 
+    for (const p of prices) {
+      if (!p.weight.trim()) {
+        setError("Weight is required for all pricing tiers");
+        return;
+      }
+      if (!p.isCustomQuote && (!p.price || Number(p.price) <= 0)) {
+        setError(`Please enter a valid price greater than 0 for ${p.weight}`);
+        return;
+      }
+    }
+
     // Display Rating validation (Optional: 4.5 to 5.0, 1 decimal place)
     let parsedDisplayRating: number | null = null;
     if (displayRating !== "" && displayRating !== null && displayRating !== undefined) {
@@ -300,14 +313,17 @@ export default function CakeForm({ categories = [], initialData, isEditing = fal
         ratingLabel: trimmedRatingLabel,
         editorialQuote: trimmedEditorialQuote,
         occasionIds: selectedOccasionIds,
+        isCustomQuote: prices.some((p) => p.isCustomQuote),
         prices: prices.map((p, idx) => {
           const tierGallery = (p.images || [])
             .filter((img) => typeof img === "string" && img.trim().length > 0)
             .slice(0, 5);
+          const isCustomQuote = Boolean(p.isCustomQuote);
           return {
             weight: p.weight,
-            price: Number(p.price) || 0,
-            originalPrice: p.originalPrice ? Number(p.originalPrice) : null,
+            isCustomQuote,
+            price: isCustomQuote ? null : (Number(p.price) || 0),
+            originalPrice: isCustomQuote ? null : (p.originalPrice ? Number(p.originalPrice) : null),
             isDefault: p.isDefault ?? idx === 0,
             image: tierGallery.length > 0 ? tierGallery[0] : (p.image || null),
             images: tierGallery,
@@ -547,38 +563,71 @@ export default function CakeForm({ categories = [], initialData, isEditing = fal
                       <input
                         type="text"
                         required
-                        placeholder="e.g. 0.5 kg, 1 kg"
+                        placeholder="e.g. 0.5 kg, 1 kg, 3 kg+"
                         value={row.weight}
                         onChange={(e) => handleWeightChange(idx, "weight", e.target.value)}
                         className="w-full rounded-xl border border-luxury-700 bg-luxury-900 px-3 py-2 text-xs text-cream-100 focus:border-gold-500 focus:outline-none"
                       />
                     </div>
 
+                    {/* Pricing Type Toggle */}
+                    <div className="col-span-1 md:w-[130px]">
+                      <label className="block text-[10px] font-medium text-luxury-400 mb-1">Pricing Type</label>
+                      <select
+                        value={row.isCustomQuote ? "quote" : "fixed"}
+                        onChange={(e) => {
+                          const isQuote = e.target.value === "quote";
+                          handleWeightChange(idx, "isCustomQuote", isQuote);
+                          if (isQuote) {
+                            handleWeightChange(idx, "price", "");
+                            handleWeightChange(idx, "originalPrice", "");
+                          }
+                        }}
+                        className="w-full rounded-xl border border-luxury-700 bg-luxury-900 px-2.5 py-2 text-xs text-cream-100 focus:border-gold-500 focus:outline-none"
+                      >
+                        <option value="fixed">Fixed (₹)</option>
+                        <option value="quote">Custom Quote</option>
+                      </select>
+                    </div>
+
                     {/* Selling Price */}
                     <div className="col-span-1 md:flex-1 md:min-w-[120px]">
-                      <label className="block text-[10px] font-medium text-luxury-400 mb-1">Selling Price (₹)</label>
-                      <input
-                        type="number"
-                        required
-                        min="0"
-                        placeholder="e.g. 799"
-                        value={row.price}
-                        onChange={(e) => handleWeightChange(idx, "price", e.target.value)}
-                        className="w-full rounded-xl border border-luxury-700 bg-luxury-900 px-3 py-2 text-xs text-gold-400 font-bold focus:border-gold-500 focus:outline-none"
-                      />
+                      <label className="block text-[10px] font-medium text-luxury-400 mb-1">Selling Price</label>
+                      {row.isCustomQuote ? (
+                        <div className="w-full rounded-xl border border-gold-500/40 bg-gold-500/10 px-3 py-2 text-xs text-gold-300 font-bold flex items-center gap-1">
+                          <span>👑</span>
+                          <span>Custom Quote</span>
+                        </div>
+                      ) : (
+                        <input
+                          type="number"
+                          required
+                          min="1"
+                          placeholder="e.g. 799"
+                          value={row.price}
+                          onChange={(e) => handleWeightChange(idx, "price", e.target.value)}
+                          className="w-full rounded-xl border border-luxury-700 bg-luxury-900 px-3 py-2 text-xs text-gold-400 font-bold focus:border-gold-500 focus:outline-none"
+                        />
+                      )}
                     </div>
 
                     {/* Original Price */}
                     <div className="col-span-1 md:flex-1 md:min-w-[110px]">
                       <label className="block text-[10px] font-medium text-luxury-400 mb-1">Original Price (₹)</label>
-                      <input
-                        type="number"
-                        min="0"
-                        placeholder="e.g. 899"
-                        value={row.originalPrice || ""}
-                        onChange={(e) => handleWeightChange(idx, "originalPrice", e.target.value)}
-                        className="w-full rounded-xl border border-luxury-700 bg-luxury-900 px-3 py-2 text-xs text-luxury-400 focus:border-gold-500 focus:outline-none"
-                      />
+                      {row.isCustomQuote ? (
+                        <div className="w-full rounded-xl border border-luxury-800 bg-luxury-950 px-3 py-2 text-xs text-luxury-500">
+                          N/A
+                        </div>
+                      ) : (
+                        <input
+                          type="number"
+                          min="1"
+                          placeholder="e.g. 899"
+                          value={row.originalPrice || ""}
+                          onChange={(e) => handleWeightChange(idx, "originalPrice", e.target.value)}
+                          className="w-full rounded-xl border border-luxury-700 bg-luxury-900 px-3 py-2 text-xs text-luxury-400 focus:border-gold-500 focus:outline-none"
+                        />
+                      )}
                     </div>
 
                     {/* Manage Gallery Control */}

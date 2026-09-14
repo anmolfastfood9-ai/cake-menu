@@ -10,13 +10,12 @@ const appUrl = getAppUrl();
 function resolveFaviconUrl(rawFavicon?: string | null): string {
   const trimmed = rawFavicon?.trim();
   if (!trimmed) {
-    return `${appUrl}/images/logo_emblem.png`;
+    return "/images/logo_emblem.png";
   }
   if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
     return trimmed;
   }
-  const normalizedPath = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
-  return `${appUrl}${normalizedPath}`;
+  return trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
 }
 
 export async function generateMetadata(): Promise<Metadata> {

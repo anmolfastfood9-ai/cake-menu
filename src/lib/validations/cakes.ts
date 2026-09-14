@@ -9,23 +9,33 @@ const ImageUrlOrPathSchema = z
     "Image must be a valid URL or relative path"
   );
 
-export const CakePriceInputSchema = z.object({
-  weight: z.string().trim().min(1, "Weight is required").max(50, "Weight must not exceed 50 characters"),
-  price: z.coerce.number().positive("Price must be greater than 0").max(1_000_000, "Price must not exceed 1,000,000"),
-  originalPrice: z.preprocess(
-    (val) => (val === "" || val === undefined ? null : val),
-    z.coerce
-      .number()
-      .positive("Original price must be greater than 0")
-      .max(1_000_000, "Original price must not exceed 1,000,000")
-      .nullable()
-      .optional()
-  ),
-  isDefault: z.coerce.boolean().optional(),
-  image: z.preprocess(
-    (val) => (val === "" ? null : val),
-    ImageUrlOrPathSchema.nullable().optional()
-  ),
+export const CakePriceInputSchema = z
+  .object({
+    weight: z.string().trim().min(1, "Weight is required").max(50, "Weight must not exceed 50 characters"),
+    isCustomQuote: z.coerce.boolean().optional().default(false),
+    price: z.preprocess(
+      (val) => (val === "" || val === undefined || val === null ? null : val),
+      z.coerce
+        .number()
+        .positive("Price must be greater than 0")
+        .max(1_000_000, "Price must not exceed 1,000,000")
+        .nullable()
+        .optional()
+    ),
+    originalPrice: z.preprocess(
+      (val) => (val === "" || val === undefined ? null : val),
+      z.coerce
+        .number()
+        .positive("Original price must be greater than 0")
+        .max(1_000_000, "Original price must not exceed 1,000,000")
+        .nullable()
+        .optional()
+    ),
+    isDefault: z.coerce.boolean().optional(),
+    image: z.preprocess(
+      (val) => (val === "" ? null : val),
+      ImageUrlOrPathSchema.nullable().optional()
+    ),
   images: z.preprocess(
     (val) => {
       if (typeof val === "string") {
@@ -43,11 +53,24 @@ export const CakePriceInputSchema = z.object({
       .optional()
       .default([])
   ),
-});
+})
+.refine(
+  (data) => {
+    if (data.isCustomQuote) {
+      return true;
+    }
+    return typeof data.price === "number" && data.price > 0;
+  },
+  {
+    message: "Price must be greater than 0 for standard pricing",
+    path: ["price"],
+  }
+);
 
 export const CreateCakeSchema = z.object({
   name: z.string().trim().min(1, "Cake name is required").max(150, "Cake name must not exceed 150 characters"),
   productType: z.literal("CAKE").default("CAKE"),
+  isCustomQuote: z.coerce.boolean().optional().default(false),
   slug: z.string().trim().max(150, "Slug must not exceed 150 characters").optional(),
   categoryId: z.string().trim().min(1, "Category ID is required").max(50, "Category ID too long"),
   description: z.string().trim().min(1, "Description is required").max(3000, "Description must not exceed 3000 characters"),

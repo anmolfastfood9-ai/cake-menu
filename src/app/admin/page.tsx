@@ -66,7 +66,9 @@ export default async function AdminDashboardPage() {
   ]);
 
   // Compute pricing intelligence
-  const priceValues = allPrices.map((p) => p.price).filter((p) => p > 0);
+  const priceValues = allPrices
+    .map((p) => p.price)
+    .filter((p): p is number => typeof p === "number" && !isNaN(p) && p > 0);
   const minPrice = priceValues.length > 0 ? Math.min(...priceValues) : 499;
   const maxPrice = priceValues.length > 0 ? Math.max(...priceValues) : 2499;
   const avgPrice =

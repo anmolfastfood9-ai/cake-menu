@@ -154,22 +154,30 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       if (ratingLabel !== undefined) updateData.ratingLabel = typeof ratingLabel === "string" && ratingLabel.trim() ? ratingLabel.trim() : null;
       if (editorialQuote !== undefined) updateData.editorialQuote = typeof editorialQuote === "string" && editorialQuote.trim() ? editorialQuote.trim() : null;
       if (customizationInfo !== undefined) updateData.customizationInfo = customizationInfo;
+      if (bodyRes.data.isCustomQuote !== undefined) {
+        updateData.isCustomQuote = Boolean(bodyRes.data.isCustomQuote);
+      } else if (prices && Array.isArray(prices)) {
+        updateData.isCustomQuote = prices.some((p: any) => p.isCustomQuote);
+      }
 
       if (prices && Array.isArray(prices)) {
         updateData.prices = {
-          create: prices.map((p, idx: number) => {
+          create: prices.map((p: any, idx: number) => {
             const tierGallery = Array.isArray(p.images) ? p.images : [];
 
             // Max 10 gallery images per tier, non-empty
             const cleanedTierImages = tierGallery
-              .filter((img) => typeof img === "string" && img.trim().length > 0)
+              .filter((img: any) => typeof img === "string" && img.trim().length > 0)
               .slice(0, 10);
+
+            const isCustomQuote = Boolean(p.isCustomQuote);
 
             return {
               weight: p.weight || "1 kg",
-              price: Number(p.price) || 0,
-              originalPrice: p.originalPrice ? Number(p.originalPrice) : null,
+              price: isCustomQuote ? null : (p.price != null && !isNaN(Number(p.price)) ? Number(p.price) : null),
+              originalPrice: isCustomQuote ? null : (p.originalPrice && !isNaN(Number(p.originalPrice)) ? Number(p.originalPrice) : null),
               isDefault: p.isDefault ?? idx === 0,
+              isCustomQuote,
               image: p.image || (cleanedTierImages.length > 0 ? cleanedTierImages[0] : null),
               images: JSON.stringify(cleanedTierImages),
             };
