@@ -1,9 +1,10 @@
 import { MetadataRoute } from "next";
 import prisma from "@/lib/db";
 import { getAllActiveOccasions } from "@/lib/festivals/occasionEngine";
+import { getAppUrl } from "@/lib/appUrl";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://sweetdelights.com").replace(/\/$/, "");
+  const appUrl = getAppUrl();
 
   // Static Public Routes
   const staticRoutes: MetadataRoute.Sitemap = [

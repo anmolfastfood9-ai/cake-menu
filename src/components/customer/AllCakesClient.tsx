@@ -10,6 +10,7 @@ import { DEFAULT_BRAND_NAME } from "@/components/customer/BrandIdentity";
 import { Search, ArrowLeft, SlidersHorizontal, ChevronDown, X } from "lucide-react";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { generateGeneralWhatsAppLink } from "@/lib/whatsapp";
+import { matchesSmartSearch } from "@/lib/search";
 
 interface AllCakesClientProps {
   initialCategories: any[];
@@ -85,11 +86,7 @@ export default function AllCakesClient({
       }
 
       if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const nameMatch = cake.name.toLowerCase().includes(q);
-        const descMatch = cake.description?.toLowerCase().includes(q);
-        const catMatch = cake.category?.name?.toLowerCase().includes(q);
-        if (!nameMatch && !descMatch && !catMatch) return false;
+        if (!matchesSmartSearch(cake, searchQuery)) return false;
       }
 
       return true;

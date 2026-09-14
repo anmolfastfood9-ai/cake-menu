@@ -5,6 +5,7 @@ export const UpdateSettingsSchema = z.object({
   restaurantName: z.string().trim().max(100, "Restaurant name too long").optional(),
   tagline: z.string().trim().max(150, "Tagline too long").nullable().optional(),
   logo: z.string().trim().max(1000, "Logo URL too long").nullable().optional(),
+  favicon: z.string().trim().max(1000, "Favicon URL too long").nullable().optional(),
   heroTitle: z.string().trim().max(200, "Hero title too long").nullable().optional(),
   heroSubtitle: z.string().trim().max(500, "Hero subtitle too long").nullable().optional(),
   heroImage: z.string().trim().max(1000, "Hero image URL too long").nullable().optional(),

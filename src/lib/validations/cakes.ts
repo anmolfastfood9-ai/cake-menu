@@ -79,6 +79,32 @@ export const CreateCakeSchema = z.object({
     (val) => (val === undefined || val === null || val === "" ? 4.9 : Number(val)),
     z.number().min(0, "Rating cannot be negative").max(5, "Rating cannot exceed 5.0").default(4.9)
   ),
+  displayRating: z.preprocess(
+    (val) => {
+      if (val === undefined || val === null || val === "" || (typeof val === "string" && val.trim() === "")) {
+        return null;
+      }
+      const num = Number(val);
+      return isNaN(num) ? val : num;
+    },
+    z.number()
+      .min(4.5, "Display rating must be between 4.5 and 5.0")
+      .max(5.0, "Display rating must be between 4.5 and 5.0")
+      .refine(
+        (val) => Math.round(val * 10) / 10 === val,
+        "Display rating can have at most 1 decimal place"
+      )
+      .nullable()
+      .optional()
+  ),
+  ratingLabel: z.preprocess(
+    (val) => (val === undefined || val === null ? null : typeof val === "string" ? val.trim() : val),
+    z.string().max(30, "Rating label must not exceed 30 characters").nullable().optional()
+  ),
+  editorialQuote: z.preprocess(
+    (val) => (val === undefined || val === null ? null : typeof val === "string" ? val.trim() : val),
+    z.string().max(180, "Editorial quote must not exceed 180 characters").nullable().optional()
+  ),
   customizationInfo: z.string().trim().max(1000, "Customization info must not exceed 1000 characters").optional(),
   prices: z
     .array(CakePriceInputSchema)

@@ -173,6 +173,9 @@ export async function POST(req: NextRequest) {
       isNew = false,
       available = true,
       rating = 4.9,
+      displayRating,
+      ratingLabel,
+      editorialQuote,
       customizationInfo,
       prices,
       occasionIds = [],
@@ -200,6 +203,9 @@ export async function POST(req: NextRequest) {
         isNew: Boolean(isNew),
         available: Boolean(available),
         rating: typeof rating === "number" ? rating : 4.9,
+        displayRating: typeof displayRating === "number" ? displayRating : null,
+        ratingLabel: ratingLabel || null,
+        editorialQuote: editorialQuote || null,
         customizationInfo,
         prices: {
           create: prices.map((p, idx) => ({

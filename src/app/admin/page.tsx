@@ -20,7 +20,12 @@ export default async function AdminDashboardPage() {
     whatsappSetting,
   ] = await Promise.all([
     prisma.cake.count(),
-    prisma.cake.count({ where: { available: true } }),
+    prisma.cake.count({
+      where: {
+        available: true,
+        productType: "CAKE",
+      },
+    }),
     prisma.cake.count({ where: { featured: true } }),
     prisma.cake.count({ where: { bestseller: true } }),
     prisma.category.count(),

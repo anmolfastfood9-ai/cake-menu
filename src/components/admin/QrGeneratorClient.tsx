@@ -16,6 +16,7 @@ import {
   Store,
   RefreshCw,
 } from "lucide-react";
+import { getAppUrl } from "@/lib/appUrl";
 
 interface QrGeneratorClientProps {
   settings?: any;
@@ -36,7 +37,7 @@ export default function QrGeneratorClient({
 
   const restaurantName = settings?.restaurantName || "Raman Sweet & Family Restaurant";
   const tagline = settings?.tagline || "100% Eggless • Pure Vegetarian";
-  const defaultUrl = origin ? `${origin}/menu` : "https://ramansweet.com/menu";
+  const defaultUrl = origin ? `${origin}/menu` : `${getAppUrl()}/menu`;
 
   // QR Code Options
   const [targetUrl, setTargetUrl] = useState<string>(defaultUrl);
@@ -53,7 +54,7 @@ export default function QrGeneratorClient({
 
   // Sync target URL when customPath or tableNumber changes
   useEffect(() => {
-    const baseUrl = origin || "https://ramansweet.com";
+    const baseUrl = origin || getAppUrl();
     let finalUrl = `${baseUrl}${customPath}`;
     if (tableNumber.trim()) {
       finalUrl += `?table=${encodeURIComponent(tableNumber.trim())}`;

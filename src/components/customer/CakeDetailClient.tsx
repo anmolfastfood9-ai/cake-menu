@@ -50,12 +50,14 @@ function getServingGuide(weight: string): string | null {
     kg = parseFloat(gMatch[1]) / 1000;
   } else if (kgMatch) {
     kg = parseFloat(kgMatch[1]);
-  } else if (lower.includes("half") || lower === "0.5" || lower === ".5") {
+  } else if (lower.includes("half") || lower.includes("1/2") || lower.includes("0.5") || lower.includes(".5")) {
     kg = 0.5;
   }
 
   if (kg === null || isNaN(kg) || kg <= 0) return null;
 
+  // Bento mini lunchbox cake edge case
+  if (kg <= 0.3) return "Serves 1–2 Guests";
   if (kg <= 0.5) return "Serves 3–4 Guests";
   if (kg <= 1.0) return "Serves 6–8 Guests";
   if (kg <= 1.5) return "Serves 10–14 Guests";
@@ -63,6 +65,16 @@ function getServingGuide(weight: string): string | null {
   if (kg <= 3.0) return "Serves 24–30 Guests";
   if (kg <= 4.0) return "Serves 35–45 Guests";
   return `Serves ~${Math.round(kg * 12)}+ Guests`;
+}
+
+/**
+ * Returns a compact rating label for ultra-narrow mobile viewports (<= 340px)
+ */
+function getCompactRatingLabel(label: string): string {
+  if (!label) return "";
+  if (label === "Popular Choice") return "Popular";
+  if (label.endsWith(" Choice")) return label.replace(/\s+Choice$/, "");
+  return label;
 }
 
 function parseJsonImageArray(raw: any): string[] {
@@ -109,6 +121,8 @@ export default function CakeDetailClient({
     weight: "1 kg",
     price: 1399,
   };
+
+  const isPhotoCake = cake.slug === "custom-bespoke-photo-cake";
 
   // Weight-Specific Active Tier Gallery Logic
   // Priority:
@@ -440,11 +454,11 @@ export default function CakeDetailClient({
               </div>
 
               {/* 7. Price & Rating Row */}
-              <div className="flex items-baseline justify-between pt-1">
+              <div className="price-rating-row flex items-baseline justify-between pt-1">
                 {/* Price Display */}
                 <div>
-                  <div className="flex items-baseline gap-2.5">
-                    <span className="font-price text-2xl sm:text-3xl font-extrabold text-[#F5E29D] tracking-tight">
+                  <div className="flex items-baseline gap-2.5 leading-none">
+                    <span className="font-price text-2xl sm:text-3xl font-extrabold text-[#F5E29D] tracking-tight leading-none">
                       ₹{activePriceObj.price.toLocaleString("en-IN")}
                     </span>
                     {hasDiscount && (
@@ -453,30 +467,50 @@ export default function CakeDetailClient({
                       </span>
                     )}
                     {discountPercent && (
-                      <span className="font-sans rounded-md bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.5 text-[10px] font-bold text-emerald-400 tracking-wide uppercase">
+                      <span className="font-sans inline-flex items-center justify-center h-[24px] px-1.5 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-[10px] font-bold text-emerald-400 tracking-wide uppercase whitespace-nowrap leading-none align-middle">
                         {discountPercent}% OFF
                       </span>
                     )}
                   </div>
                   <span className="block font-sans text-xs text-[#A89F91] mt-1 font-normal">
                     for&nbsp;<span className="font-medium text-zinc-300">{activePriceObj.weight.replace(/(\d+)\s*(kg|g|gm)/i, "$1 $2")}</span>
+                    {servingGuide && (
+                      <>
+                        <span className="mx-1.5 text-zinc-500">•</span>
+                        <span className="text-[#E5C365] font-medium">{servingGuide}</span>
+                      </>
+                    )}
                   </span>
                 </div>
 
-                {/* Real Rating Display */}
-                <div className="text-right shrink-0">
-                  <div className="flex items-center justify-end gap-1 text-xs text-[#F8F2E6] font-semibold">
-                    <span className="text-[#D4AF37]">★</span>
-                    <span>{cake.rating || 4.8}</span>
-                    <span className="text-[#8C8275] font-normal text-[10.5px]">(120 reviews)</span>
+                {/* Display Rating & Editorial Label */}
+                {cake.displayRating ? (
+                  <div className="rating-display-block text-right shrink-0 pl-3">
+                    <div className="flex items-center justify-end gap-1.5 text-xs text-[#F8F2E6] font-semibold whitespace-nowrap">
+                      <span className="text-[#D4AF37]">★</span>
+                      <span>{Number(cake.displayRating).toFixed(1)}</span>
+                      {cake.ratingLabel ? (
+                        <>
+                          <span className="text-[#8C8275] text-[10px]">·</span>
+                          <span className="text-[#E5C365] font-medium text-[11px] sm:text-xs">
+                            {getCompactRatingLabel(cake.ratingLabel) !== cake.ratingLabel ? (
+                              <>
+                                <span className="rating-label-compact">
+                                  {getCompactRatingLabel(cake.ratingLabel)}
+                                </span>
+                                <span className="rating-label-full">
+                                  {cake.ratingLabel}
+                                </span>
+                              </>
+                            ) : (
+                              cake.ratingLabel
+                            )}
+                          </span>
+                        </>
+                      ) : null}
+                    </div>
                   </div>
-                  <a
-                    href="#details"
-                    className="inline-block text-[10.5px] text-[#D4AF37] hover:underline font-medium mt-0.5"
-                  >
-                    See Reviews &gt;
-                  </a>
-                </div>
+                ) : null}
               </div>
 
               {/* 8. Weight Selector */}
@@ -485,13 +519,6 @@ export default function CakeDetailClient({
                   <span className="text-xs sm:text-sm font-bold text-[#F8F2E6]">
                     Select Weight
                   </span>
-                  <a
-                    href="#details"
-                    className="flex items-center gap-1 text-xs text-[#D4AF37] font-semibold hover:underline"
-                  >
-                    <Ruler className="h-3 w-3" />
-                    <span>Size Guide</span>
-                  </a>
                 </div>
 
                 {/* Weight Cards Grid matching reference */}
@@ -525,13 +552,13 @@ export default function CakeDetailClient({
                 </div>
               </div>
 
-                {/* Custom Message on Cake (Positioned immediately above WhatsApp Button) */}
+                {/* Custom Message on Cake (Positioned immediately above What You Get) */}
                 <div className="space-y-1.5 pt-1">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-semibold text-[#D4CBBF]">
                       Name / Message on Cake <span className="text-[#8C8275] font-normal">(Optional)</span>
                     </label>
-                    <span className="text-[10px] text-[#D4AF37]">Free Chocolate Plaque</span>
+                    <span className="text-[10px] text-[#D4AF37]">✦ Free Custom Message</span>
                   </div>
                   <input
                     type="text"
@@ -543,7 +570,34 @@ export default function CakeDetailClient({
                   />
                 </div>
 
-                {/* 9. Primary WhatsApp CTA Button */}
+                {/* 9. What You Get (Compact Customer Assurance Checklist) */}
+                <div className="rounded-xl border border-[#D4AF37]/25 bg-[#14120E] p-2.5 sm:p-3 space-y-1.5">
+                  <h4 className="text-[10.5px] sm:text-[11.5px] font-bold uppercase tracking-wider text-[#E5C365]">
+                    What You Get
+                  </h4>
+                  <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 text-[11px] sm:text-xs text-[#E8DFC8]">
+                    <div className="flex items-center gap-1.5">
+                      <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                      <span className="truncate">100% Eggless Cake</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                      <span className="truncate">{activePriceObj.weight.replace(/(\d+)\s*(kg|g|gm)/i, "$1 $2")} Weight</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                      <span className="truncate">Cake Decoration</span>
+                    </div>
+                    {Boolean(cake.customizationInfo) && (
+                      <div className="flex items-center gap-1.5">
+                        <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                        <span className="truncate">Custom Message*</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 10. Primary WhatsApp CTA Button */}
                 <div className="pt-1.5">
                   <a
                     href={waLink}
@@ -553,14 +607,20 @@ export default function CakeDetailClient({
                   >
                     <div className="flex items-center gap-2.5">
                       <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white shrink-0">
-                        <WhatsAppIcon className="h-4.5 w-4.5 text-white" />
+                        {isPhotoCake ? (
+                          <span className="text-base leading-none">📸</span>
+                        ) : (
+                          <WhatsAppIcon className="h-4.5 w-4.5 text-white" />
+                        )}
                       </span>
                       <div className="text-left">
                         <span className="block text-xs sm:text-sm font-bold leading-tight">
-                          Order on WhatsApp
+                          {isPhotoCake ? "📸 Send Your Photo" : "Order on WhatsApp"}
                         </span>
                         <span className="text-[10px] text-white/90 font-medium">
-                          Quick enquiry • No payment needed
+                          {isPhotoCake
+                            ? "Share your photo on WhatsApp"
+                            : "Quick enquiry • No payment needed"}
                         </span>
                       </div>
                     </div>
@@ -617,14 +677,16 @@ export default function CakeDetailClient({
                   </p>
                 </div>
 
-                {/* Quote Banner Matching Reference Screen 2 */}
-                <div className="py-3 text-center">
-                  <div className="text-xl font-serif text-[#D4AF37]/60 leading-none mb-1">“</div>
-                  <p className="font-serif italic text-sm sm:text-base text-[#F8F2E6]/90 tracking-wide">
-                    “Chocolate makes every celebration better!”
-                  </p>
-                  <div className="w-10 h-[1px] bg-[#D4AF37]/30 mx-auto mt-2.5" />
-                </div>
+                {/* Editorial Quote Banner */}
+                {cake.editorialQuote && cake.editorialQuote.trim() ? (
+                  <div className="py-3 text-center">
+                    <div className="text-xl font-serif text-[#D4AF37]/60 leading-none mb-1">“</div>
+                    <p className="font-serif italic text-sm sm:text-base text-[#F8F2E6]/90 tracking-wide">
+                      “{cake.editorialQuote.trim().replace(/^["“]+|["”]+$/g, "")}”
+                    </p>
+                    <div className="w-10 h-[1px] bg-[#D4AF37]/30 mx-auto mt-2.5" />
+                  </div>
+                ) : null}
 
                 {/* Preparation & Storage */}
                 {cake.preparationNotes && (
@@ -656,7 +718,7 @@ export default function CakeDetailClient({
                 <div className="pt-5 border-t border-white/[0.08] space-y-3 text-left mt-3">
                   <div className="flex items-center justify-between">
                     <h3 className="font-sans text-base sm:text-lg font-bold text-[#F8F2E6]">
-                      Related Cakes
+                      Like this? Try these
                     </h3>
                     <Link href="/menu" className="flex items-center gap-1 text-xs font-semibold text-[#D4AF37] hover:underline">
                       <span>See All</span>

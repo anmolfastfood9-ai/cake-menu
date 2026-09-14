@@ -9,8 +9,14 @@ import { generateGeneralWhatsAppLink } from "@/lib/whatsapp";
 import OccasionShowcase from "@/components/customer/OccasionShowcase";
 import Footer from "@/components/customer/Footer";
 import CategoryIcon from "@/components/customer/CategoryIcon";
-import { Sparkles, BookOpen } from "lucide-react";
+import { Sparkles, BookOpen, Search, X } from "lucide-react";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
+import {
+  matchesSmartSearch,
+  matchesBudget,
+  BUDGET_OPTIONS,
+  type BudgetFilterId,
+} from "@/lib/search";
 
 import { DEFAULT_BRAND_NAME, DEFAULT_BRAND_TAGLINE } from "@/components/customer/BrandIdentity";
 import { cleanupStaleFavorites } from "@/lib/customerFavorites";
@@ -90,6 +96,7 @@ export default function MenuClient({
 
   const [selectedCategory, setSelectedCategory] = useState<string>(initialSelectedCategory);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [selectedBudget, setSelectedBudget] = useState<BudgetFilterId>("all");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -265,8 +272,18 @@ export default function MenuClient({
       });
     }
 
+    // 2. Budget filter (starting price threshold)
+    if (selectedBudget !== "all") {
+      list = list.filter((c: any) => matchesBudget(c, selectedBudget));
+    }
+
+    // 3. Smart search filter (matches name, description, category, flavour & weight tiers)
+    if (searchQuery.trim()) {
+      list = list.filter((c: any) => matchesSmartSearch(c, searchQuery));
+    }
+
     return list;
-  }, [displayCakes, selectedCategory]);
+  }, [displayCakes, selectedCategory, selectedBudget, searchQuery]);
 
   const categoriesList = useMemo(() => {
     const allItem = { id: "all", name: "All", slug: "all" };
@@ -706,6 +723,85 @@ export default function MenuClient({
         </section>
 
         {/* ====================================================
+            SMART SEARCH & BUDGET FILTER CONTROLS
+        ==================================================== */}
+        <div className="mt-4 sm:mt-5 space-y-2.5">
+          {/* Smart Search Bar */}
+          <div className="relative w-full">
+            <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#D4AF37]/75 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search cakes, flavours or weight..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="
+                w-full
+                rounded-xl
+                border
+                border-[#D4AF37]/30
+                bg-[#110E0B]
+                py-2.5
+                pl-10
+                pr-9
+                text-xs
+                sm:text-sm
+                text-[#FBF7EE]
+                placeholder-[#8C8275]
+                shadow-[inset_0_1px_4px_rgba(0,0,0,0.6)]
+                focus:border-[#E5C365]
+                focus:outline-none
+                focus:ring-1
+                focus:ring-[#E5C365]/30
+                transition-all
+              "
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                aria-label="Clear search"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A69B8D] hover:text-[#FBF7EE] p-0.5 transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Budget Filter Horizontal Pills */}
+          <div className="flex items-center gap-1.5 overflow-x-auto overscroll-x-contain touch-pan-x [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pb-0.5 -mx-1 px-1">
+            {BUDGET_OPTIONS.map((opt) => {
+              const isSelected = selectedBudget === opt.id;
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setSelectedBudget(opt.id)}
+                  className={`
+                    shrink-0
+                    rounded-full
+                    px-3
+                    py-1
+                    text-[10.5px]
+                    sm:text-[11.5px]
+                    font-semibold
+                    transition-all
+                    duration-150
+                    active:scale-95
+                    ${
+                      isSelected
+                        ? "border border-[#E5C365] bg-[#D4AF37]/20 text-[#FFF3CD] shadow-[0_0_8px_rgba(212,175,55,0.25)]"
+                        : "border border-white/10 bg-[#14120E] text-[#B8AA97] hover:border-white/20 hover:text-[#FBF7EE]"
+                    }
+                  `}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ====================================================
             CAKE SHOWCASE CATALOG
         ==================================================== */}
         <section id="cake-catalog" className="mt-5 sm:mt-6 scroll-mt-20">
@@ -724,6 +820,8 @@ export default function MenuClient({
             >
               {searchQuery.trim()
                 ? `Results for "${searchQuery}"`
+                : selectedBudget !== "all"
+                ? `${BUDGET_OPTIONS.find((b) => b.id === selectedBudget)?.label || "Budget"} Cakes`
                 : selectedCategory === "all"
                 ? "Signature Cakes"
                 : `${categoriesList.find((c) => c.slug === selectedCategory)?.name || "Artisan"} Cakes`}
@@ -734,13 +832,20 @@ export default function MenuClient({
           </div>
 
           {filteredCakes.length === 0 ? (
-            <div className="rounded-2xl border border-[#D4AF37]/25 bg-[#0F0D0A] p-8 text-center">
-              <p className="text-xs text-[#A69B8D]">
-                No cakes currently listed under this category.
+            <div className="rounded-2xl border border-[#D4AF37]/25 bg-[#0F0D0A] p-8 text-center space-y-2">
+              <p className="font-serif text-lg font-bold text-[#F5E29D]">
+                No cakes found
+              </p>
+              <p className="text-xs text-[#A69B8D] max-w-sm mx-auto">
+                Try another flavour, category or weight.
               </p>
               <button
                 type="button"
-                onClick={() => setSelectedCategory("all")}
+                onClick={() => {
+                  setSearchQuery("");
+                  setSelectedCategory("all");
+                  setSelectedBudget("all");
+                }}
                 className="mt-3 inline-flex items-center rounded-xl border border-[#D4AF37]/50 bg-[#16130E] px-4 py-2 text-xs font-semibold text-[#EBD699] hover:bg-[#D4AF37]/20 transition-colors"
               >
                 View All Available Cakes
@@ -753,7 +858,8 @@ export default function MenuClient({
                 grid-cols-2
                 gap-2.5
                 sm:gap-3.5
-                md:grid-cols-4
+                md:grid-cols-3
+                lg:grid-cols-4
                 md:gap-4
                 lg:gap-5
               "

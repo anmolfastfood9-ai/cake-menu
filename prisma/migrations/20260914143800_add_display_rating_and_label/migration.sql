@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Cake" ADD COLUMN IF NOT EXISTS "displayRating" DOUBLE PRECISION,
+ADD COLUMN IF NOT EXISTS "ratingLabel" TEXT;

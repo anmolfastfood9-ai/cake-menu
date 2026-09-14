@@ -52,6 +52,7 @@ export function invalidateAppCache() {
   pendingOccasions.clear();
 
   try {
+    revalidatePath("/", "layout");
     revalidatePath("/menu");
     revalidatePath("/menu/cakes");
     revalidatePath("/menu/cake/[slug]", "page");
@@ -300,7 +301,8 @@ export async function getCachedRelatedCakes(categoryId: string, excludeCakeId: s
   return await getCachedApiQuery(
     cacheKey,
     async () => {
-      return await prisma.cake.findMany({
+      // 1. Fetch cakes from same category (up to 3)
+      const sameCategory = await prisma.cake.findMany({
         where: {
           categoryId,
           id: { not: excludeCakeId },
@@ -332,6 +334,53 @@ export async function getCachedRelatedCakes(categoryId: string, excludeCakeId: s
         orderBy: [{ featured: "desc" }, { bestseller: "desc" }, { createdAt: "desc" }],
         take: 3,
       });
+
+      // If category already provides 3 results, no fallback needed
+      if (sameCategory.length >= 3) {
+        return sameCategory;
+      }
+
+      // 2. Fallback: fill remaining slots from Signature/Featured cakes without duplicates
+      const needed = 3 - sameCategory.length;
+      const excludeIds = [excludeCakeId, ...sameCategory.map((c) => c.id)];
+
+      const fallbackCakes = await prisma.cake.findMany({
+        where: {
+          id: { notIn: excludeIds },
+          available: true,
+          productType: "CAKE",
+          NOT: [
+            { slug: { contains: "test", mode: "insensitive" } },
+            { name: { contains: "test", mode: "insensitive" } },
+          ],
+        },
+        select: {
+          id: true,
+          slug: true,
+          name: true,
+          coverImage: true,
+          prices: {
+            select: { price: true },
+            orderBy: { price: "asc" },
+            take: 1,
+          },
+          category: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
+        },
+        orderBy: [
+          { featured: "desc" },
+          { bestseller: "desc" },
+          { createdAt: "desc" },
+        ],
+        take: needed,
+      });
+
+      return [...sameCategory, ...fallbackCakes];
     },
     DEFAULT_TTL_MS
   );

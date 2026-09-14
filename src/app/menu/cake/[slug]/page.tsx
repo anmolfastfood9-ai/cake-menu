@@ -7,6 +7,7 @@ import {
   getCachedWebsiteSettings,
   getCachedWhatsAppSetting,
 } from "@/lib/cache";
+import { getAppUrl } from "@/lib/appUrl";
 
 export const revalidate = 60; // ISR: revalidate every 60s, memory cache handles freshness
 
@@ -29,15 +30,20 @@ export async function generateMetadata({
     };
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://sweetdelights.com";
-  const canonicalUrl = `${appUrl.replace(/\/$/, "")}/menu/cake/${cake.slug}`;
+  const appUrl = getAppUrl();
+  const canonicalUrl = `${appUrl}/menu/cake/${cake.slug}`;
   const startingPrice = cake.prices?.[0]?.price ? ` from ₹${cake.prices[0].price}` : "";
   const title = `${cake.name}${startingPrice} | 100% Eggless Luxury Cake`;
   const description =
     cake.description ||
     "Handcrafted artisanal 100% eggless luxury confections. Order & enquire directly on WhatsApp.";
 
+  const fullImageUrl = cake.coverImage?.startsWith("http")
+    ? cake.coverImage
+    : `${appUrl}${cake.coverImage?.startsWith("/") ? "" : "/"}${cake.coverImage || ""}`;
+
   return {
+    metadataBase: new URL(appUrl),
     title,
     description,
     alternates: {
@@ -50,7 +56,7 @@ export async function generateMetadata({
       type: "website",
       images: [
         {
-          url: cake.coverImage,
+          url: fullImageUrl,
           width: 800,
           height: 800,
           alt: cake.name,
@@ -61,7 +67,7 @@ export async function generateMetadata({
       card: "summary_large_image",
       title,
       description,
-      images: [cake.coverImage],
+      images: [fullImageUrl],
     },
   };
 }
@@ -81,7 +87,7 @@ export default async function CakeDetailPage({ params }: { params: { slug: strin
   // Targeted related cakes query (same category, deterministic top 3, minimal fields)
   const relatedCakes = await getCachedRelatedCakes(cake.categoryId, cake.id);
 
-  const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://sweetdelights.com").replace(/\/$/, "");
+  const appUrl = getAppUrl();
   const canonicalUrl = `${appUrl}/menu/cake/${cake!.slug}`;
 
   // Schema.org Product structured data — only real stored data, no fabricated reviews

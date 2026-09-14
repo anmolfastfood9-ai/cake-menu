@@ -49,7 +49,10 @@ interface CakeCardProps {
 export default function CakeCard({ cake }: CakeCardProps) {
   const { isFavorite, toggleFavorite } = useCakeFavorite(cake.id || cake.slug);
 
-  const sortedPrices = [...(cake.prices || [])].sort(
+  const validPrices = (cake.prices || []).filter(
+    (p) => typeof p.price === "number" && !isNaN(p.price) && p.price > 0
+  );
+  const sortedPrices = [...validPrices].sort(
     (a, b) => a.price - b.price
   );
 
@@ -57,21 +60,57 @@ export default function CakeCard({ cake }: CakeCardProps) {
   const normalizedCoverImage = getNormalizedCakeImageUrl(cake.coverImage);
   const [imgSrc, setImgSrc] = useState<string>(normalizedCoverImage || fallbackImage);
 
-  const defaultPriceObj = sortedPrices.find((p) => p.isDefault) || sortedPrices[0];
-  const lowestPrice = defaultPriceObj?.price || sortedPrices[0]?.price || 1499;
-  const priceWeight = defaultPriceObj?.weight || sortedPrices[0]?.weight || "1 kg";
+  const lowestPriceObj = sortedPrices[0] || { price: 1499, weight: "1 kg" };
+  const lowestPrice = lowestPriceObj.price;
+
+  // Available weights in compact notation: e.g. "0.5 kg • 1 kg • 1.5 kg • 2 kg" or "250 g"
+  const availableWeightsText = sortedPrices
+    .map((p) => p.weight?.trim())
+    .filter(Boolean)
+    .join(" • ");
 
   const cakeHref = `/menu/cake/${cake.slug}`;
 
-  // Promotional badge: Priority: Bestseller (1) -> New (2) -> Signature/Featured (3)
-  // Strictly mapped to real DB flags only (no fake badges)
+  // Bento Detection: Category slug or specific cake slug
+  const isBento =
+    cake.slug === "bento-celebration-cake" ||
+    cake.category?.slug === "mini-bento-cakes";
+
+  // Deterministic Smart Badges (Strictly derived from verified DB attributes)
+  const catSlug = (cake.category?.slug || "").toLowerCase();
+  const fullText = `${cake.name} ${cake.description || ""}`.toLowerCase();
+
+  const isSmallCelebration =
+    isBento ||
+    sortedPrices.some((p) => {
+      const w = (p.weight || "").toLowerCase();
+      return w.includes("250") || w.includes("bento");
+    });
+
+  const isChocolateLover =
+    catSlug.includes("chocolate") ||
+    ["chocolate", "truffle", "ganache", "hazelnut"].some((term) =>
+      fullText.includes(term)
+    );
+
+  const isPremiumChoice =
+    lowestPrice > 1500 || catSlug === "red-velvet-premium";
+
+  // Promotional badge hierarchy: Exactly ONE badge per card
+  // Small Celebration -> Chocolate Lover -> Existing explicit admin flags -> Premium Choice
   let primaryBadge: { label: string; icon: string } | null = null;
-  if (cake.bestseller === true) {
+  if (isSmallCelebration) {
+    primaryBadge = { label: "Small Celebration", icon: "🍰" };
+  } else if (isChocolateLover) {
+    primaryBadge = { label: "Chocolate Lover", icon: "🍫" };
+  } else if (cake.bestseller === true) {
     primaryBadge = { label: "Best Seller", icon: "★" };
   } else if (cake.isNew === true) {
     primaryBadge = { label: "New", icon: "✦" };
   } else if (cake.featured === true) {
     primaryBadge = { label: "Signature", icon: "✦" };
+  } else if (isPremiumChoice) {
+    primaryBadge = { label: "Premium Choice", icon: "✨" };
   }
 
   return (
@@ -158,20 +197,23 @@ export default function CakeCard({ cake }: CakeCardProps) {
         ==================================================== */}
         {/* 1. Left Side: Promotional Badge (Crystal-clear luxury pill) */}
         {primaryBadge && (
-          <div className="absolute left-2 top-2 sm:left-2.5 sm:top-2.5 z-10 flex items-center pointer-events-none">
+          <div className="absolute left-2 top-2 sm:left-2.5 sm:top-2.5 z-10 flex items-center pointer-events-none max-w-[calc(100%-28px)] sm:max-w-[calc(100%-32px)]">
             <span
               className="
                 inline-flex
+                max-w-full
+                min-w-0
                 h-[18px]
                 sm:h-[20px]
                 items-center
-                gap-1.5
+                gap-1
+                sm:gap-1.5
                 rounded-full
                 border
                 border-[#E5C365]
                 bg-[#0D0B08]/95
-                px-2.5
-                sm:px-3
+                px-2
+                sm:px-2.5
                 text-[10px]
                 sm:text-[11px]
                 font-semibold
@@ -180,10 +222,12 @@ export default function CakeCard({ cake }: CakeCardProps) {
                 shadow-[0_2px_8px_rgba(0,0,0,0.85)]
               "
             >
-              <span className="text-[9.5px] sm:text-[10.5px] text-[#F5C842] leading-none" aria-hidden="true">
+              <span className="text-[9.5px] sm:text-[10.5px] text-[#F5C842] leading-none shrink-0" aria-hidden="true">
                 {primaryBadge.icon}
               </span>
-              <span className="leading-none whitespace-nowrap font-medium text-[#FFF3CD]">{primaryBadge.label}</span>
+              <span className="leading-none min-w-0 truncate font-medium text-[#FFF3CD]">
+                {primaryBadge.label}
+              </span>
             </span>
           </div>
         )}
@@ -314,55 +358,75 @@ export default function CakeCard({ cake }: CakeCardProps) {
           </button>
         </div>
 
+        {/* Available Weights / Bento Callout Sub-row */}
+        {isBento ? (
+          <div className="mt-1 flex items-center justify-between text-[8.5px] sm:text-[9.5px] text-[#E5C365] font-semibold leading-tight">
+            <span className="inline-flex items-center gap-1">
+              <span>🍱</span>
+              <span>250 g Bento</span>
+            </span>
+            <span className="text-[#C5BAA8] font-medium">1–2 Guests</span>
+          </div>
+        ) : (
+          availableWeightsText && (
+            <div
+              className="mt-1 text-[8.5px] sm:text-[9.5px] text-[#A69B8D] font-medium truncate leading-tight"
+              title={availableWeightsText}
+            >
+              {availableWeightsText}
+            </div>
+          )
+        )}
+
         {/* Price Row (Pinned to bottom with mt-auto, always aligned) */}
-        <div className="mt-auto pt-2 flex min-w-0 items-center justify-between gap-1 sm:gap-1.5">
-          {/* 4. Price & Weight Pill: slightly increased internal spacing */}
-          <span
+        <div className="mt-auto pt-1.5 flex min-w-0 items-center justify-between gap-1 sm:gap-1.5">
+          {/* 4. Price Pill: "From ₹..." */}
+          <div
             className="
               inline-flex
               min-w-0
               shrink
               items-center
-              gap-1
-              sm:gap-1.5
+              gap-0.5
+              sm:gap-1
               rounded-[6px]
               border
               border-[#D4AF37]/45
               bg-[#18130B]
-              px-2
+              px-1.5
               py-[3px]
               sm:px-2.5
               sm:py-[3.5px]
               shadow-[inset_0_0_6px_rgba(212,175,55,0.06)]
             "
           >
-            <span className="text-[8.5px] font-medium text-[#AFA393] sm:text-[9.5px] whitespace-nowrap">
-              {priceWeight}
+            <span className="text-[8px] sm:text-[9px] font-medium text-[#B8AA97] whitespace-nowrap shrink-0">
+              From
             </span>
-            <span className="text-[7.5px] text-[#D4AF37]/50">•</span>
-            <span className="font-price text-[10px] font-bold leading-none text-[#F5E29D] sm:text-[11px] whitespace-nowrap">
+            <span className="font-price text-[10px] sm:text-[11.5px] font-bold leading-none text-[#F5E29D] whitespace-nowrap shrink-0">
               ₹{lowestPrice.toLocaleString("en-IN")}
             </span>
-          </span>
+          </div>
 
           {/* 5. Order Button: +2px taller (27px / 29px), improved alignment and centering */}
           <Link
             href={cakeHref}
             className="
               inline-flex
-              h-[27px]
+              h-[26px]
               sm:h-[29px]
               shrink-0
               items-center
               justify-center
-              gap-1.5
+              gap-1
+              sm:gap-1.5
               rounded-[7px]
               border
               border-emerald-500/75
               bg-[#082017]
-              px-2.5
+              px-2
               sm:px-3
-              text-[9.5px]
+              text-[9px]
               sm:text-[10.5px]
               font-semibold
               leading-none

@@ -413,3 +413,50 @@ img {
     transform: none !important;
   }
 }
+
+/* ==========================================================
+   ULTRA-NARROW (<= 340px) RATING LABEL & ALIGNMENT MICRO-FIX
+   ========================================================== */
+
+@media (max-width: 340px) {
+  .rating-label-full {
+    display: none !important;
+  }
+  .rating-label-compact {
+    display: inline !important;
+  }
+  .price-rating-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.375rem !important;
+  }
+  .rating-display-block {
+    text-align: left !important;
+    padding-left: 0 !important;
+    align-self: flex-start !important;
+  }
+  .rating-display-block > div {
+    justify-content: flex-start !important;
+  }
+}
+
+@media (min-width: 341px) {
+  .rating-label-full {
+    display: inline !important;
+  }
+  .rating-label-compact {
+    display: none !important;
+  }
+  .price-rating-row {
+    flex-direction: row !important;
+    align-items: baseline !important;
+    justify-content: space-between !important;
+  }
+  .rating-display-block {
+    text-align: right !important;
+    padding-left: 0.75rem !important;
+  }
+  .rating-display-block > div {
+    justify-content: flex-end !important;
+  }
+}

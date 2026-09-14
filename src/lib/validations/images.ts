@@ -7,6 +7,7 @@ export const ALLOWED_IMAGE_FOLDERS = [
   "/branding",
   "/hero",
   "/logo",
+  "/favicon",
   "/festivals",
   "/categories",
   "/custom",

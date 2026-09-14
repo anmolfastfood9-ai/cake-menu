@@ -43,6 +43,11 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
   );
   const [uploadingLogo, setUploadingLogo] = useState(false);
 
+  const [favicon, setFavicon] = useState(
+    initialSettings?.favicon || ""
+  );
+  const [uploadingFavicon, setUploadingFavicon] = useState(false);
+
   const [heroTitle, setHeroTitle] = useState(
     initialSettings?.heroTitle || "Artisanal Elegance In Every Slice"
   );
@@ -83,12 +88,12 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
   // Upload & Media Picker state
   const [uploadingHero, setUploadingHero] = useState(false);
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
-  const [mediaPickerTarget, setMediaPickerTarget] = useState<"hero" | "logo">("hero");
+  const [mediaPickerTarget, setMediaPickerTarget] = useState<"hero" | "logo" | "favicon">("hero");
   const [libraryImages, setLibraryImages] = useState<any[]>([]);
   const [loadingLibrary, setLoadingLibrary] = useState(false);
 
   // Fetch images for Media Library picker
-  const openMediaPicker = async (target: "hero" | "logo" = "hero") => {
+  const openMediaPicker = async (target: "hero" | "logo" | "favicon" = "hero") => {
     setMediaPickerTarget(target);
     setMediaPickerOpen(true);
     if (libraryImages.length === 0) {
@@ -159,12 +164,40 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
     }
   };
 
+  // Direct Favicon Upload
+  const handleFaviconUpload = async (file: File) => {
+    setUploadingFavicon(true);
+    setError(null);
+    try {
+      const formData = new FormData();
+      formData.append("files", file);
+      formData.append("folder", "/favicon");
+
+      const res = await fetch("/api/images", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Favicon upload failed");
+
+      if (data.images && data.images[0]?.url) {
+        setFavicon(data.images[0].url);
+        setLibraryImages((prev) => [data.images[0], ...prev]);
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to upload favicon");
+    } finally {
+      setUploadingFavicon(false);
+    }
+  };
+
   // Sync state whenever initialSettings prop changes or after page refresh
   useEffect(() => {
     if (initialSettings) {
       if (initialSettings.restaurantName) setRestaurantName(initialSettings.restaurantName);
       if (initialSettings.tagline !== undefined) setTagline(initialSettings.tagline || "");
       if (initialSettings.logo !== undefined) setLogo(initialSettings.logo || "/images/logo_emblem.png");
+      if (initialSettings.favicon !== undefined) setFavicon(initialSettings.favicon || "");
       if (initialSettings.heroTitle !== undefined) setHeroTitle(initialSettings.heroTitle || "");
       if (initialSettings.heroSubtitle !== undefined) setHeroSubtitle(initialSettings.heroSubtitle || "");
       if (initialSettings.heroImage !== undefined) setHeroImage(initialSettings.heroImage || "");
@@ -191,6 +224,7 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
         restaurantName: restaurantName.trim(),
         tagline: tagline.trim(),
         logo: logo ? logo.trim() : "",
+        favicon: favicon ? favicon.trim() : null,
         heroTitle: heroTitle.trim(),
         heroSubtitle: heroSubtitle.trim(),
         heroImage: heroImage.trim(),
@@ -225,6 +259,7 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
         setRestaurantName(data.settings.restaurantName || "");
         setTagline(data.settings.tagline || "");
         if (data.settings.logo !== undefined) setLogo(data.settings.logo || "/images/logo_emblem.png");
+        if (data.settings.favicon !== undefined) setFavicon(data.settings.favicon || "");
         setHeroTitle(data.settings.heroTitle || "");
         setHeroSubtitle(data.settings.heroSubtitle || "");
         setHeroImage(data.settings.heroImage || "");
@@ -377,6 +412,109 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
                   type="text"
                   value={logo}
                   onChange={(e) => setLogo(e.target.value)}
+                  placeholder="/images/logo_emblem.png or https://..."
+                  className="w-full rounded-xl border border-luxury-800 bg-[#161411] px-3.5 py-2 text-xs text-cream-100 placeholder-luxury-500 focus:border-gold-500/50 focus:outline-none focus:ring-1 focus:ring-gold-500/30"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Browser Favicon Card */}
+        <div className="rounded-3xl border border-gold-500/25 bg-luxury-900/80 p-6 sm:p-8 shadow-xl space-y-5">
+          <div className="flex items-center justify-between border-b border-luxury-800 pb-3">
+            <h2 className="font-serif text-base font-bold text-cream-100 flex items-center space-x-2">
+              <Globe className="h-4 w-4 text-gold-400" />
+              <span>Browser Favicon</span>
+            </h2>
+            <span className="text-[10.5px] text-gold-400 bg-gold-500/10 border border-gold-500/25 px-2.5 py-0.5 rounded-full font-medium">
+              Browser Tabs & Bookmarks
+            </span>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 pt-1">
+            {/* Live Favicon Preview Box */}
+            <div className="flex flex-col items-center shrink-0">
+              <div className="relative h-20 w-20 rounded-2xl overflow-hidden border-2 border-[#D4AF37]/60 bg-[#12100C] shadow-[0_0_25px_rgba(212,175,55,0.2)] flex items-center justify-center p-2.5">
+                <img
+                  src={favicon || "/images/logo_emblem.png"}
+                  alt="Browser Favicon Preview"
+                  className="h-full w-full object-contain"
+                />
+                {uploadingFavicon && (
+                  <div className="absolute inset-0 bg-black/75 flex flex-col items-center justify-center text-[10px] text-gold-400 font-bold backdrop-blur-xs">
+                    <Loader2 className="h-5 w-5 animate-spin mb-1 text-gold-400" />
+                    <span>Uploading...</span>
+                  </div>
+                )}
+              </div>
+              <span className="text-[10px] text-gold-400/80 mt-2 font-semibold tracking-wide">
+                {favicon ? "Custom Favicon" : "Default Fallback"}
+              </span>
+            </div>
+
+            {/* Upload Controls */}
+            <div className="flex-1 space-y-3.5 w-full text-center sm:text-left">
+              <div>
+                <h3 className="text-sm font-bold text-cream-100">
+                  Browser Favicon
+                </h3>
+                <p className="text-xs text-luxury-400 mt-1 leading-relaxed">
+                  Small icon shown in browser tabs and bookmarks. If left blank, the official bakery emblem is automatically used as the fallback.
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5 pt-1">
+                <label className="flex items-center space-x-2 rounded-xl bg-gold-gradient px-4 py-2.5 text-xs font-bold text-luxury-950 shadow-gold-sm hover:brightness-110 active:scale-95 transition-all cursor-pointer">
+                  {uploadingFavicon ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Upload className="h-3.5 w-3.5" />
+                  )}
+                  <span>{uploadingFavicon ? "Uploading..." : "Upload Favicon"}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={uploadingFavicon}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleFaviconUpload(file);
+                    }}
+                  />
+                </label>
+
+                <button
+                  type="button"
+                  onClick={() => openMediaPicker("favicon")}
+                  className="flex items-center space-x-2 rounded-xl border border-luxury-700 bg-luxury-800 px-3.5 py-2.5 text-xs font-semibold text-cream-200 hover:border-gold-500/50 hover:text-gold-400 transition-all active:scale-95"
+                >
+                  <ImageIcon className="h-3.5 w-3.5 text-gold-400" />
+                  <span>Choose from Media</span>
+                </button>
+
+                {favicon && (
+                  <button
+                    type="button"
+                    onClick={() => setFavicon("")}
+                    className="flex items-center space-x-1.5 rounded-xl border border-luxury-800 bg-luxury-900/60 px-3 py-2.5 text-xs font-medium text-luxury-400 hover:text-cream-200 hover:border-luxury-700 transition-colors"
+                  >
+                    <RefreshCw className="h-3 w-3" />
+                    <span>Reset to Default</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Direct Path / URL Field */}
+              <div className="pt-1.5">
+                <label className="block text-[10px] uppercase tracking-wider text-luxury-400 font-semibold mb-1">
+                  Favicon URL / File Path (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={favicon}
+                  onChange={(e) => setFavicon(e.target.value)}
                   placeholder="/images/logo_emblem.png or https://..."
                   className="w-full rounded-xl border border-luxury-800 bg-[#161411] px-3.5 py-2 text-xs text-cream-100 placeholder-luxury-500 focus:border-gold-500/50 focus:outline-none focus:ring-1 focus:ring-gold-500/30"
                 />
@@ -748,13 +886,20 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
             ) : libraryImages.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 overflow-y-auto max-h-96 pr-1">
                 {libraryImages.map((img) => {
-                  const isSelected = mediaPickerTarget === "logo" ? logo === img.url : heroImage === img.url;
+                  const isSelected =
+                    mediaPickerTarget === "logo"
+                      ? logo === img.url
+                      : mediaPickerTarget === "favicon"
+                      ? favicon === img.url
+                      : heroImage === img.url;
                   return (
                     <div
                       key={img.id}
                       onClick={() => {
                         if (mediaPickerTarget === "logo") {
                           setLogo(img.url);
+                        } else if (mediaPickerTarget === "favicon") {
+                          setFavicon(img.url);
                         } else {
                           setHeroImage(img.url);
                         }

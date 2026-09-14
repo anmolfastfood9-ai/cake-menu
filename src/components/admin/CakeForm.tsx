@@ -50,7 +50,7 @@ export default function CakeForm({ categories = [], initialData, isEditing = fal
     initialData?.preparationNotes || "Freshly baked daily • 2-3 hours preparation time"
   );
   const [customizationInfo, setCustomizationInfo] = useState(
-    initialData?.customizationInfo || "Custom message on chocolate plaque, shape customization & tiered sizing available on request."
+    initialData?.customizationInfo || "Custom message on cake, shape customization & tiered sizing available on request."
   );
 
   // Flags (All cakes are strictly 100% eggless & vegetarian)
@@ -58,6 +58,15 @@ export default function CakeForm({ categories = [], initialData, isEditing = fal
   const [bestseller, setBestseller] = useState(initialData?.bestseller ?? false);
   const [isNew, setIsNew] = useState(initialData?.isNew ?? false);
   const [available, setAvailable] = useState(initialData?.available ?? true);
+
+  // Display Rating & Editorial Label (Optional, per-cake presentation)
+  const [displayRating, setDisplayRating] = useState<string | number>(
+    initialData?.displayRating !== undefined && initialData?.displayRating !== null
+      ? initialData.displayRating
+      : ""
+  );
+  const [ratingLabel, setRatingLabel] = useState<string>(initialData?.ratingLabel || "");
+  const [editorialQuote, setEditorialQuote] = useState<string>(initialData?.editorialQuote || "");
 
   // Dynamic Weight Pricing Rows
   const [prices, setPrices] = useState<CakePriceRow[]>(
@@ -241,6 +250,34 @@ export default function CakeForm({ categories = [], initialData, isEditing = fal
       return;
     }
 
+    // Display Rating validation (Optional: 4.5 to 5.0, 1 decimal place)
+    let parsedDisplayRating: number | null = null;
+    if (displayRating !== "" && displayRating !== null && displayRating !== undefined) {
+      const num = Number(displayRating);
+      if (isNaN(num) || num < 4.5 || num > 5.0) {
+        setError("Display Rating must be between 4.5 and 5.0");
+        return;
+      }
+      const rounded = Math.round(num * 10) / 10;
+      if (Math.abs(num - rounded) > 0.001) {
+        setError("Display Rating can have at most 1 decimal place (e.g. 4.8)");
+        return;
+      }
+      parsedDisplayRating = rounded;
+    }
+
+    const trimmedRatingLabel = ratingLabel.trim() || null;
+    if (trimmedRatingLabel && trimmedRatingLabel.length > 30) {
+      setError("Display Label must not exceed 30 characters");
+      return;
+    }
+
+    const trimmedEditorialQuote = editorialQuote.trim() || null;
+    if (trimmedEditorialQuote && trimmedEditorialQuote.length > 180) {
+      setError("Editorial Quote must not exceed 180 characters");
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -259,6 +296,9 @@ export default function CakeForm({ categories = [], initialData, isEditing = fal
         bestseller,
         isNew,
         available,
+        displayRating: parsedDisplayRating,
+        ratingLabel: trimmedRatingLabel,
+        editorialQuote: trimmedEditorialQuote,
         occasionIds: selectedOccasionIds,
         prices: prices.map((p, idx) => {
           const tierGallery = (p.images || [])
@@ -419,6 +459,29 @@ export default function CakeForm({ categories = [], initialData, isEditing = fal
                   onChange={(e) => setIngredients(e.target.value)}
                   className="w-full rounded-xl border border-luxury-700 bg-luxury-950 px-3.5 sm:px-4 py-2.5 text-xs text-cream-100 focus:border-gold-500 focus:outline-none"
                 />
+              </div>
+
+              {/* Editorial Quote */}
+              <div className="space-y-1.5 sm:col-span-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-semibold text-cream-200">
+                    Editorial Quote <span className="text-luxury-400 font-normal">(Optional · Max 180 chars)</span>
+                  </label>
+                  <span className="text-[10.5px] text-luxury-500">
+                    {editorialQuote.length}/180
+                  </span>
+                </div>
+                <textarea
+                  rows={2}
+                  maxLength={180}
+                  placeholder='e.g. Handcrafted layers of sour cherries and dark Belgian ganache.'
+                  value={editorialQuote}
+                  onChange={(e) => setEditorialQuote(e.target.value)}
+                  className="w-full rounded-xl border border-luxury-700 bg-luxury-950 p-3 text-xs text-cream-100 placeholder:text-luxury-600 focus:border-gold-500 focus:outline-none"
+                />
+                <p className="text-[10.5px] text-luxury-400">
+                  Highlighted quotation banner shown on the cake page. Leave blank to hide the quote banner completely.
+                </p>
               </div>
             </div>
           </div>
@@ -876,6 +939,59 @@ export default function CakeForm({ categories = [], initialData, isEditing = fal
                   className="h-4 w-4 rounded accent-emerald-500 shrink-0"
                 />
               </label>
+            </div>
+
+            {/* Display Rating & Editorial Label */}
+            <div className="rounded-xl border border-luxury-800 bg-[#161411] p-3.5 sm:p-4 space-y-3">
+              <div>
+                <h3 className="text-xs font-semibold text-gold-400">Display Rating & Label</h3>
+                <p className="text-[11px] text-luxury-400">
+                  Optional per-cake presentation rating and editorial highlight. Leave empty to hide rating.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-medium text-cream-200 mb-1">
+                    Display Rating <span className="text-luxury-400 font-normal">(4.5 to 5.0, 1 decimal)</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="4.5"
+                      max="5.0"
+                      placeholder="e.g. 4.8 (leave blank to hide)"
+                      value={displayRating}
+                      onChange={(e) => setDisplayRating(e.target.value)}
+                      className="w-full rounded-xl border border-luxury-700 bg-luxury-950 px-3.5 py-2 text-xs text-cream-100 placeholder:text-luxury-600 focus:border-gold-500 focus:outline-none"
+                    />
+                    <span className="absolute right-3 top-2 text-xs text-[#D4AF37] pointer-events-none">
+                      ★
+                    </span>
+                  </div>
+                  <span className="block text-[10px] text-luxury-500 mt-1">
+                    Allowed: 4.5, 4.6, 4.7, 4.8, 4.9, 5.0
+                  </span>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-cream-200 mb-1">
+                    Display Label <span className="text-luxury-400 font-normal">(Optional · Max 30 chars)</span>
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={30}
+                    placeholder="e.g. Bakery Favourite, Popular Choice, Top Pick"
+                    value={ratingLabel}
+                    onChange={(e) => setRatingLabel(e.target.value)}
+                    className="w-full rounded-xl border border-luxury-700 bg-luxury-950 px-3.5 py-2 text-xs text-cream-100 placeholder:text-luxury-600 focus:border-gold-500 focus:outline-none"
+                  />
+                  <span className="block text-[10px] text-luxury-500 mt-1">
+                    Customer sees: ★ {displayRating || "4.8"}{ratingLabel ? ` · ${ratingLabel}` : ""}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
 

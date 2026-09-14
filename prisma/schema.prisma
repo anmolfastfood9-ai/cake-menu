@@ -50,6 +50,9 @@ model Cake {
   isNew             Boolean        @default(false)
   available         Boolean        @default(true)
   rating            Float          @default(4.9)
+  displayRating     Float?
+  ratingLabel       String?
+  editorialQuote    String?
   customizationInfo String?        @default("Custom message on chocolate plaque, shape customization & tiered sizing available on request.")
   prices             CakePrice[]
   occasions          CakeOccasion[]
@@ -185,6 +188,7 @@ model WebsiteSetting {
   restaurantName String   @default("Sweet Delights")
   tagline        String   @default("HAUTE PÂTISSERIE • 100% EGGLESS")
   logo           String?  @default("https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=200&auto=format&fit=crop")
+  favicon        String?
   heroTitle      String   @default("Every Celebration Deserves Something Beautiful.")
   heroSubtitle   String   @default("Handcrafted eggless cakes, made fresh for your special moments. Browse our curated digital collection and order directly on WhatsApp.")
   heroImage      String   @default("https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=1200&auto=format&fit=crop")

@@ -2,40 +2,74 @@ import type { Metadata } from "next";
 import "./globals.css";
 import NavigationProgress from "@/components/NavigationProgress";
 import { Suspense } from "react";
+import { getAppUrl } from "@/lib/appUrl";
+import { getCachedWebsiteSettings } from "@/lib/cache";
 
-const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://sweetdelights.com";
+const appUrl = getAppUrl();
 
-export const metadata: Metadata = {
-  metadataBase: new URL(appUrl),
-  title: "Raman Sweet & Luxury Pâtisserie | Digital Cake Menu",
-  description: "Explore our handcrafted collection of artisanal luxury cakes, Belgian chocolate ganaches, and fresh fruit gateaux. Order & enquire directly via WhatsApp.",
-  keywords: ["cake menu", "luxury cakes", "artisanal bakery", "digital menu", "whatsapp cake order", "eggless cakes"],
-  alternates: {
-    canonical: "/menu",
-  },
-  openGraph: {
+function resolveFaviconUrl(rawFavicon?: string | null): string {
+  const trimmed = rawFavicon?.trim();
+  if (!trimmed) {
+    return `${appUrl}/images/logo_emblem.png`;
+  }
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    return trimmed;
+  }
+  const normalizedPath = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+  return `${appUrl}${normalizedPath}`;
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getCachedWebsiteSettings().catch(() => null);
+  const faviconUrl = resolveFaviconUrl(settings?.favicon);
+
+  return {
+    metadataBase: new URL(appUrl),
     title: "Raman Sweet & Luxury Pâtisserie | Digital Cake Menu",
-    description: "Handcrafted Artisanal Cakes & Luxury Confections. Scan, browse and enquire directly on WhatsApp.",
-    url: appUrl,
-    type: "website",
-  },
-  icons: {
-    icon: [
-      { url: "/icon.svg", type: "image/svg+xml" },
+    description:
+      "Explore our handcrafted collection of artisanal luxury cakes, Belgian chocolate ganaches, and fresh fruit gateaux. Order & enquire directly via WhatsApp.",
+    keywords: [
+      "cake menu",
+      "luxury cakes",
+      "artisanal bakery",
+      "digital menu",
+      "whatsapp cake order",
+      "eggless cakes",
     ],
-    shortcut: "/icon.svg",
-    apple: "/icon.svg",
-  },
-};
+    alternates: {
+      canonical: "/menu",
+    },
+    openGraph: {
+      title: "Raman Sweet & Luxury Pâtisserie | Digital Cake Menu",
+      description:
+        "Handcrafted Artisanal Cakes & Luxury Confections. Scan, browse and enquire directly on WhatsApp.",
+      url: appUrl,
+      type: "website",
+    },
+    icons: {
+      icon: [
+        { url: faviconUrl },
+      ],
+      shortcut: faviconUrl,
+      apple: faviconUrl,
+    },
+  };
+}
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const settings = await getCachedWebsiteSettings().catch(() => null);
+  const faviconUrl = resolveFaviconUrl(settings?.favicon);
+
   return (
     <html lang="en" className="dark scroll-smooth">
       <head>
+        <link rel="icon" href={faviconUrl} />
+        <link rel="shortcut icon" href={faviconUrl} />
+        <link rel="apple-touch-icon" href={faviconUrl} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

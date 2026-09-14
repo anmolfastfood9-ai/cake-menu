@@ -112,6 +112,9 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       isNew,
       available,
       rating,
+      displayRating,
+      ratingLabel,
+      editorialQuote,
       customizationInfo,
       prices,
       occasionIds,
@@ -147,6 +150,9 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       if (isNew !== undefined) updateData.isNew = Boolean(isNew);
       if (available !== undefined) updateData.available = Boolean(available);
       if (rating !== undefined) updateData.rating = typeof rating === "number" ? rating : 4.9;
+      if (displayRating !== undefined) updateData.displayRating = typeof displayRating === "number" ? displayRating : null;
+      if (ratingLabel !== undefined) updateData.ratingLabel = typeof ratingLabel === "string" && ratingLabel.trim() ? ratingLabel.trim() : null;
+      if (editorialQuote !== undefined) updateData.editorialQuote = typeof editorialQuote === "string" && editorialQuote.trim() ? editorialQuote.trim() : null;
       if (customizationInfo !== undefined) updateData.customizationInfo = customizationInfo;
 
       if (prices && Array.isArray(prices)) {

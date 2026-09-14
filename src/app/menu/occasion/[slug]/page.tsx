@@ -7,6 +7,7 @@ import {
   getCachedWebsiteSettings,
   getCachedWhatsAppSetting,
 } from "@/lib/cache";
+import { getAppUrl } from "@/lib/appUrl";
 
 export const revalidate = 60; // ISR: revalidate every 60s, memory cache handles freshness
 
@@ -42,9 +43,7 @@ export async function generateMetadata({
     };
   }
 
-  const appUrl = (
-    process.env.NEXT_PUBLIC_APP_URL || "https://sweetdelights.com"
-  ).replace(/\/$/, "");
+  const appUrl = getAppUrl();
   const canonicalUrl = `${appUrl}/menu/occasion/${occasion.slug}`;
   const cleanName = occasion.name.replace(/\s+special$/i, "").trim();
   const title = `${cleanName} Special | Raman Sweet Bakery`;
@@ -53,6 +52,7 @@ export async function generateMetadata({
     `Celebrate ${cleanName} with artisanal 100% eggless luxury cakes. Browse collection & enquire directly on WhatsApp.`;
 
   return {
+    metadataBase: new URL(appUrl),
     title,
     description,
     alternates: {

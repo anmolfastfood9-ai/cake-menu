@@ -84,11 +84,18 @@ export function buildCakeEnquiryMessage(params: WhatsAppMessageParams): string {
       : "";
 
   const sections: string[] = [];
+  const isPhotoCake = params.slug === "custom-bespoke-photo-cake";
 
   // 1. Header block
-  sections.push(
-    `🎂 NEW CAKE ENQUIRY\n\n${SEPARATOR}\n\n${brandName}\n100% Eggless • Pure Vegetarian`
-  );
+  if (isPhotoCake) {
+    sections.push(
+      `📸 CUSTOM PHOTO CAKE ORDER\n\n${SEPARATOR}\n\n${brandName}\n100% Eggless • Pure Vegetarian\n\nI want to order the Custom Edible Photo Cake.\nI will send my photo for the edible print.`
+    );
+  } else {
+    sections.push(
+      `🎂 NEW CAKE ENQUIRY\n\n${SEPARATOR}\n\n${brandName}\n100% Eggless • Pure Vegetarian`
+    );
+  }
 
   // 2. Cake
   if (cakeName && cakeName !== "null" && cakeName !== "undefined") {

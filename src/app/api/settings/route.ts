@@ -62,6 +62,7 @@ async function handleUpdateSettings(req: NextRequest) {
       "restaurantName",
       "tagline",
       "logo",
+      "favicon",
       "heroTitle",
       "heroSubtitle",
       "heroImage",
