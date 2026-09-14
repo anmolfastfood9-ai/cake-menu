@@ -21,7 +21,7 @@ export async function generateMetadata({
 
   if (!cake) {
     return {
-      title: "Cake Not Found | Raman Sweet & Luxury Pâtisserie",
+      title: "Cake Not Found | Raman Sweet Bakery",
       description: "Explore our handcrafted eggless luxury cakes.",
       robots: {
         index: false,

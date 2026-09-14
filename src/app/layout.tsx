@@ -25,7 +25,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     metadataBase: new URL(appUrl),
-    title: "Raman Sweet & Luxury Pâtisserie | Digital Cake Menu",
+    title: "Raman Sweet Bakery | Premium Eggless Cakes",
     description:
       "Explore our handcrafted collection of artisanal luxury cakes, Belgian chocolate ganaches, and fresh fruit gateaux. Order & enquire directly via WhatsApp.",
     keywords: [
@@ -35,16 +35,24 @@ export async function generateMetadata(): Promise<Metadata> {
       "digital menu",
       "whatsapp cake order",
       "eggless cakes",
+      "premium eggless cakes",
+      "raman sweet bakery",
     ],
     alternates: {
       canonical: "/menu",
     },
     openGraph: {
-      title: "Raman Sweet & Luxury Pâtisserie | Digital Cake Menu",
+      title: "Raman Sweet Bakery | Premium Eggless Cakes",
       description:
         "Handcrafted Artisanal Cakes & Luxury Confections. Scan, browse and enquire directly on WhatsApp.",
       url: appUrl,
       type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "Raman Sweet Bakery | Premium Eggless Cakes",
+      description:
+        "Handcrafted Artisanal Cakes & Luxury Confections. Scan, browse and enquire directly on WhatsApp.",
     },
     icons: {
       icon: [
