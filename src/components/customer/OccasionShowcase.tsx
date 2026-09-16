@@ -55,7 +55,13 @@ export function checkHasBakedInText(bannerUrl?: string | null, badgeText?: strin
   if (!bannerUrl) return false;
   const url = bannerUrl.toLowerCase();
   if (badgeText === "__NO_TEXT__") return true;
-  if (url.includes("#text=true") || url.includes("#overlay=true")) return false;
+
+  // Strict priority 1: Explicit overlay flag -> Show HTML text overlay (hasBakedInText = false)
+  if (url.includes("#text=true") || url.includes("#overlay=true") || url.includes("overlay=true")) {
+    return false;
+  }
+
+  // Strict priority 2: Explicit no-text / baked flag -> Hide HTML text overlay (hasBakedInText = true)
   if (
     url.includes("#notext") ||
     url.includes("notext=true") ||
@@ -65,9 +71,13 @@ export function checkHasBakedInText(bannerUrl?: string | null, badgeText?: strin
   ) {
     return true;
   }
+
+  // Generic or plain banners default to showing text
   if (url.includes("generic") || url.includes("plain")) {
     return false;
   }
+
+  // Preset fallback
   return BAKED_IN_TEXT_PRESETS.some((preset) => url.includes(preset));
 }
 

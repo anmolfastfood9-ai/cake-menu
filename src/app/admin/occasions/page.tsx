@@ -140,11 +140,11 @@ export default function AdminOccasionsPage() {
         if (data.settings) {
           if (data.settings.heroImage) setDefaultBannerImage(data.settings.heroImage);
           if (data.settings.heroTitle !== undefined) {
-            if (data.settings.heroTitle === "__NO_TEXT__" || data.settings.heroTitle === "") {
-              setBannerHasText(true);
+            if (data.settings.heroTitle === "__NO_TEXT__") {
+              setBannerHasText(false); // Clean poster mode (no text overlay)
               setDefaultBannerTitle("");
             } else {
-              setBannerHasText(false);
+              setBannerHasText(true); // Show 3D Gold Text Overlay
               setDefaultBannerTitle(data.settings.heroTitle || "Raman Sweet Signature Collection");
             }
           }
@@ -154,9 +154,11 @@ export default function AdminOccasionsPage() {
       .catch(console.error);
   }, []);
 
-  const handleToggleBannerHasText = async (hasText: boolean) => {
-    setBannerHasText(hasText);
-    const saveTitle = hasText ? "__NO_TEXT__" : (defaultBannerTitle || "Raman Sweet Signature Collection");
+  const handleToggleBannerHasText = async (showOverlay: boolean) => {
+    setBannerHasText(showOverlay);
+    const saveTitle = showOverlay
+      ? (defaultBannerTitle || "Raman Sweet Signature Collection")
+      : "__NO_TEXT__";
     try {
       await fetch("/api/settings", {
         method: "PUT",
@@ -211,10 +213,10 @@ export default function AdminOccasionsPage() {
       const uploadedUrl = data.images?.[0]?.url;
       if (uploadedUrl) {
         if (isEdit) {
-          setEditForm((prev) => ({ ...prev, bannerImage: uploadedUrl }));
+          setEditForm((prev) => ({ ...prev, bannerImage: `${uploadedUrl}#overlay=true` }));
           setEditBannerHasText(true);
         } else {
-          setCreateForm((prev) => ({ ...prev, bannerImage: uploadedUrl }));
+          setCreateForm((prev) => ({ ...prev, bannerImage: `${uploadedUrl}#overlay=true` }));
           setCreateBannerHasText(true);
         }
       }
@@ -248,7 +250,7 @@ export default function AdminOccasionsPage() {
         setDefaultBannerImage(uploadedUrl);
 
         // Auto-save immediately to settings so customer view updates without extra clicks
-        const saveTitle = bannerHasText ? "__NO_TEXT__" : defaultBannerTitle.trim();
+        const saveTitle = bannerHasText ? (defaultBannerTitle.trim() || "Raman Sweet Signature Collection") : "__NO_TEXT__";
         const saveRes = await fetch("/api/settings", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -281,7 +283,7 @@ export default function AdminOccasionsPage() {
     setDefaultBannerImage(master8k);
     setDefaultBannerTitle(defaultTitle);
     setDefaultBannerSubtitle(defaultSubtitle);
-    setBannerHasText(false);
+    setBannerHasText(true);
     setSavingDefaultBanner(true);
     setDefaultBannerError(null);
     setDefaultBannerSuccess(false);
@@ -315,7 +317,7 @@ export default function AdminOccasionsPage() {
     setDefaultBannerError(null);
     setDefaultBannerSuccess(false);
     try {
-      const saveTitle = bannerHasText ? "__NO_TEXT__" : defaultBannerTitle.trim();
+      const saveTitle = bannerHasText ? (defaultBannerTitle.trim() || "Raman Sweet Signature Collection") : "__NO_TEXT__";
       const res = await fetch("/api/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -356,30 +358,31 @@ export default function AdminOccasionsPage() {
       selectedCakeIds: occ.cakeIds || [],
     });
     const bannerUrl = getOccasionBannerUrl(occ.slug, occ.bannerImage);
-    let hasText = true;
+    // showOverlay is true if text overlay should be displayed on the banner
+    let showOverlay = true;
     if (bannerUrl.includes("#overlay=true") || bannerUrl.includes("#text=true")) {
-      hasText = false;
+      showOverlay = true;
     } else if (bannerUrl.includes("#notext")) {
-      hasText = true;
+      showOverlay = false;
     } else {
-      hasText = checkHasBakedInText(bannerUrl, occ.badgeText);
+      showOverlay = !checkHasBakedInText(bannerUrl, occ.badgeText);
     }
-    setEditBannerHasText(hasText);
+    setEditBannerHasText(showOverlay);
     setBannerUploadError(null);
     setEditCakeSearch("");
   };
 
-  const handleToggleEditBannerText = async (newHasText: boolean) => {
-    setEditBannerHasText(newHasText);
+  const handleToggleEditBannerText = async (newShowOverlay: boolean) => {
+    setEditBannerHasText(newShowOverlay);
     if (!editingOccasion) return;
 
     let finalBanner = editForm.bannerImage ? editForm.bannerImage.trim() : "";
     if (finalBanner) {
       const cleanUrl = finalBanner.split("#")[0];
-      finalBanner = newHasText ? `${cleanUrl}#notext` : `${cleanUrl}#overlay=true`;
+      finalBanner = newShowOverlay ? `${cleanUrl}#overlay=true` : `${cleanUrl}#notext`;
     } else {
       const defaultUrl = getOccasionBannerUrl(editingOccasion.slug);
-      finalBanner = newHasText ? `${defaultUrl}#notext` : `${defaultUrl}#overlay=true`;
+      finalBanner = newShowOverlay ? `${defaultUrl}#overlay=true` : `${defaultUrl}#notext`;
     }
 
     setEditForm((prev) => ({ ...prev, bannerImage: finalBanner }));
@@ -406,10 +409,10 @@ export default function AdminOccasionsPage() {
       let finalBanner = editForm.bannerImage ? editForm.bannerImage.trim() : "";
       if (finalBanner) {
         const cleanUrl = finalBanner.split("#")[0];
-        finalBanner = editBannerHasText ? `${cleanUrl}#notext` : `${cleanUrl}#overlay=true`;
+        finalBanner = editBannerHasText ? `${cleanUrl}#overlay=true` : `${cleanUrl}#notext`;
       } else {
         const defaultUrl = getOccasionBannerUrl(editingOccasion.slug);
-        finalBanner = editBannerHasText ? `${defaultUrl}#notext` : `${defaultUrl}#overlay=true`;
+        finalBanner = editBannerHasText ? `${defaultUrl}#overlay=true` : `${defaultUrl}#notext`;
       }
 
       const res = await fetch(`/api/occasions/${editingOccasion.id}`, {
@@ -454,9 +457,7 @@ export default function AdminOccasionsPage() {
       let finalBanner = createForm.bannerImage ? createForm.bannerImage.trim() : "";
       if (finalBanner) {
         finalBanner = finalBanner.split("#")[0];
-        if (createBannerHasText) {
-          finalBanner = `${finalBanner}#notext`;
-        }
+        finalBanner = createBannerHasText ? `${finalBanner}#overlay=true` : `${finalBanner}#notext`;
       }
 
       const res = await fetch("/api/occasions", {
@@ -708,7 +709,8 @@ export default function AdminOccasionsPage() {
                 }}
               />
               {/* Center Radial Overlay: Only rendered when banner does NOT have text */}
-              {!bannerHasText ? (
+              {/* Center Radial Overlay: Rendered when bannerHasText is true (Show Overlay mode) */}
+              {bannerHasText ? (
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(6,5,4,0.60)_0%,rgba(6,5,4,0.25)_55%,transparent_100%)] flex flex-col items-center justify-center text-center p-3 select-none">
                   <div className="mb-0.5 text-[#E6C675] drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
                     <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4" viewBox="0 0 24 24" fill="currentColor">
@@ -731,7 +733,7 @@ export default function AdminOccasionsPage() {
                 </div>
               ) : (
                 <div className="absolute top-2 right-2 rounded bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 text-[9px] font-semibold text-amber-300">
-                  Clean Artwork Mode (No Text Overlay)
+                  Clean Artwork Mode (No HTML Text Overlay)
                 </div>
               )}
             </div>
@@ -743,10 +745,11 @@ export default function AdminOccasionsPage() {
             <div className="flex items-center justify-between p-3 rounded-xl border border-gold-500/30 bg-gold-500/10">
               <div className="pr-3">
                 <span className="text-xs font-bold text-gold-300 block">
-                  Banner Image Me Pehle Se Text Hai?
+                  Banner Par 3D Gold Text Overlay Dikhayein?
                 </span>
                 <span className="text-[10px] text-luxury-300 leading-tight block mt-0.5">
-                  Agar aapke banner me text/logo pehle se designed hai to ise ON karein (extra HTML text overlay hide ho jayega).
+                  <strong>ON (Recommended)</strong>: Headline, Sub-headline aur Button luxury 3D Gold style me dikhega. <br />
+                  <strong>OFF</strong>: Extra text hide hoga (agar poster me pehle se text printed hai).
                 </span>
               </div>
               <button
@@ -765,10 +768,6 @@ export default function AdminOccasionsPage() {
             </div>
 
             {bannerHasText ? (
-              <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-300">
-                ✦ <strong>Clean Artwork Mode Active</strong>: Banner par koi extra HTML text ya button nahi aayega. Aapka original design 100% clean aur border-to-border dikhega.
-              </div>
-            ) : (
               <>
                 <div>
                   <label className="block text-xs font-semibold text-cream-200 mb-1">
@@ -796,6 +795,10 @@ export default function AdminOccasionsPage() {
                   />
                 </div>
               </>
+            ) : (
+              <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-300">
+                ✦ <strong>Clean Artwork Mode Active</strong>: Banner par koi extra HTML text ya button nahi aayega. Aapka original design 100% clean aur border-to-border dikhega.
+              </div>
             )}
 
             {/* Upload & Reset Buttons */}
@@ -1164,7 +1167,7 @@ export default function AdminOccasionsPage() {
                       (e.target as HTMLImageElement).src = "/images/festivals/generic-luxury-banner.jpg";
                     }}
                   />
-                  {!editBannerHasText ? (
+                  {editBannerHasText ? (
                     <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center p-2">
                       <span className="text-[9px] uppercase tracking-widest text-[#E6C675] font-medium">
                         {editForm.badgeText || "FESTIVE SPECIAL"}
@@ -1178,22 +1181,23 @@ export default function AdminOccasionsPage() {
                     </div>
                   ) : (
                     <div className="absolute top-2 right-2 rounded bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 text-[9px] font-semibold text-amber-300">
-                      Clean Artwork Mode (No Text Overlay)
+                      Clean Artwork Mode (No HTML Text Overlay)
                     </div>
                   )}
                 </div>
 
-                {/* Toggle: Banner Image has baked-in text */}
+                {/* Toggle: Show 3D Gold Text Overlay on Banner */}
                 <div
                   onClick={() => handleToggleEditBannerText(!editBannerHasText)}
                   className="flex items-center justify-between p-3 rounded-xl border border-gold-500/30 bg-gold-500/10 cursor-pointer hover:bg-gold-500/15 transition-colors select-none"
                 >
                   <div className="pr-3">
                     <span className="text-xs font-bold text-gold-300 block">
-                      Banner Image Me Pehle Se Text Hai?
+                      Banner Par 3D Gold Text Overlay Dikhayein?
                     </span>
                     <span className="text-[10px] text-luxury-300 leading-tight block mt-0.5">
-                      Agar occasion banner me title/badge pehle se designed hai to ise ON karein (extra HTML text overlay hide ho jayega).
+                      <strong>ON (Recommended)</strong>: Festive Title, Subtitle aur Button luxury 3D Gold style me dikhega. <br />
+                      <strong>OFF</strong>: Extra text hide hoga (sirf clean graphic poster dikhega agar poster me pehle se text printed hai).
                     </span>
                   </div>
                   <button
@@ -1216,14 +1220,14 @@ export default function AdminOccasionsPage() {
 
                 {/* Instant Status Pill */}
                 {editBannerHasText ? (
-                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-2.5 text-xs text-amber-300 flex items-center gap-2">
-                    <span className="text-amber-400">✦</span>
-                    <span><strong>Clean Artwork Mode Active</strong>: Banner par koi extra HTML text overlay ya button nahi aayega.</span>
-                  </div>
-                ) : (
                   <div className="rounded-xl border border-gold-500/30 bg-gold-500/10 p-2.5 text-xs text-gold-300 flex items-center gap-2">
                     <span className="text-gold-400">✦</span>
                     <span><strong>Text Overlay Mode Active</strong>: 3D Gold Title, ornaments aur button banner ke upar luxury style me render honge.</span>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-2.5 text-xs text-amber-300 flex items-center gap-2">
+                    <span className="text-amber-400">✦</span>
+                    <span><strong>Clean Artwork Mode Active</strong>: Banner par koi extra HTML text overlay ya button nahi aayega.</span>
                   </div>
                 )}
 
@@ -1602,7 +1606,7 @@ export default function AdminOccasionsPage() {
                     alt="Banner Live Preview"
                     className="h-full w-full object-cover"
                   />
-                  {!createBannerHasText ? (
+                  {createBannerHasText ? (
                     <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center p-2">
                       <span className="text-[9px] uppercase tracking-widest text-[#E6C675] font-medium">
                         {createForm.badgeText || "FESTIVE SPECIAL"}
@@ -1616,22 +1620,23 @@ export default function AdminOccasionsPage() {
                     </div>
                   ) : (
                     <div className="absolute top-2 right-2 rounded bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 text-[9px] font-semibold text-amber-300">
-                      Clean Artwork Mode (No Text Overlay)
+                      Clean Artwork Mode (No HTML Text Overlay)
                     </div>
                   )}
                 </div>
 
-                {/* Toggle: Banner Image has baked-in text */}
+                {/* Toggle: Show 3D Gold Text Overlay on Banner */}
                 <div
                   onClick={() => setCreateBannerHasText(!createBannerHasText)}
                   className="flex items-center justify-between p-3 rounded-xl border border-gold-500/30 bg-gold-500/10 cursor-pointer hover:bg-gold-500/15 transition-colors select-none"
                 >
                   <div className="pr-3">
                     <span className="text-xs font-bold text-gold-300 block">
-                      Banner Image Me Pehle Se Text Hai?
+                      Banner Par 3D Gold Text Overlay Dikhayein?
                     </span>
                     <span className="text-[10px] text-luxury-300 leading-tight block mt-0.5">
-                      Agar occasion banner me title/badge pehle se designed hai to ise ON karein (extra HTML text overlay hide ho jayega).
+                      <strong>ON (Recommended)</strong>: Festive Title, Subtitle aur Button luxury 3D Gold style me dikhega. <br />
+                      <strong>OFF</strong>: Extra text hide hoga (sirf clean graphic poster dikhega agar poster me pehle se text printed hai).
                     </span>
                   </div>
                   <button
@@ -1654,14 +1659,14 @@ export default function AdminOccasionsPage() {
 
                 {/* Instant Status Pill */}
                 {createBannerHasText ? (
-                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-2.5 text-xs text-amber-300 flex items-center gap-2">
-                    <span className="text-amber-400">✦</span>
-                    <span><strong>Clean Artwork Mode Active</strong>: Banner par koi extra HTML text overlay ya button nahi aayega.</span>
-                  </div>
-                ) : (
                   <div className="rounded-xl border border-gold-500/30 bg-gold-500/10 p-2.5 text-xs text-gold-300 flex items-center gap-2">
                     <span className="text-gold-400">✦</span>
                     <span><strong>Text Overlay Mode Active</strong>: 3D Gold Title, ornaments aur button banner ke upar luxury style me render honge.</span>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-2.5 text-xs text-amber-300 flex items-center gap-2">
+                    <span className="text-amber-400">✦</span>
+                    <span><strong>Clean Artwork Mode Active</strong>: Banner par koi extra HTML text overlay ya button nahi aayega.</span>
                   </div>
                 )}
 
