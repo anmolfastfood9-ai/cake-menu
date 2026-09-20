@@ -241,6 +241,7 @@ export default function WhatsAppSettingsClient({
                       { tag: "{cake_name}", label: "Cake Title" },
                       { tag: "{weight}", label: "Selected Weight" },
                       { tag: "{price}", label: "Dynamic Price" },
+                      { tag: "{custom_message}", label: "Custom Plaque Note" },
                       { tag: "{restaurant_name}", label: "Bakery Name" },
                     ].map((item) => (
                       <button

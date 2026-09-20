@@ -94,10 +94,82 @@ export function buildCakeEnquiryMessage(params: WhatsAppMessageParams): string {
       ? formatIndianPrice(params.price)
       : "";
 
+  const customMessage = sanitizeCustomMessage(params.customMessage);
+  const customization = params.customizationInfo?.trim();
+  const occasion = params.occasion?.trim();
+
+  // If a custom template is supplied (and not legacy), evaluate template placeholders
+  if (
+    params.template &&
+    typeof params.template === "string" &&
+    params.template.trim().length > 0 &&
+    !isLegacyTemplate(params.template)
+  ) {
+    let msg = params.template
+      .replace(/{restaurant_name}/g, brandName)
+      .replace(/{cake_name}/g, cakeName)
+      .replace(/{weight}/g, weight || "1 kg")
+      .replace(/{price}/g, isCustomQuote ? "Custom Quote" : (formattedPrice || ""))
+      .replace(/{custom_message}/g, customMessage || "")
+      .replace(/{customization_info}/g, customization || "")
+      .replace(/{occasion}/g, occasion || "");
+
+    msg = msg.replace(/\n{3,}/g, "\n\n").trim();
+
+    const extraSections: string[] = [];
+    if (customMessage && !params.template.includes("{custom_message}") && !msg.includes(customMessage)) {
+      extraSections.push(`📝 Custom Message\n${customMessage}`);
+    }
+    if (
+      customization &&
+      customization !== "null" &&
+      customization !== "undefined" &&
+      customization.toLowerCase() !== "n/a" &&
+      !params.template.includes("{customization_info}") &&
+      !msg.includes(customization)
+    ) {
+      extraSections.push(`✨ Customization\n${customization}`);
+    }
+    if (
+      occasion &&
+      occasion !== "null" &&
+      occasion !== "undefined" &&
+      occasion.toLowerCase() !== "n/a" &&
+      !params.template.includes("{occasion}") &&
+      !msg.includes(occasion)
+    ) {
+      extraSections.push(`📅 Occasion\n${occasion}`);
+    }
+
+    let photoUrl = params.imageUrl?.trim();
+    if (photoUrl && photoUrl !== "null" && photoUrl !== "undefined") {
+      if (photoUrl.startsWith("/")) photoUrl = `${PRODUCTION_APP_URL}${photoUrl}`;
+      if (photoUrl.startsWith("http://") || photoUrl.startsWith("https://")) {
+        photoUrl = photoUrl.replace(/https?:\/\/localhost(:\d+)?/g, PRODUCTION_APP_URL);
+        extraSections.push(`🖼️ Cake Photo\n${photoUrl}`);
+      }
+    }
+
+    let cakeUrl = params.cakeUrl?.trim();
+    if (!cakeUrl && params.slug) {
+      cakeUrl = `${PRODUCTION_APP_URL}/menu/cake/${encodeURIComponent(params.slug.trim())}`;
+    }
+    if (cakeUrl && cakeUrl !== "null" && cakeUrl !== "undefined") {
+      cakeUrl = cakeUrl.replace(/https?:\/\/localhost(:\d+)?/g, PRODUCTION_APP_URL);
+      extraSections.push(`🔗 Cake Details\n${cakeUrl}`);
+    }
+
+    if (extraSections.length > 0) {
+      msg = `${msg}\n\n${extraSections.join("\n\n")}`;
+    }
+
+    return msg;
+  }
+
+  // Fallback default message builder
   const sections: string[] = [];
   const isPhotoCake = params.slug === "custom-bespoke-photo-cake";
 
-  // 1. Header block
   if (isPhotoCake) {
     sections.push(
       `📸 CUSTOM PHOTO CAKE ORDER\n\n${SEPARATOR}\n\n${brandName}\n100% Eggless • Pure Vegetarian\n\nI want to order the Custom Edible Photo Cake.\nI will send my photo for the edible print.`
@@ -112,31 +184,24 @@ export function buildCakeEnquiryMessage(params: WhatsAppMessageParams): string {
     );
   }
 
-  // 2. Cake
   if (cakeName && cakeName !== "null" && cakeName !== "undefined") {
     sections.push(`🍰 Cake\n${cakeName}`);
   }
 
-  // 3. Selected Weight
   if (weight && weight !== "null" && weight !== "undefined") {
     sections.push(`⚖️ Selected Weight\n${weight}`);
   }
 
-  // 4. Price
   if (isCustomQuote) {
     sections.push(`💰 Price\nCustom Quote`);
   } else if (formattedPrice) {
     sections.push(`💰 Price\n₹${formattedPrice}`);
   }
 
-  // 5. Custom Message (optional)
-  const customMessage = sanitizeCustomMessage(params.customMessage);
   if (customMessage) {
     sections.push(`📝 Custom Message\n${customMessage}`);
   }
 
-  // 6. Customization (optional)
-  const customization = params.customizationInfo?.trim();
   if (
     customization &&
     customization !== "null" &&
@@ -146,8 +211,6 @@ export function buildCakeEnquiryMessage(params: WhatsAppMessageParams): string {
     sections.push(`✨ Customization\n${customization}`);
   }
 
-  // 7. Occasion (optional)
-  const occasion = params.occasion?.trim();
   if (
     occasion &&
     occasion !== "null" &&
@@ -157,37 +220,24 @@ export function buildCakeEnquiryMessage(params: WhatsAppMessageParams): string {
     sections.push(`📅 Occasion\n${occasion}`);
   }
 
-  // 8. Cake Photo (optional public production URL)
   let photoUrl = params.imageUrl?.trim();
   if (photoUrl && photoUrl !== "null" && photoUrl !== "undefined") {
-    if (photoUrl.startsWith("/")) {
-      photoUrl = `${PRODUCTION_APP_URL}${photoUrl}`;
-    }
+    if (photoUrl.startsWith("/")) photoUrl = `${PRODUCTION_APP_URL}${photoUrl}`;
     if (photoUrl.startsWith("http://") || photoUrl.startsWith("https://")) {
-      // Normalize any localhost or sweetdelights domain to production domain
-      photoUrl = photoUrl
-        .replace(/https?:\/\/localhost(:\d+)?/g, PRODUCTION_APP_URL)
-        .replace(/https?:\/\/(www\.)?sweetdelights\.com/g, PRODUCTION_APP_URL);
-
+      photoUrl = photoUrl.replace(/https?:\/\/localhost(:\d+)?/g, PRODUCTION_APP_URL);
       sections.push(`🖼️ Cake Photo\n${photoUrl}`);
     }
   }
 
-  // 9. Cake Details URL (optional production URL)
   let cakeUrl = params.cakeUrl?.trim();
   if (!cakeUrl && params.slug) {
     cakeUrl = `${PRODUCTION_APP_URL}/menu/cake/${encodeURIComponent(params.slug.trim())}`;
   }
   if (cakeUrl && cakeUrl !== "null" && cakeUrl !== "undefined") {
-    // Normalize any localhost or sweetdelights domain to production domain
-    cakeUrl = cakeUrl
-      .replace(/https?:\/\/localhost(:\d+)?/g, PRODUCTION_APP_URL)
-      .replace(/https?:\/\/(www\.)?sweetdelights\.com/g, PRODUCTION_APP_URL);
-
+    cakeUrl = cakeUrl.replace(/https?:\/\/localhost(:\d+)?/g, PRODUCTION_APP_URL);
     sections.push(`🔗 Cake Details\n${cakeUrl}`);
   }
 
-  // 10. Footer block
   if (isCustomQuote && isLargeCakeEnquiry) {
     return `${sections.join("\n\n")}\n\n${SEPARATOR}\n\nPlease confirm availability, design and final price.`;
   }
