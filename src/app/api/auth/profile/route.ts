@@ -44,7 +44,19 @@ export async function PUT(req: NextRequest) {
 
     const updateData: any = {};
     if (name) updateData.name = name;
-    if (email) updateData.email = email.toLowerCase().trim();
+    if (email && email.toLowerCase().trim() !== user.email.toLowerCase()) {
+      const normalizedEmail = email.toLowerCase().trim();
+      const existingUser = await prisma.user.findUnique({
+        where: { email: normalizedEmail },
+      });
+      if (existingUser && existingUser.id !== user.id) {
+        return NextResponse.json(
+          { error: "Email address is already in use by another account" },
+          { status: 400 }
+        );
+      }
+      updateData.email = normalizedEmail;
+    }
 
     if (newPassword) {
       if (!currentPassword) {

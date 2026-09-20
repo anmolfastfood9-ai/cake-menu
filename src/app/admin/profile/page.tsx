@@ -67,8 +67,8 @@ export default function AdminProfilePage() {
     setError(null);
     setSuccess(false);
 
-    if (newPassword && newPassword.length < 6) {
-      setError("New password must be at least 6 characters long");
+    if (newPassword && newPassword.length < 8) {
+      setError("New password must be at least 8 characters long");
       return;
     }
 
@@ -263,7 +263,7 @@ export default function AdminProfilePage() {
                     <div className="relative">
                       <input
                         type={showNewPw ? "text" : "password"}
-                        placeholder="At least 6 characters"
+                        placeholder="At least 8 characters"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
                         className="w-full rounded-xl border border-luxury-700 bg-luxury-950 py-2.5 pl-3.5 pr-10 text-xs text-cream-100 focus:border-gold-500 focus:outline-none"
