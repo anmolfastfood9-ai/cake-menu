@@ -222,6 +222,14 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
 
     try {
       const cleanWa = whatsapp ? normalizeWhatsAppNumber(whatsapp) : "";
+      const formattedAddress = address
+        ? address
+            .split(",")
+            .map((s: string) => s.trim())
+            .filter(Boolean)
+            .join(", ")
+        : "";
+
       const payload = {
         restaurantName: restaurantName.trim(),
         tagline: tagline.trim(),
@@ -233,12 +241,13 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
         about: about.trim(),
         phone: phone.trim(),
         whatsapp: cleanWa,
-        address: address.trim(),
+        address: formattedAddress,
         openingHours: openingHours.trim(),
         instagram: instagram.trim(),
         facebook: facebook.trim(),
         footerText: footerText.trim(),
       };
+
 
       const res = await fetch("/api/settings", {
         method: "PUT",
@@ -450,10 +459,19 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
                   </div>
                 )}
               </div>
-              <span className="text-[10px] text-gold-400/80 mt-2 font-semibold tracking-wide">
-                {favicon ? "Custom Favicon" : "Default Fallback"}
-              </span>
+              {/* Browser Tab Simulation Badge */}
+              <div className="mt-2.5 flex items-center gap-1.5 rounded-xl border border-luxury-700/80 bg-[#1D1A15] px-2.5 py-1 text-[10px] text-cream-200 shadow">
+                <img
+                  src={favicon || logo || "/images/logo_emblem.png"}
+                  alt="Tab Icon"
+                  className="h-3.5 w-3.5 rounded-xs object-contain"
+                />
+                <span className="font-medium text-gold-300 truncate max-w-[120px]">
+                  {restaurantName || "Bakery"} Tab
+                </span>
+              </div>
             </div>
+
 
             {/* Upload Controls */}
             <div className="flex-1 space-y-3.5 w-full text-center sm:text-left">
