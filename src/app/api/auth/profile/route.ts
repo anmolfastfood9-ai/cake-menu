@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import bcrypt from "bcryptjs";
-import { getSessionAdminFromRequest } from "@/lib/auth";
+import { getSessionAdminFromRequest, signAdminToken, AUTH_COOKIE_NAME } from "@/lib/auth";
 import { getClientIp, checkGenericRateLimit, rateLimitResponse } from "@/lib/rateLimit";
 import { UpdateProfileSchema, safeValidate } from "@/lib/validations";
 
@@ -68,7 +68,22 @@ export async function PUT(req: NextRequest) {
       select: { id: true, name: true, email: true },
     });
 
-    return NextResponse.json({ success: true, user: updatedUser });
+    // Re-sign token so session stays completely synced across admin header
+    const token = signAdminToken({
+      userId: updatedUser.id,
+      email: updatedUser.email,
+      name: updatedUser.name || "Admin",
+    });
+
+    const res = NextResponse.json({ success: true, user: updatedUser });
+    res.cookies.set(AUTH_COOKIE_NAME, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60,
+      path: "/",
+    });
+    return res;
   } catch (error: any) {
     console.error("Update profile error:", error);
     return NextResponse.json(
