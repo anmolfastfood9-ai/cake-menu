@@ -14,12 +14,12 @@ import {
   Sliders,
   Store,
   Layers,
-  Image as ImageIcon,
   Tag,
   AlertCircle,
   ExternalLink,
 } from "lucide-react";
-import { getAppUrl } from "@/lib/appUrl";
+import { getAppUrl, PRODUCTION_APP_URL } from "@/lib/appUrl";
+
 import { CakeMenuPremiumStandee } from "./templates/CakeMenuPremiumStandee";
 
 interface QrGeneratorClientProps {
@@ -29,33 +29,6 @@ interface QrGeneratorClientProps {
   cakes?: Array<{ id: string; name: string; slug: string; coverImage?: string | null }>;
   mediaImages?: Array<{ id: string; filename?: string; name?: string; url: string }>;
 }
-
-const CAKE_IMAGE_PRESETS = [
-  {
-    name: "Fresh Strawberry Chocolate Drip (Generated Hero)",
-    url: "/images/standee_hero_cake.jpg",
-  },
-  {
-    name: "Classic Strawberry Chocolate Drip (Reference Match)",
-    url: "/images/standee_reference_bottom_clean.jpg",
-  },
-  {
-    name: "Luxury Ferrero Rocher & Gold Drip",
-    url: "/images/hero_cake_luxury_real.png",
-  },
-  {
-    name: "Royal Chocolate Celebration Cake",
-    url: "https://ik.imagekit.io/syaod8skj/cakes/royal-chocolate-celebration-cake_9EoY8PSWc.jpg",
-  },
-  {
-    name: "Belgian Chocolate Truffle",
-    url: "https://ik.imagekit.io/syaod8skj/cakes/belgian-chocolate-truffle_5zoQgVFtvg.jpg",
-  },
-  {
-    name: "Red Velvet Celebration Cake",
-    url: "https://ik.imagekit.io/syaod8skj/cakes/red-velvet-celebration-cake_DCsz97rgb.jpg",
-  },
-];
 
 const OCCASION_PRESETS = [
   { name: "Birthday Cakes", path: "/menu?occasion=birthday" },
@@ -110,13 +83,9 @@ export default function QrGeneratorClient({
   const [fgColor, setFgColor] = useState<string>("#1A0F0A");
   const [bgColor, setBgColor] = useState<string>("#FFFFFF");
   const [includeLogo, setIncludeLogo] = useState<boolean>(true);
+  const [useProductionDomain, setUseProductionDomain] = useState<boolean>(true);
   const [copied, setCopied] = useState<boolean>(false);
   const [isExporting, setIsExporting] = useState<boolean>(false);
-
-  // Standee Cake Image (for Cake Menu — Premium)
-  const [standeeCakeImage, setStandeeCakeImage] = useState<string>(
-    CAKE_IMAGE_PRESETS[0].url
-  );
 
   const qrContainerRef = useRef<HTMLDivElement>(null);
   const standeeRef = useRef<HTMLDivElement>(null);
@@ -151,9 +120,9 @@ export default function QrGeneratorClient({
     setCustomPath(path);
   };
 
-  // Sync target URL when customPath or tableNumber changes
+  // Sync target URL when customPath, tableNumber, or domain mode changes
   useEffect(() => {
-    const baseUrl = origin || getAppUrl();
+    const baseUrl = useProductionDomain ? PRODUCTION_APP_URL : (origin || getAppUrl());
     let finalUrl =
       customPath.startsWith("http://") || customPath.startsWith("https://")
         ? customPath
@@ -164,7 +133,8 @@ export default function QrGeneratorClient({
       finalUrl += `${sep}table=${encodeURIComponent(tableNumber.trim())}`;
     }
     setTargetUrl(finalUrl);
-  }, [origin, customPath, tableNumber]);
+  }, [origin, customPath, tableNumber, useProductionDomain]);
+
 
   const handleCopyLink = () => {
     if (typeof navigator !== "undefined") {
@@ -395,6 +365,35 @@ export default function QrGeneratorClient({
               <span>Target Menu Destination</span>
             </h2>
 
+            {/* Live Production Domain Toggle */}
+            <div className="flex items-center justify-between p-3 rounded-2xl border border-gold-500/30 bg-gold-500/10">
+              <div className="pr-2">
+                <span className="block text-xs font-bold text-cream-100 flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5 text-gold-400" />
+                  <span>Live Production Domain Mode</span>
+                </span>
+                <span className="block text-[10px] text-luxury-300 mt-0.5">
+                  {useProductionDomain
+                    ? "Encodes live production URL (https://ramansweetbakery.vercel.app) for real customer scans"
+                    : `Encodes current test host (${origin || "localhost"})`}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setUseProductionDomain(!useProductionDomain)}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  useProductionDomain ? "bg-gold-500" : "bg-luxury-800"
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-luxury-950 shadow ring-0 transition duration-200 ease-in-out ${
+                    useProductionDomain ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </div>
+
+
             <div className="space-y-3.5">
               {/* Destination Mode Tabs */}
               <div>
@@ -580,67 +579,6 @@ export default function QrGeneratorClient({
           </div>
 
           {/* ================================================== */}
-          {/* DECORATIVE CAKE IMAGE SELECTOR (PREMIUM TEMPLATE ONLY) */}
-          {/* ================================================== */}
-          {selectedTemplate === "cake-menu-premium" && (
-            <div className="rounded-3xl border border-gold-500/20 bg-[#14120f] p-6 shadow-xl space-y-4">
-              <h2 className="font-serif text-base font-bold text-cream-100 flex items-center space-x-2 border-b border-luxury-800 pb-3">
-                <ImageIcon className="h-4 w-4 text-gold-400" />
-                <span>Standee Decorative Cake Image</span>
-              </h2>
-
-              <div className="space-y-3">
-                <label className="block text-xs font-semibold text-cream-200">
-                  Select Cake Presentation Photo
-                </label>
-
-                {/* Preset image cards */}
-                <div className="grid grid-cols-2 gap-2.5">
-                  {CAKE_IMAGE_PRESETS.map((preset) => (
-                    <button
-                      key={preset.url}
-                      type="button"
-                      onClick={() => setStandeeCakeImage(preset.url)}
-                      className={`flex items-center space-x-2 rounded-xl border p-2 text-left transition-all ${
-                        standeeCakeImage === preset.url
-                          ? "border-gold-400 bg-gold-500/15 shadow-sm"
-                          : "border-luxury-800 bg-luxury-950 hover:border-gold-500/40"
-                      }`}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={preset.url}
-                        alt={preset.name}
-                        width={36}
-                        height={36}
-                        className="h-9 w-9 rounded-lg object-cover shrink-0"
-                        style={{ width: "36px", height: "36px", objectFit: "cover", flexShrink: 0 }}
-                      />
-                      <span className="text-[11px] font-medium text-cream-100 leading-tight line-clamp-2">
-                        {preset.name}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Custom URL Input */}
-                <div className="pt-2">
-                  <label className="block text-[11px] text-luxury-400 mb-1">
-                    Or Use Custom Image URL / Media Asset
-                  </label>
-                  <input
-                    type="text"
-                    value={standeeCakeImage}
-                    onChange={(e) => setStandeeCakeImage(e.target.value)}
-                    placeholder="https://..."
-                    className="w-full rounded-xl border border-luxury-700 bg-luxury-950 px-3 py-2 text-xs text-cream-100 focus:border-gold-500 focus:outline-none"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ================================================== */}
           {/* STYLING & QR OPTIONS CARD */}
           {/* ================================================== */}
           <div className="rounded-3xl border border-gold-500/20 bg-[#14120f] p-6 shadow-xl space-y-4">
@@ -805,7 +743,6 @@ export default function QrGeneratorClient({
                   logoUrl={logoUrl}
                   targetUrl={targetUrl}
                   tableNumber={tableNumber}
-                  cakeImageUrl={standeeCakeImage}
                   includeLogo={includeLogo}
                   fgColor={fgColor}
                   bgColor={bgColor}

@@ -9,7 +9,6 @@ export interface CakeMenuPremiumStandeeProps {
   logoUrl?: string;
   targetUrl: string;
   tableNumber?: string;
-  cakeImageUrl?: string;
   includeLogo?: boolean;
   fgColor?: string;
   bgColor?: string;
