@@ -159,7 +159,8 @@ export async function POST(req: NextRequest) {
     });
 
     // Create occurrence for the specified eventDate
-    const parsedEventDate = new Date(`${eventDate}T00:00:00.000Z`);
+    const rawParsed = eventDate ? new Date(`${eventDate.trim()}T00:00:00.000Z`) : new Date();
+    const parsedEventDate = !isNaN(rawParsed.getTime()) ? rawParsed : new Date();
     const year = parsedEventDate.getUTCFullYear();
 
     const displayStart = new Date(

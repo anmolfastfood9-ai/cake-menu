@@ -99,11 +99,15 @@ export async function PUT(
       },
     });
 
-    if (existingOcc || eventDate) {
-      const targetEventDate = eventDate
-        ? new Date(`${eventDate}T00:00:00.000Z`)
-        : existingOcc!.eventDate;
+    let targetEventDate: Date | null = existingOcc ? existingOcc.eventDate : null;
+    if (eventDate && typeof eventDate === "string" && eventDate.trim()) {
+      const parsed = new Date(`${eventDate.trim()}T00:00:00.000Z`);
+      if (!isNaN(parsed.getTime())) {
+        targetEventDate = parsed;
+      }
+    }
 
+    if (targetEventDate) {
       const numDaysBefore = daysBefore !== undefined ? daysBefore : occasion.daysBefore;
       const numDaysAfter = daysAfter !== undefined ? daysAfter : occasion.daysAfter;
 
