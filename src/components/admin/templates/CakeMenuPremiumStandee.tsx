@@ -70,17 +70,17 @@ export const CakeMenuPremiumStandee = forwardRef<
             left: "50%",
             top: "43.7%",
             transform: "translate(-50%, -50%)",
-            width: "27%",
+            width: "29.5%",
             aspectRatio: "1 / 1",
           }}
         >
           <QRCodeSVG
             value={targetUrl}
-            size={size === "print" ? 220 : 135}
+            size={size === "print" ? 250 : 160}
             fgColor={qrForeground}
-            bgColor="#FAF6EF"
+            bgColor="#FFFFFF"
             level="H"
-            includeMargin={true}
+            includeMargin={false}
             style={{
               width: "100%",
               height: "100%",
