@@ -342,9 +342,17 @@ export default function AdminOccasionsPage() {
 
   const handleOpenEdit = (occ: OccasionRecord) => {
     setEditingOccasion(occ);
-    const evDate = occ.currentOccurrence?.eventDate
-      ? new Date(occ.currentOccurrence.eventDate).toISOString().slice(0, 10)
-      : "";
+    let evDate = "";
+    if (occ.currentOccurrence?.eventDate) {
+      try {
+        const d = new Date(occ.currentOccurrence.eventDate);
+        if (!isNaN(d.getTime())) {
+          evDate = d.toISOString().slice(0, 10);
+        }
+      } catch {
+        evDate = "";
+      }
+    }
     setEditForm({
       name: occ.name,
       badgeText: occ.badgeText || "",
