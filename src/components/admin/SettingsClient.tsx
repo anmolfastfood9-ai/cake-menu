@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { normalizeWhatsAppNumber } from "@/lib/whatsapp";
+import { checkHasBakedInText } from "@/components/customer/OccasionShowcase";
+
 
 interface SettingsClientProps {
   initialSettings?: any;
@@ -599,30 +601,49 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
               </div>
 
               {/* Interactive Live Banner Preview */}
-              <div className="relative aspect-[16/5.5] w-full overflow-hidden rounded-2xl border border-gold-500/40 bg-[#0B0806] shadow-lg group">
-                <img
-                  src={heroImage || "/images/festivals/generic-luxury-banner.jpg"}
-                  alt="Hero Showcase Preview"
-                  className="h-full w-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = "/images/festivals/generic-luxury-banner.jpg";
-                  }}
-                />
-                {/* Visual Overlay Preview */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col items-center justify-end p-3 sm:p-4 text-center">
-                  <span className="text-[9px] uppercase tracking-widest text-[#E6C675] font-medium">
-                    {tagline || "100% EGGLESS • LUXURY BAKERY"}
-                  </span>
-                  <h4 className="font-serif text-sm sm:text-base font-bold text-[#FFFDF7] drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] line-clamp-1">
-                    {heroTitle || restaurantName}
-                  </h4>
-                  {heroSubtitle && (
-                    <p className="hidden sm:block text-[10px] text-cream-200/80 max-w-md line-clamp-1 mt-0.5">
-                      {heroSubtitle}
-                    </p>
-                  )}
-                </div>
-              </div>
+              {(() => {
+                const isBakedInArtwork = checkHasBakedInText(heroImage, heroTitle);
+                return (
+                  <div className="relative aspect-[16/5.5] w-full overflow-hidden rounded-2xl border border-gold-500/40 bg-[#0B0806] shadow-lg group">
+                    <img
+                      src={heroImage || "/images/festivals/generic-luxury-banner.jpg"}
+                      alt="Hero Showcase Preview"
+                      className="h-full w-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "/images/festivals/generic-luxury-banner.jpg";
+                      }}
+                    />
+                    {/* Visual Overlay Preview */}
+                    {isBakedInArtwork ? (
+                      <div className="absolute top-2 left-2 z-10">
+                        <span className="inline-flex items-center gap-1.5 rounded-lg bg-black/85 border border-gold-500/50 px-2.5 py-1 text-[10px] font-bold text-gold-300 backdrop-blur-md shadow">
+                          <Sparkles className="h-3 w-3 text-gold-400" />
+                          <span>Graphic Artwork Banner (Baked-In Typography)</span>
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col items-center justify-end p-3 sm:p-4 text-center">
+                        {tagline && (
+                          <span className="text-[9px] uppercase tracking-widest text-[#E6C675] font-medium">
+                            {tagline}
+                          </span>
+                        )}
+                        {heroTitle ? (
+                          <h4 className="font-serif text-sm sm:text-base font-bold text-[#FFFDF7] drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] line-clamp-1">
+                            {heroTitle}
+                          </h4>
+                        ) : null}
+                        {heroSubtitle && (
+                          <p className="hidden sm:block text-[10px] text-cream-200/80 max-w-md line-clamp-1 mt-0.5">
+                            {heroSubtitle}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
 
               {/* Action Buttons: Upload & Choose from Library */}
               <div className="flex flex-wrap items-center gap-2 pt-1">

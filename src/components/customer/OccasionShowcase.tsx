@@ -49,6 +49,10 @@ const BAKED_IN_TEXT_PRESETS = [
   "navratri-banner",
   "makar-sankranti-banner",
   "media_1789038038168",
+  "default-banner",
+  "1789049579790",
+  "every-moment-deserves",
+  "something-sweet",
 ];
 
 export function checkHasBakedInText(bannerUrl?: string | null, badgeText?: string | null): boolean {
