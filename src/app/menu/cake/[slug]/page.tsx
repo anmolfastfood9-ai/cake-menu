@@ -90,13 +90,17 @@ export default async function CakeDetailPage({ params }: { params: { slug: strin
   const appUrl = getAppUrl();
   const canonicalUrl = `${appUrl}/menu/cake/${cake!.slug}`;
 
+  const fullImageUrl = cake!.coverImage?.startsWith("http")
+    ? cake!.coverImage
+    : `${appUrl}${cake!.coverImage?.startsWith("/") ? "" : "/"}${cake!.coverImage || ""}`;
+
   // Schema.org Product structured data — only real stored data, no fabricated reviews
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: cake!.name,
     description: cake!.description,
-    image: cake!.coverImage,
+    image: fullImageUrl,
     brand: {
       "@type": "Brand",
       name: settings?.restaurantName || "Raman Sweet Bakery",

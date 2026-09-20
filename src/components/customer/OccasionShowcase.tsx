@@ -363,30 +363,49 @@ export default function OccasionShowcase({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
+  const safeSlidesLength = slides.length > 0 ? slides.length : 1;
+
   // Auto-advance carousel every 5 seconds when multiple slides exist
   useEffect(() => {
     if (slides.length <= 1 || isPaused) return;
 
     const timer = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % slides.length);
+      setCurrentIndex((prev) => (prev + 1) % safeSlidesLength);
     }, 5000);
 
     return () => clearInterval(timer);
-  }, [slides.length, isPaused]);
+  }, [safeSlidesLength, isPaused]);
 
-  const activeIndex = currentIndex % slides.length;
-  const currentSlide = slides[activeIndex] || slides[0];
+  const activeIndex = slides.length > 0 ? ((currentIndex % slides.length) + slides.length) % slides.length : 0;
+  const currentSlide = slides[activeIndex] || slides[0] || {
+    id: "default-showcase",
+    slug: "default",
+    title: defaultSettings?.heroTitle || "Raman Sweet Signature Collection",
+    rawName: defaultSettings?.heroTitle || "Raman Sweet Signature Collection",
+    subtitle: defaultSettings?.heroSubtitle || "100% EGGLESS • HANDCRAFTED ARTISANAL BAKES",
+    bannerAsset: GENERIC_FALLBACK_BANNER,
+    mobileBannerAsset: GENERIC_FALLBACK_MOBILE_BANNER,
+    motifType: "starburst",
+    isLight: false,
+    href: "#category-navigation",
+    buttonLabel: "Explore Cakes",
+    hasBakedInText: false,
+  };
 
   const handlePrev = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setCurrentIndex((prev) => (prev - 1 + slides.length) % slides.length);
+    if (slides.length > 0) {
+      setCurrentIndex((prev) => (prev - 1 + slides.length) % slides.length);
+    }
   };
 
   const handleNext = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setCurrentIndex((prev) => (prev + 1) % slides.length);
+    if (slides.length > 0) {
+      setCurrentIndex((prev) => (prev + 1) % slides.length);
+    }
   };
 
   return (

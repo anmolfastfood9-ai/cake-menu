@@ -45,7 +45,7 @@ function getServingGuide(weight: string): string | null {
   if (lower.includes("10kg") || lower.includes("10 kg")) return "Large Celebration";
 
   let kg: number | null = null;
-  const gMatch = lower.match(/^([\d.]+)g$/);
+  const gMatch = lower.match(/^([\d.]+)(?:g|gm|gms)$/);
   const kgMatch = lower.match(/^([\d.]+)kg/);
 
   if (gMatch) {
@@ -115,16 +115,16 @@ export default function CakeDetailClient({
   });
 
   // Prices and selected weight
-  const sortedPrices = [...(cake.prices || [])].sort((a, b) => (a.price ?? 999999) - (b.price ?? 999999));
+  const rawPrices = Array.isArray(cake.prices) && cake.prices.length > 0
+    ? cake.prices
+    : [{ weight: "1 kg", price: null, isCustomQuote: true }];
+  const sortedPrices = [...rawPrices].sort((a, b) => (a.price ?? 999999) - (b.price ?? 999999));
   const defaultIndex = sortedPrices.findIndex((p) => p.isDefault);
   const [selectedWeightIndex, setSelectedWeightIndex] = useState<number>(
     defaultIndex !== -1 ? defaultIndex : 0
   );
 
-  const activePriceObj = sortedPrices[selectedWeightIndex] || {
-    weight: "1 kg",
-    price: 1399,
-  };
+  const activePriceObj = sortedPrices[selectedWeightIndex] || sortedPrices[0];
 
   const isPhotoCake = cake.slug === "custom-bespoke-photo-cake";
 
@@ -203,12 +203,11 @@ export default function CakeDetailClient({
     generalGallery[0] ||
     null;
 
-  const selectedPhotoUrl =
-    rawSelectedPhoto
-      ? (rawSelectedPhoto.startsWith("/")
-          ? `https://ramansweetbakery.vercel.app${rawSelectedPhoto}`
-          : rawSelectedPhoto)
-      : null;
+  const selectedPhotoUrl = rawSelectedPhoto
+    ? rawSelectedPhoto.startsWith("http")
+      ? rawSelectedPhoto
+      : `https://ramansweetbakery.vercel.app/${rawSelectedPhoto.replace(/^\/+/, "")}`
+    : null;
 
   const resolvedOccasion =
     occasionParam ||
@@ -265,12 +264,53 @@ export default function CakeDetailClient({
     ? Math.round((1 - (activePriceObj.price ?? 0) / activePriceObj.originalPrice!) * 100)
     : null;
 
-  // Dynamically generated authentic highlights from real cake data
+  // Smart flavour-aware highlights generator
+  const nameLower = (cake.name || "").toLowerCase();
+  const descLower = (cake.description || "").toLowerCase();
+  const productType = (cake.productType || "CAKE").toUpperCase();
+  
+  let fillingHighlight = "Artisan gourmet filling & rich layered frosting";
+  let spongeHighlight = "Soft and moist artisanal sponge, 100% eggless";
+
+  if (isPhotoCake) {
+    fillingHighlight = "High-definition edible photo print on sugar sheet";
+    spongeHighlight = "Soft and moist vanilla or chocolate sponge, 100% eggless";
+  } else if (productType === "HAMPER" || productType === "GIFT_BOX") {
+    fillingHighlight = "Handcrafted luxury selection with elegant festive packaging";
+    spongeHighlight = "Premium artisanal confectionery items, 100% eggless";
+  } else if (productType === "SWEET" || productType === "DRY_FRUIT") {
+    fillingHighlight = "Made with pure ingredients & premium dry fruits";
+    spongeHighlight = "Authentic traditional recipe, 100% vegetarian";
+  } else if (nameLower.includes("chocolate") || nameLower.includes("truffle") || nameLower.includes("fudge") || nameLower.includes("cocoa") || descLower.includes("chocolate")) {
+    fillingHighlight = "Rich Belgian chocolate ganache & velvet chocolate filling";
+    spongeHighlight = "Soft and moist chocolate cocoa sponge, 100% eggless";
+  } else if (nameLower.includes("pineapple") || descLower.includes("pineapple")) {
+    fillingHighlight = "Real juicy pineapple compote & fresh dairy cream";
+    spongeHighlight = "Light and fluffy vanilla sponge, 100% eggless";
+  } else if (nameLower.includes("red velvet") || descLower.includes("red velvet")) {
+    fillingHighlight = "Velvety cream cheese frosting & smooth cocoa infusion";
+    spongeHighlight = "Soft and moist red velvet sponge, 100% eggless";
+  } else if (nameLower.includes("butterscotch") || nameLower.includes("caramel") || descLower.includes("butterscotch")) {
+    fillingHighlight = "Crunchy caramel praline & rich butterscotch cream";
+    spongeHighlight = "Soft butterscotch-infused sponge, 100% eggless";
+  } else if (nameLower.includes("mango") || nameLower.includes("strawberry") || nameLower.includes("fruit") || nameLower.includes("berry") || descLower.includes("fruit")) {
+    fillingHighlight = "Fresh real fruit pulp & whipped vanilla cream";
+    spongeHighlight = "Light and airy vanilla sponge, 100% eggless";
+  } else if (nameLower.includes("black forest") || nameLower.includes("cherry") || descLower.includes("black forest")) {
+    fillingHighlight = "Classic dark chocolate shavings & sour cherry compote";
+    spongeHighlight = "Moist chocolate sponge layered with whipped cream, 100% eggless";
+  }
+
+  const formattedSizes = sortedPrices
+    .map((p) => (p.weight ? p.weight.replace(/(\d+)\s*(kg|g|gm)/i, "$1 $2") : ""))
+    .filter(Boolean)
+    .join(", ");
+
   const highlights = [
-    `Rich ${cake.name.toLowerCase().includes("chocolate") ? "Belgian chocolate ganache" : "artisan gourmet filling"}`,
-    "Soft and moist chocolate sponge, 100% eggless",
+    fillingHighlight,
+    spongeHighlight,
     "Perfect for celebrations and luxury gifting",
-    `Available in ${sortedPrices.map((p) => p.weight).join(", ")} sizes`,
+    formattedSizes ? `Available in ${formattedSizes} sizes` : "Freshly prepared to order",
     "Prepared fresh with premium confectionery ingredients",
   ];
 
@@ -763,7 +803,13 @@ export default function CakeDetailClient({
 
                   <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5">
                     {relatedCakes.slice(0, 3).map((rel) => {
-                      const price = rel.prices?.[0]?.price || 799;
+                      const firstPrice = rel.prices?.[0];
+                      const isRelCustomQuote = Boolean(
+                        rel.isCustomQuote ||
+                        firstPrice?.isCustomQuote ||
+                        firstPrice?.price == null
+                      );
+                      const price = firstPrice?.price;
                       const isTestImage =
                         !rel.coverImage ||
                         rel.coverImage.includes("qa_test") ||
@@ -798,7 +844,7 @@ export default function CakeDetailClient({
                             {rel.name}
                           </span>
                           <span className="font-price text-[11px] text-[#D4AF37] font-semibold mt-0.5">
-                            ₹{price.toLocaleString("en-IN")} onwards
+                            {isRelCustomQuote || price == null ? "Custom Quote" : `₹${price.toLocaleString("en-IN")} onwards`}
                           </span>
                         </Link>
                       );
