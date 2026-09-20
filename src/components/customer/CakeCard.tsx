@@ -177,12 +177,12 @@ export default function CakeCard({ cake }: CakeCardProps) {
           "
           onError={() => setImgSrc(fallbackImage)}
           className="
-            object-contain
+            object-cover
             object-center
             transition-transform
             duration-500
             ease-out
-            group-hover:scale-[1.02]
+            group-hover:scale-[1.03]
           "
         />
 
