@@ -32,6 +32,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
+import { PRODUCTION_APP_URL } from "@/lib/appUrl";
 
 interface AdminDashboardClientProps {
   totalCakes: number;
@@ -92,7 +93,7 @@ export default function AdminDashboardClient({
     }
   }, []);
 
-  const menuUrl = origin ? `${origin}/menu` : "https://ramansweet.com/menu";
+  const menuUrl = origin ? `${origin}/menu` : `${PRODUCTION_APP_URL}/menu`;
   const restaurantName = settings?.restaurantName || "Raman Sweet";
 
   // Formatted date
@@ -632,8 +633,8 @@ export default function AdminDashboardClient({
                           <div className="flex items-center space-x-3">
                             <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-gold-500/20 bg-luxury-950">
                               <Image
-                                src={cake.coverImage}
-                                alt={cake.name}
+                                src={cake.coverImage || "/images/logo_emblem.png"}
+                                alt={cake.name || "Cake"}
                                 fill
                                 sizes="40px"
                                 className="object-cover"
@@ -742,8 +743,8 @@ export default function AdminDashboardClient({
                       <div className="flex items-center space-x-3 min-w-0 flex-1">
                         <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-gold-500/20 bg-luxury-950">
                           <Image
-                            src={cake.coverImage}
-                            alt={cake.name}
+                            src={cake.coverImage || "/images/logo_emblem.png"}
+                            alt={cake.name || "Cake"}
                             fill
                             sizes="48px"
                             className="object-cover"
