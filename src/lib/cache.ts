@@ -159,7 +159,6 @@ export async function getCachedAllCakes() {
   const cakes = await prisma.cake.findMany({
     where: {
       available: true,
-      productType: "CAKE",
       NOT: [
         { slug: { contains: "test", mode: "insensitive" } },
         { name: { contains: "test", mode: "insensitive" } },

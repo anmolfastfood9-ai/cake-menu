@@ -6,9 +6,6 @@ export const dynamic = "force-dynamic";
 export default async function AdminCakesPage() {
   const [cakes, categories] = await Promise.all([
     prisma.cake.findMany({
-      where: {
-        productType: "CAKE",
-      },
       include: {
         category: true,
         prices: {
