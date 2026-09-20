@@ -89,9 +89,9 @@ export default function CakesManagerClient({
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      const matchName = cake.name.toLowerCase().includes(q);
-      const matchDesc = cake.description?.toLowerCase().includes(q);
-      const matchCat = cake.category?.name.toLowerCase().includes(q);
+      const matchName = (cake.name || "").toLowerCase().includes(q);
+      const matchDesc = (cake.description || "").toLowerCase().includes(q);
+      const matchCat = (cake.category?.name || "").toLowerCase().includes(q);
       if (!matchName && !matchDesc && !matchCat) return false;
     }
 
