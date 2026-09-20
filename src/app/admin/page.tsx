@@ -23,7 +23,6 @@ export default async function AdminDashboardPage() {
     prisma.cake.count({
       where: {
         available: true,
-        productType: "CAKE",
       },
     }),
     prisma.cake.count({ where: { featured: true } }),
@@ -45,7 +44,7 @@ export default async function AdminDashboardPage() {
     }),
     prisma.imageMedia.count(),
     prisma.cake.findMany({
-      take: 12,
+      take: 50,
       orderBy: { createdAt: "desc" },
       include: {
         category: true,
