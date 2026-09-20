@@ -135,7 +135,7 @@ export default function CategoryManagerClient({
   };
 
   const handleDelete = async (catId: string, name: string) => {
-    if (!confirm(`Delete category "${name}"? Cakes belonging to this category will also be deleted.`)) {
+    if (!confirm(`Are you sure you want to delete category "${name}"?`)) {
       return;
     }
 
@@ -144,11 +144,16 @@ export default function CategoryManagerClient({
         method: "DELETE",
       });
 
+      const data = await res.json().catch(() => ({}));
+
       if (res.ok) {
         setCategories((prev) => prev.filter((c) => c.id !== catId));
+      } else {
+        alert(data.error || "Failed to delete category");
       }
     } catch (e) {
       console.error(e);
+      alert("Error deleting category");
     }
   };
 
