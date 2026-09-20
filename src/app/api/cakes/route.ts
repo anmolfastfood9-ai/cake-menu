@@ -62,8 +62,9 @@ export async function GET(req: NextRequest) {
       whereClause.available = true;
     }
 
-    // Active productType model is CAKE ONLY
-    whereClause.productType = "CAKE";
+    if (cakesOnly === "true") {
+      whereClause.productType = "CAKE";
+    }
 
     if (categoryId) {
       whereClause.categoryId = categoryId;
