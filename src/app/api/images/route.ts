@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { getSessionAdminFromRequest } from "@/lib/auth";
-import { processImageUpload, deleteFromImageKit, validateImageBuffer } from "@/lib/upload";
+import { processImageUpload, deleteFromImageKit, validateImageBuffer, getImageUsageMap, purgeUnusedImages } from "@/lib/upload";
 import { getClientIp } from "@/lib/rateLimit";
 import { checkGenericRateLimit, rateLimitResponse } from "@/lib/rateLimit";
 import {
@@ -31,10 +31,21 @@ export async function GET(req: NextRequest) {
       return rateLimitResponse(rl.retryAfter);
     }
 
-    const images = await prisma.imageMedia.findMany({
-      orderBy: { createdAt: "desc" },
+    const [images, usageMap] = await Promise.all([
+      prisma.imageMedia.findMany({ orderBy: { createdAt: "desc" } }),
+      getImageUsageMap(),
+    ]);
+
+    const enrichedImages = images.map((img) => {
+      const usages = usageMap.get(img.url) || [];
+      return {
+        ...img,
+        isUsed: usages.length > 0,
+        usedIn: usages,
+      };
     });
-    return NextResponse.json({ success: true, images });
+
+    return NextResponse.json({ success: true, images: enrichedImages });
   } catch (error: any) {
     console.error("Fetch images error:", error);
     return NextResponse.json(
@@ -43,6 +54,7 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+
 
 // POST /api/images - Upload one or more images (Admin only)
 export async function POST(req: NextRequest) {
@@ -183,6 +195,18 @@ export async function DELETE(req: NextRequest) {
     }
 
     const { searchParams } = new URL(req.url);
+
+    // Handle bulk cleanup action for unused/orphaned images
+    if (searchParams.get("action") === "cleanup" || searchParams.get("cleanup") === "true") {
+      const result = await purgeUnusedImages();
+      return NextResponse.json({
+        success: true,
+        message: `Successfully cleaned up ${result.deletedCount} unused/orphaned image(s)`,
+        deletedCount: result.deletedCount,
+        deletedIds: result.deletedIds,
+      });
+    }
+
     const rawQuery = { id: searchParams.get("id") ?? undefined };
     const queryRes = safeValidate(DeleteImageQuerySchema, rawQuery);
     if (!queryRes.success) {
@@ -193,6 +217,7 @@ export async function DELETE(req: NextRequest) {
     const image = await prisma.imageMedia.findUnique({
       where: { id },
     });
+
 
     if (!image) {
       return NextResponse.json({ error: "Image record not found" }, { status: 404 });

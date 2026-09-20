@@ -25,12 +25,14 @@ interface ImageLibraryClientProps {
 export default function ImageLibraryClient({ initialImages = [] }: ImageLibraryClientProps) {
   const [images, setImages] = useState(initialImages);
   const [uploading, setUploading] = useState(false);
+  const [cleaning, setCleaning] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterType, setFilterType] = useState<"ALL" | "BANNERS" | "CAKES">("ALL");
+  const [filterType, setFilterType] = useState<"ALL" | "IN_USE" | "UNUSED" | "BANNERS" | "CAKES">("ALL");
 
   // File Upload Handler
   const handleUploadFiles = async (files: FileList | null) => {
@@ -38,6 +40,7 @@ export default function ImageLibraryClient({ initialImages = [] }: ImageLibraryC
 
     setUploading(true);
     setError(null);
+    setSuccessMessage(null);
 
     try {
       const formData = new FormData();
@@ -54,6 +57,8 @@ export default function ImageLibraryClient({ initialImages = [] }: ImageLibraryC
       if (!res.ok) throw new Error(data.error || "Upload failed");
 
       setImages((prev) => [...data.images, ...prev]);
+      setSuccessMessage(`Successfully uploaded ${data.images.length} new photo(s)!`);
+      setTimeout(() => setSuccessMessage(null), 4000);
     } catch (err: any) {
       setError(err.message || "Failed to upload files");
     } finally {
@@ -90,7 +95,7 @@ export default function ImageLibraryClient({ initialImages = [] }: ImageLibraryC
     }
   };
 
-  // Delete Image
+  // Delete Single Image
   const handleDeleteImage = async (imgId: string) => {
     if (!confirm("Are you sure you want to delete this image?")) return;
 
@@ -102,32 +107,57 @@ export default function ImageLibraryClient({ initialImages = [] }: ImageLibraryC
       if (res.ok) {
         setImages((prev) => prev.filter((img) => img.id !== imgId));
         if (previewImage?.id === imgId) setPreviewImage(null);
+      } else {
+        const data = await res.json();
+        setError(data.error || "Failed to delete image");
       }
     } catch (e) {
       console.error(e);
+      setError("Failed to delete image");
     }
   };
 
-  // Filtered images list
-  const filteredImages = useMemo(() => {
-    return images.filter((img) => {
-      const filename = (img.filename || "").toLowerCase();
-      const url = (img.url || "").toLowerCase();
-      const query = searchQuery.toLowerCase().trim();
+  // Bulk Cleanup Unused / Orphaned Images
+  const handleCleanupUnused = async () => {
+    const unusedCount = images.filter((img) => !img.isUsed).length;
+    if (unusedCount === 0) {
+      alert("No unused or duplicate images found to clean up.");
+      return;
+    }
 
-      const matchesSearch = !query || filename.includes(query) || url.includes(query);
-      if (!matchesSearch) return false;
+    if (
+      !confirm(
+        `Are you sure you want to delete ${unusedCount} unused/orphaned image(s)? This will permanently purge old duplicate files from CDN and database while keeping all active product images intact.`
+      )
+    ) {
+      return;
+    }
 
-      if (filterType === "BANNERS") {
-        return filename.includes("banner") || url.includes("banner");
-      }
-      if (filterType === "CAKES") {
-        return !filename.includes("banner") && !url.includes("banner");
-      }
+    setCleaning(true);
+    setError(null);
+    setSuccessMessage(null);
 
-      return true;
-    });
-  }, [images, searchQuery, filterType]);
+    try {
+      const res = await fetch("/api/images?action=cleanup", {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Cleanup failed");
+
+      const deletedSet = new Set(data.deletedIds || []);
+      setImages((prev) => prev.filter((img) => !deletedSet.has(img.id)));
+      setSuccessMessage(`Successfully purged ${data.deletedCount} unused duplicate/orphaned image(s)!`);
+      setTimeout(() => setSuccessMessage(null), 5000);
+    } catch (err: any) {
+      setError(err.message || "Failed to clean up unused images");
+    } finally {
+      setCleaning(false);
+    }
+  };
+
+  // Counts
+  const usedCount = useMemo(() => images.filter((img) => img.isUsed).length, [images]);
+  const unusedCount = useMemo(() => images.filter((img) => !img.isUsed).length, [images]);
 
   const bannerCount = useMemo(() => {
     return images.filter(
@@ -139,25 +169,74 @@ export default function ImageLibraryClient({ initialImages = [] }: ImageLibraryC
 
   const cakeCount = images.length - bannerCount;
 
+  // Filtered images list
+  const filteredImages = useMemo(() => {
+    return images.filter((img) => {
+      const filename = (img.filename || "").toLowerCase();
+      const url = (img.url || "").toLowerCase();
+      const query = searchQuery.toLowerCase().trim();
+
+      const matchesSearch = !query || filename.includes(query) || url.includes(query);
+      if (!matchesSearch) return false;
+
+      if (filterType === "IN_USE") return Boolean(img.isUsed);
+      if (filterType === "UNUSED") return !img.isUsed;
+      if (filterType === "BANNERS") {
+        return filename.includes("banner") || url.includes("banner");
+      }
+      if (filterType === "CAKES") {
+        return !filename.includes("banner") && !url.includes("banner");
+      }
+
+      return true;
+    });
+  }, [images, searchQuery, filterType]);
+
   return (
     <div className="space-y-6 pb-32 sm:pb-12">
-      {/* Header */}
-      <div>
-        <span className="text-xs font-bold uppercase tracking-widest text-gold-400">
-          Media Assets
-        </span>
-        <h1 className="font-serif text-2xl font-bold text-cream-50 sm:text-3xl">
-          Image Library ({images.length})
-        </h1>
-        <p className="text-xs text-luxury-400 mt-1">
-          Upload and manage cake photography. All images are hosted and ready for menu cards and galleries.
-        </p>
+      {/* Header with Quick Clean Up Action */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <span className="text-xs font-bold uppercase tracking-widest text-gold-400">
+            Media Assets
+          </span>
+          <h1 className="font-serif text-2xl font-bold text-cream-50 sm:text-3xl">
+            Image Library ({images.length})
+          </h1>
+          <p className="text-xs text-luxury-400 mt-1">
+            Upload and manage cake photography. Detects active vs unused duplicate images automatically.
+          </p>
+        </div>
+
+        {/* Clean Up Unused Action Button */}
+        {unusedCount > 0 && (
+          <button
+            type="button"
+            onClick={handleCleanupUnused}
+            disabled={cleaning}
+            className="self-start sm:self-center flex items-center gap-2 rounded-2xl border border-amber-500/40 bg-amber-950/40 px-4 py-2.5 text-xs font-bold text-amber-300 hover:bg-amber-900/60 hover:border-amber-400 disabled:opacity-50 transition-all shadow-lg"
+          >
+            {cleaning ? (
+              <Sparkles className="h-4 w-4 animate-spin text-amber-400" />
+            ) : (
+              <Trash2 className="h-4 w-4 text-amber-400" />
+            )}
+            <span>Clean Up {unusedCount} Unused Duplicate Images</span>
+          </button>
+        )}
       </div>
 
       {error && (
         <div className="flex items-center space-x-2 rounded-xl border border-red-500/40 bg-red-950/40 p-3.5 text-xs text-red-400">
           <AlertCircle className="h-4 w-4 shrink-0" />
           <span>{error}</span>
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="flex items-center space-x-2 rounded-xl border border-emerald-500/40 bg-emerald-950/40 p-3.5 text-xs text-emerald-400">
+          <Check className="h-4 w-4 shrink-0" />
+          <span>{successMessage}</span>
         </div>
       )}
 
@@ -217,6 +296,31 @@ export default function ImageLibraryClient({ initialImages = [] }: ImageLibraryC
           >
             All ({images.length})
           </button>
+
+          <button
+            type="button"
+            onClick={() => setFilterType("IN_USE")}
+            className={`rounded-xl px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-all ${
+              filterType === "IN_USE"
+                ? "bg-emerald-500 text-luxury-950 font-bold shadow-gold-sm"
+                : "bg-luxury-950 text-emerald-400 hover:text-emerald-300 border border-emerald-900/60"
+            }`}
+          >
+            🟢 In Use ({usedCount})
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setFilterType("UNUSED")}
+            className={`rounded-xl px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-all ${
+              filterType === "UNUSED"
+                ? "bg-amber-500 text-luxury-950 font-bold shadow-gold-sm"
+                : "bg-luxury-950 text-amber-400 hover:text-amber-300 border border-amber-900/60"
+            }`}
+          >
+            🟠 Unused ({unusedCount})
+          </button>
+
           <button
             type="button"
             onClick={() => setFilterType("BANNERS")}
@@ -228,6 +332,7 @@ export default function ImageLibraryClient({ initialImages = [] }: ImageLibraryC
           >
             Banners ({bannerCount})
           </button>
+
           <button
             type="button"
             onClick={() => setFilterType("CAKES")}
@@ -281,7 +386,11 @@ export default function ImageLibraryClient({ initialImages = [] }: ImageLibraryC
             {filteredImages.map((img) => (
               <div
                 key={img.id}
-                className="group relative flex flex-col overflow-hidden rounded-2xl border border-luxury-800 bg-luxury-950 transition-all hover:border-gold-500/50 hover:shadow-gold-sm"
+                className={`group relative flex flex-col overflow-hidden rounded-2xl border bg-luxury-950 transition-all ${
+                  img.isUsed
+                    ? "border-emerald-500/30 hover:border-emerald-400 hover:shadow-gold-sm"
+                    : "border-amber-500/30 hover:border-amber-400"
+                }`}
               >
                 {/* Image Container - Tap to Preview */}
                 <div
@@ -295,6 +404,25 @@ export default function ImageLibraryClient({ initialImages = [] }: ImageLibraryC
                     sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
                     className="object-cover group-hover:scale-105 transition-transform duration-300"
                   />
+
+                  {/* Usage Badge (Top Left) */}
+                  <div className="absolute top-2 left-2 flex items-center gap-1 z-10">
+                    {img.isUsed ? (
+                      <span
+                        className="inline-flex items-center gap-1 rounded-md bg-emerald-950/90 border border-emerald-500/60 px-1.5 py-0.5 text-[9px] font-bold text-emerald-300 backdrop-blur-md shadow"
+                        title={img.usedIn && img.usedIn.length > 0 ? `Used in: ${img.usedIn.join(", ")}` : "In use on website"}
+                      >
+                        <Check className="h-2.5 w-2.5" /> In Use
+                      </span>
+                    ) : (
+                      <span
+                        className="inline-flex items-center gap-1 rounded-md bg-amber-950/90 border border-amber-500/60 px-1.5 py-0.5 text-[9px] font-bold text-amber-300 backdrop-blur-md shadow"
+                        title="Not linked to any active cake, category, occasion, or setting"
+                      >
+                        <AlertCircle className="h-2.5 w-2.5" /> Unused
+                      </span>
+                    )}
+                  </div>
 
                   {/* Top-right quick copy button */}
                   <button
@@ -321,7 +449,7 @@ export default function ImageLibraryClient({ initialImages = [] }: ImageLibraryC
                   <div className="hidden md:flex absolute inset-0 items-center justify-center space-x-2 bg-luxury-950/70 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                     <span className="inline-flex items-center gap-1 rounded-lg bg-luxury-900/90 border border-gold-500/40 px-2.5 py-1 text-[11px] font-semibold text-gold-300 shadow">
                       <Eye className="h-3.5 w-3.5" />
-                      <span>Preview</span>
+                      <span>Preview Details</span>
                     </span>
                   </div>
                 </div>
@@ -342,13 +470,13 @@ export default function ImageLibraryClient({ initialImages = [] }: ImageLibraryC
                       {img.size ? `${(img.size / 1024).toFixed(0)} KB` : "Web"}
                     </span>
 
-                    {/* Action buttons (always accessible on mobile & desktop) */}
+                    {/* Action buttons */}
                     <div className="flex items-center gap-1">
                       <button
                         type="button"
                         onClick={() => setPreviewImage(img)}
                         className="p-1 rounded-md text-luxury-400 hover:text-gold-400 hover:bg-luxury-900 transition-colors"
-                        title="Preview Full Size"
+                        title="Preview Details"
                       >
                         <Eye className="h-3.5 w-3.5" />
                       </button>
@@ -386,7 +514,7 @@ export default function ImageLibraryClient({ initialImages = [] }: ImageLibraryC
             <p>
               {searchQuery
                 ? `No images found matching "${searchQuery}".`
-                : "No images uploaded in this category."}
+                : "No images found in this filter category."}
             </p>
             {searchQuery && (
               <button
@@ -432,6 +560,37 @@ export default function ImageLibraryClient({ initialImages = [] }: ImageLibraryC
                 sizes="800px"
                 className="object-contain"
               />
+            </div>
+
+            {/* Usage Status Details */}
+            <div className="rounded-xl border border-luxury-800 bg-luxury-950 p-3 space-y-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-luxury-400 block">
+                Website Usage Status
+              </span>
+              {previewImage.isUsed ? (
+                <div className="flex flex-wrap gap-1.5 pt-0.5">
+                  {previewImage.usedIn && previewImage.usedIn.length > 0 ? (
+                    previewImage.usedIn.map((item: string, idx: number) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center gap-1 rounded-lg bg-emerald-950/80 border border-emerald-700/60 px-2.5 py-1 text-xs font-semibold text-emerald-300"
+                      >
+                        <Check className="h-3 w-3 text-emerald-400" />
+                        {item}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-xs font-semibold text-emerald-400">
+                      Linked to active menu item / banner
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-xs font-semibold text-amber-400 pt-0.5">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <span>Unused / Orphaned image (Not linked to any product or banner. Safe to delete).</span>
+                </div>
+              )}
             </div>
 
             {/* URL Display */}
@@ -480,4 +639,3 @@ export default function ImageLibraryClient({ initialImages = [] }: ImageLibraryC
     </div>
   );
 }
-

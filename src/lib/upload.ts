@@ -1,5 +1,6 @@
 import path from "path";
 import fs from "fs";
+import prisma from "@/lib/db";
 
 export interface UploadResult {
   url: string;
@@ -273,3 +274,96 @@ export async function processImageUpload(
     publicId: cleanFilename,
   };
 }
+
+/**
+ * Builds a map of image URLs to their active usage locations across all database models.
+ */
+export async function getImageUsageMap(): Promise<Map<string, string[]>> {
+  const usageMap = new Map<string, string[]>();
+
+  const addUsage = (url: string | null | undefined, label: string) => {
+    if (!url || typeof url !== "string" || !url.trim()) return;
+    const clean = url.trim();
+    const existing = usageMap.get(clean) || [];
+    if (!existing.includes(label)) {
+      existing.push(label);
+    }
+    usageMap.set(clean, existing);
+  };
+
+  const [cakes, prices, categories, occasions, settings] = await Promise.all([
+    prisma.cake.findMany({ select: { name: true, coverImage: true, images: true } }),
+    prisma.cakePrice.findMany({ select: { id: true, image: true, images: true } }),
+    prisma.category.findMany({ select: { name: true, image: true } }),
+    prisma.occasion.findMany({ select: { name: true, bannerImage: true } }),
+    prisma.websiteSetting.findMany({ select: { logo: true, favicon: true, heroImage: true } }),
+  ]);
+
+  for (const c of cakes) {
+    if (c.coverImage) addUsage(c.coverImage, `Cake: ${c.name}`);
+    if (c.images) {
+      try {
+        const arr = typeof c.images === "string" ? JSON.parse(c.images) : c.images;
+        if (Array.isArray(arr)) arr.forEach((u: string) => addUsage(u, `Cake Gallery: ${c.name}`));
+      } catch (e) {}
+    }
+  }
+
+  for (const p of prices) {
+    if (p.image) addUsage(p.image, `Weight Tier`);
+    if (p.images) {
+      try {
+        const arr = typeof p.images === "string" ? JSON.parse(p.images) : p.images;
+        if (Array.isArray(arr)) arr.forEach((u: string) => addUsage(u, `Weight Tier Gallery`));
+      } catch (e) {}
+    }
+  }
+
+  for (const cat of categories) {
+    if (cat.image) addUsage(cat.image, `Category: ${cat.name}`);
+  }
+
+  for (const occ of occasions) {
+    if (occ.bannerImage) addUsage(occ.bannerImage, `Occasion: ${occ.name}`);
+  }
+
+  for (const s of settings) {
+    if (s.logo) addUsage(s.logo, `Logo`);
+    if (s.favicon) addUsage(s.favicon, `Favicon`);
+    if (s.heroImage) addUsage(s.heroImage, `Hero Banner`);
+  }
+
+  return usageMap;
+}
+
+/**
+ * Finds and purges all unused / orphaned ImageMedia records from CDN/disk and DB.
+ */
+export async function purgeUnusedImages(): Promise<{ deletedCount: number; deletedIds: string[] }> {
+  const images = await prisma.imageMedia.findMany();
+  const usageMap = await getImageUsageMap();
+
+  const unusedImages = images.filter((img) => !usageMap.has(img.url));
+
+  const deletedIds: string[] = [];
+  for (const img of unusedImages) {
+    try {
+      if (img.publicId && !img.publicId.endsWith(".jpg") && !img.publicId.endsWith(".png")) {
+        await deleteFromImageKit(img.publicId).catch(() => null);
+      }
+      if (img.url && img.url.startsWith("/uploads/")) {
+        const localPath = path.join(process.cwd(), "public", img.url.replace(/^\//, ""));
+        if (fs.existsSync(localPath)) {
+          fs.unlinkSync(localPath);
+        }
+      }
+      await prisma.imageMedia.delete({ where: { id: img.id } });
+      deletedIds.push(img.id);
+    } catch (err) {
+      console.warn(`Failed to delete unused image (${img.id}):`, err);
+    }
+  }
+
+  return { deletedCount: deletedIds.length, deletedIds };
+}
+
