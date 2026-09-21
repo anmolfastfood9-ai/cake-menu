@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
   Plus,
   Edit2,
@@ -24,6 +25,7 @@ interface CategoryManagerClientProps {
 export default function CategoryManagerClient({
   initialCategories = [],
 }: CategoryManagerClientProps) {
+  const router = useRouter();
   const [categories, setCategories] = useState(initialCategories);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any | null>(null);
@@ -277,13 +279,14 @@ export default function CategoryManagerClient({
         );
       } else {
         setCategories((prev) =>
-          [...prev, { ...data.category, _count: { cakes: 0 } }].sort(
+          [...prev, { ...data.category, _count: data.category._count || { cakes: 0 } }].sort(
             (a, b) => a.displayOrder - b.displayOrder
           )
         );
       }
 
       setModalOpen(false);
+      router.refresh();
     } catch (err: any) {
       setError(err.message || "An error occurred");
     } finally {

@@ -73,11 +73,18 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     const category = await prisma.category.update({
       where: { id },
       data: updateData,
+      include: {
+        _count: {
+          select: { cakes: true },
+        },
+      },
     });
 
     invalidateAppCache();
     try {
       revalidatePath("/menu");
+      revalidatePath("/admin/categories");
+      revalidatePath("/admin/cakes");
     } catch (e) {}
 
     return NextResponse.json({ success: true, category });

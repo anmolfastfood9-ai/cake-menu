@@ -102,11 +102,18 @@ export async function POST(req: NextRequest) {
         displayOrder: displayOrder ?? 0,
         active: Boolean(active),
       },
+      include: {
+        _count: {
+          select: { cakes: true },
+        },
+      },
     });
 
     invalidateAppCache();
     try {
       revalidatePath("/menu");
+      revalidatePath("/admin/categories");
+      revalidatePath("/admin/cakes");
     } catch (e) {}
 
     return NextResponse.json({ success: true, category }, { status: 201 });
