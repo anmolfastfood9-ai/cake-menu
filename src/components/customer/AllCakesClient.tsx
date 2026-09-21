@@ -81,8 +81,26 @@ export default function AllCakesClient({
   // Filter cakes
   const filteredCakes = useMemo(() => {
     let result = initialCakes.filter((cake: CakeItem) => {
-      if (selectedCategory !== "all" && cake.category?.slug !== selectedCategory) {
-        return false;
+      if (selectedCategory !== "all") {
+        const normSelected = selectedCategory.toLowerCase().trim();
+        const catSlug = (cake.category?.slug || "").toLowerCase().trim();
+        const catId = ((cake as any).categoryId || cake.category?.id || "").toLowerCase().trim();
+
+        if (catSlug !== normSelected && catId !== normSelected) {
+          if (normSelected === "chocolate" || normSelected === "truffle") {
+            if (catSlug !== "chocolate-cakes") return false;
+          } else if (normSelected === "fruit" || normSelected === "berry" || normSelected === "fruit-berry") {
+            if (catSlug !== "fruit-fresh-cream") return false;
+          } else if (normSelected === "cheesecakes" || normSelected === "cheese") {
+            if (catSlug !== "red-velvet-premium") return false;
+          } else if (normSelected === "photo-cakes" || normSelected === "designer-photo") {
+            if (catSlug !== "designer-photo-cakes") return false;
+          } else if (normSelected === "signature" || normSelected === "luxury") {
+            if (catSlug !== "signature-cakes") return false;
+          } else if (!catSlug.includes(normSelected) && !normSelected.includes(catSlug)) {
+            return false;
+          }
+        }
       }
 
       if (searchQuery.trim()) {

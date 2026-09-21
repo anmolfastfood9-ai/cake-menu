@@ -4,6 +4,7 @@ import MenuClient from "@/components/customer/MenuClient";
 import prisma from "@/lib/db";
 import {
   getCachedCategories,
+  getCachedAllCakes,
   getCachedWebsiteSettings,
   getCachedWhatsAppSetting,
 } from "@/lib/cache";
@@ -74,25 +75,9 @@ export default async function CategoryMenuPage({
     notFound();
   }
 
-  // Fetch only cakes for this category with available: true, productType: "CAKE"
-  const [categoryCakes, allCategories, settings, whatsappSetting, activeOccasion] =
+  const [allCakes, allCategories, settings, whatsappSetting, activeOccasion] =
     await Promise.all([
-      prisma.cake.findMany({
-        where: {
-          categoryId: category.id,
-          available: true,
-          productType: "CAKE",
-          NOT: [
-            { slug: { contains: "test", mode: "insensitive" } },
-            { name: { contains: "test", mode: "insensitive" } },
-          ],
-        },
-        include: {
-          category: { select: { id: true, name: true, slug: true } },
-          prices: { orderBy: { price: "asc" } },
-        },
-        orderBy: { createdAt: "asc" },
-      }),
+      getCachedAllCakes(),
       getCachedCategories(),
       getCachedWebsiteSettings(),
       getCachedWhatsAppSetting(),
@@ -102,7 +87,7 @@ export default async function CategoryMenuPage({
   return (
     <MenuClient
       initialCategories={allCategories as any}
-      initialCakes={categoryCakes as any}
+      initialCakes={allCakes as any}
       settings={settings as any}
       whatsappSetting={whatsappSetting as any}
       activeOccasion={activeOccasion as any}

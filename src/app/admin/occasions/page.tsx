@@ -870,50 +870,50 @@ export default function AdminOccasionsPage() {
               return (
                 <div
                   key={occ.id}
-                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3.5 rounded-2xl border border-luxury-800/80 bg-[#181512] p-4 transition-colors hover:border-gold-500/30"
+                  className="rounded-2xl border border-luxury-800/80 bg-[#181512] p-4 transition-all hover:border-gold-500/30 space-y-3"
                 >
-                  {/* Left: Info */}
-                  <div className="space-y-1 sm:max-w-md">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <div
-                        className="h-2.5 w-2.5 rounded-full shrink-0"
-                        style={{ backgroundColor: accent }}
-                      />
-                      <h3 className="font-serif text-base font-bold text-cream-50">
-                        {occ.name}
-                      </h3>
-                      <span className="rounded-md border border-luxury-700 bg-luxury-900 px-1.5 py-0.5 text-[9.5px] font-semibold text-luxury-300">
-                        {occ.type}
-                      </span>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    {/* Left: Info */}
+                    <div className="space-y-1 sm:max-w-md flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <div
+                          className="h-2.5 w-2.5 rounded-full shrink-0"
+                          style={{ backgroundColor: accent }}
+                        />
+                        <h3 className="font-serif text-base font-bold text-cream-50">
+                          {occ.name}
+                        </h3>
+                        <span className="rounded-md border border-luxury-700 bg-luxury-900 px-1.5 py-0.5 text-[9.5px] font-semibold text-luxury-300">
+                          {occ.type}
+                        </span>
 
-                      {/* Status Badge */}
-                      {occ.status === "ACTIVE" && occ.active && (
-                        <span className="rounded-full border border-emerald-500/40 bg-emerald-950/60 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
-                          Active Now
-                        </span>
-                      )}
-                      {occ.status === "UPCOMING" && occ.active && (
-                        <span className="rounded-full border border-gold-500/30 bg-gold-950/40 px-2 py-0.5 text-[10px] font-semibold text-gold-400">
-                          Upcoming
-                        </span>
-                      )}
+                        {/* Status Badge */}
+                        {occ.status === "ACTIVE" && occ.active && (
+                          <span className="rounded-full border border-emerald-500/40 bg-emerald-950/60 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
+                            Active Now
+                          </span>
+                        )}
+                        {occ.status === "UPCOMING" && occ.active && (
+                          <span className="rounded-full border border-gold-500/30 bg-gold-950/40 px-2 py-0.5 text-[10px] font-semibold text-gold-400">
+                            Upcoming
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="text-xs text-luxury-400 line-clamp-1">
+                        {occ.description || "No promotional description set"}
+                      </p>
+
+                      {/* Calculated Dates */}
+                      <div className="flex flex-wrap items-center gap-2 pt-0.5 text-[11px] text-luxury-500">
+                        <span>Event: <strong className="text-luxury-300 font-medium">{formatDate(occurrence?.eventDate)}</strong></span>
+                        <span>•</span>
+                        <span>Display Window: <span className="text-luxury-300">{formatDate(occurrence?.displayStart)} – {formatDate(occurrence?.displayEnd)}</span></span>
+                      </div>
                     </div>
 
-                    <p className="text-xs text-luxury-400 line-clamp-1">
-                      {occ.description || "No promotional description set"}
-                    </p>
-
-                    {/* Calculated Dates */}
-                    <div className="flex flex-wrap items-center gap-2 pt-0.5 text-[11px] text-luxury-500">
-                      <span>Event: <strong className="text-luxury-300 font-medium">{formatDate(occurrence?.eventDate)}</strong></span>
-                      <span>•</span>
-                      <span>Display Window: <span className="text-luxury-300">{formatDate(occurrence?.displayStart)} – {formatDate(occurrence?.displayEnd)}</span></span>
-                    </div>
-                  </div>
-
-                  {/* Middle: Banner Thumbnail Preview */}
-                  <div className="flex items-center gap-2 shrink-0">
-                    <div className="relative w-24 sm:w-32 aspect-[16/5] rounded-lg overflow-hidden border border-gold-500/30 bg-black/80 shadow-sm group">
+                    {/* Middle/Banner Preview */}
+                    <div className="relative w-full sm:w-36 h-16 sm:h-12 aspect-auto sm:aspect-[16/5] rounded-xl overflow-hidden border border-gold-500/30 bg-black/80 shadow-sm group shrink-0">
                       <img
                         src={getOccasionBannerUrl(occ.slug, occ.bannerImage)}
                         alt={occ.name}
@@ -922,8 +922,8 @@ export default function AdminOccasionsPage() {
                           (e.target as HTMLImageElement).src = "/images/festivals/generic-luxury-banner.jpg";
                         }}
                       />
-                      <span className={`absolute bottom-0.5 right-1 rounded px-1 py-0.2 text-[8px] font-medium backdrop-blur-[2px] ${
-                        occ.bannerImage ? "bg-amber-950/80 text-amber-300 border border-amber-500/40" : "bg-black/70 text-gold-300"
+                      <span className={`absolute bottom-1 right-1 rounded px-1.5 py-0.5 text-[8.5px] font-medium backdrop-blur-md ${
+                        occ.bannerImage ? "bg-amber-950/80 text-amber-300 border border-amber-500/40" : "bg-black/70 text-gold-300 border border-gold-500/20"
                       }`}>
                         {occ.bannerImage ? "Custom" : "System 8K"}
                         {(occ.bannerImage?.includes("#notext") || checkHasBakedInText(getOccasionBannerUrl(occ.slug, occ.bannerImage), occ.badgeText)) ? " • Clean" : ""}
@@ -931,53 +931,61 @@ export default function AdminOccasionsPage() {
                     </div>
                   </div>
 
-                  {/* Right: Tagged Cakes, Switch & Actions */}
-                  <div className="flex items-center gap-3 sm:gap-4 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-luxury-800">
-                    {/* Tagged Cakes */}
-                    <div className="text-right">
-                      <span className="text-xs font-bold text-cream-100 block">
-                        {occ.cakeCount} Cakes
+                  {/* Bottom Row: Tagged Cakes & Actions */}
+                  <div className="flex items-center justify-between pt-2 border-t border-luxury-800/60">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1.5 rounded-lg border border-luxury-700/80 bg-luxury-900/90 px-2.5 py-1 text-xs font-semibold text-cream-200">
+                        <Cake className="h-3.5 w-3.5 text-gold-400" />
+                        <span>{occ.cakeCount} {occ.cakeCount === 1 ? "Cake" : "Cakes"} Tagged</span>
                       </span>
-                      <span className="text-[10px] text-luxury-500">Tagged</span>
                     </div>
 
-                    {/* Content Active Toggle Switch */}
-                    <button
-                      type="button"
-                      onClick={() => handleToggleActive(occ)}
-                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                        occ.active ? "bg-emerald-600" : "bg-luxury-800"
-                      }`}
-                      title={occ.active ? "Occasion is enabled" : "Occasion is disabled"}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                          occ.active ? "translate-x-5" : "translate-x-0"
-                        }`}
-                      />
-                    </button>
+                    <div className="flex items-center gap-2.5 shrink-0">
+                      {/* Active Toggle Switch */}
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[11px] font-medium text-luxury-400 hidden sm:inline">
+                          {occ.active ? "Enabled" : "Disabled"}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleActive(occ)}
+                          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                            occ.active ? "bg-emerald-600" : "bg-luxury-800"
+                          }`}
+                          title={occ.active ? "Occasion is enabled" : "Occasion is disabled"}
+                        >
+                          <span
+                            className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                              occ.active ? "translate-x-5" : "translate-x-0"
+                            }`}
+                          />
+                        </button>
+                      </div>
 
-                    {/* Edit Content Button */}
-                    <button
-                      type="button"
-                      onClick={() => handleOpenEdit(occ)}
-                      className="rounded-xl border border-luxury-700 bg-luxury-900 p-2 text-luxury-300 hover:border-gold-500 hover:text-gold-400 transition-colors"
-                      title="Edit Promotional Content"
-                    >
-                      <Sliders className="h-4 w-4" />
-                    </button>
-
-                    {/* Delete Button (Custom Occasions) */}
-                    {isCustom && (
+                      {/* Edit Content Button */}
                       <button
                         type="button"
-                        onClick={() => handleDeleteOccasion(occ)}
-                        className="rounded-xl border border-luxury-700 bg-luxury-900 p-2 text-luxury-400 hover:border-red-500/60 hover:text-red-400 transition-colors"
-                        title="Delete Custom Occasion"
+                        onClick={() => handleOpenEdit(occ)}
+                        className="inline-flex items-center gap-1 rounded-xl border border-luxury-700 bg-luxury-900 px-2.5 py-1.5 text-xs font-medium text-luxury-300 hover:border-gold-500 hover:text-gold-400 transition-colors"
+                        title="Edit Promotional Content"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Sliders className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Edit</span>
                       </button>
-                    )}
+
+                      {/* Delete Button (Custom Occasions) */}
+                      {isCustom && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteOccasion(occ)}
+                          className="inline-flex items-center gap-1 rounded-xl border border-luxury-700 bg-luxury-900 px-2.5 py-1.5 text-xs font-medium text-luxury-400 hover:border-red-500/60 hover:text-red-400 transition-colors"
+                          title="Delete Custom Occasion"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline">Delete</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               );

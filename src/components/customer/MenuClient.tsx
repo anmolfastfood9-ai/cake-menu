@@ -189,83 +189,29 @@ export default function MenuClient({
         const cakeName = (c.name || "").toLowerCase();
         const cakeDesc = (c.description || "").toLowerCase();
 
-        // 1. Direct slug or ID match
+        // 1. Direct exact slug or ID match (Authoritative)
         if (catSlug === normSelected || catId === normSelected) {
           return true;
         }
 
-        // 2. Specialized keyword mappings
-        if (normSelected === "chocolate" || normSelected.includes("truffle")) {
-          return (
-            catSlug.includes("chocolate") ||
-            catSlug.includes("truffle") ||
-            catName.includes("chocolate") ||
-            catName.includes("truffle") ||
-            cakeName.includes("chocolate") ||
-            cakeName.includes("truffle") ||
-            cakeDesc.includes("chocolate") ||
-            cakeDesc.includes("truffle")
-          );
+        // 2. Legacy alias / URL parameter mappings (Only for legacy external links)
+        if (normSelected === "chocolate" || normSelected === "truffle") {
+          return catSlug === "chocolate-cakes";
         }
-        if (normSelected === "fruit" || normSelected.includes("berry")) {
-          return (
-            catSlug.includes("fruit") ||
-            catSlug.includes("berry") ||
-            catName.includes("fruit") ||
-            catName.includes("berry") ||
-            cakeName.includes("fruit") ||
-            cakeName.includes("mango") ||
-            cakeName.includes("berry") ||
-            cakeDesc.includes("fruit")
-          );
+        if (normSelected === "fruit" || normSelected === "berry" || normSelected === "fruit-berry") {
+          return catSlug === "fruit-fresh-cream";
         }
-        if (normSelected.includes("cheese")) {
-          return (
-            catSlug.includes("cheese") ||
-            catName.includes("cheese") ||
-            cakeName.includes("cheese") ||
-            cakeDesc.includes("cheese")
-          );
+        if (normSelected === "cheesecakes" || normSelected === "cheese") {
+          return catSlug === "red-velvet-premium";
         }
-        if (normSelected.includes("photo") || normSelected.includes("designer")) {
-          return (
-            catSlug.includes("photo") ||
-            catSlug.includes("designer") ||
-            catName.includes("photo") ||
-            catName.includes("designer") ||
-            cakeName.includes("photo") ||
-            cakeDesc.includes("photo")
-          );
+        if (normSelected === "photo-cakes" || normSelected === "designer-photo" || normSelected === "designer") {
+          return catSlug === "designer-photo-cakes";
         }
-        // Exact Large & Celebration category isolation
-        if (normSelected === "large-celebration-cakes" || normSelected === "large") {
-          return catSlug === "large-celebration-cakes" || catName.toLowerCase().includes("large");
+        if (normSelected === "celebration" || normSelected === "birthday") {
+          return catSlug === "large-celebration-cakes";
         }
-        if (normSelected.includes("birthday") || (normSelected !== "large-celebration-cakes" && normSelected.includes("celebration"))) {
-          return (
-            catSlug.includes("birthday") ||
-            catSlug.includes("celebration") ||
-            catName.includes("birthday") ||
-            catName.includes("celebration") ||
-            cakeName.includes("birthday")
-          );
-        }
-        if (normSelected.includes("anniversary") || normSelected.includes("love")) {
-          return (
-            catSlug.includes("anniversary") ||
-            catName.includes("anniversary") ||
-            cakeName.includes("anniversary")
-          );
-        }
-        if (normSelected.includes("signature") || normSelected.includes("luxury") || normSelected.includes("premium")) {
-          return (
-            catSlug.includes("signature") ||
-            catSlug.includes("luxury") ||
-            catSlug.includes("premium") ||
-            catName.includes("signature") ||
-            catName.includes("luxury") ||
-            catName.includes("premium")
-          );
+        if (normSelected === "signature" || normSelected === "luxury") {
+          return catSlug === "signature-cakes";
         }
 
         return (
@@ -837,7 +783,7 @@ export default function MenuClient({
                 : selectedBudget !== "all"
                 ? `${BUDGET_OPTIONS.find((b) => b.id === selectedBudget)?.label || "Budget"} Cakes`
                 : selectedCategory === "all"
-                ? "Signature Cakes"
+                ? "All Cakes"
                 : (() => {
                     const catName = categoriesList.find((c) => c.slug === selectedCategory)?.name || "Artisan";
                     return catName.toLowerCase().endsWith("cakes") ? catName : `${catName} Cakes`;

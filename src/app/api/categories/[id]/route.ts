@@ -94,18 +94,30 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     }
     const { id } = paramRes.data;
 
-    // Check if category has cakes attached to prevent accidental cascade deletion
+    const { searchParams } = new URL(req.url);
+    const reassignToId = searchParams.get("reassignToId");
+
+    // Check if category has cakes attached
     const attachedCakesCount = await prisma.cake.count({
       where: { categoryId: id },
     });
 
     if (attachedCakesCount > 0) {
-      return NextResponse.json(
-        {
-          error: `Cannot delete category: ${attachedCakesCount} cake(s) are assigned to it. Please reassign or delete these cakes first, or toggle category status to inactive.`,
-        },
-        { status: 400 }
-      );
+      if (reassignToId) {
+        // Reassign cakes to target category first
+        await prisma.cake.updateMany({
+          where: { categoryId: id },
+          data: { categoryId: reassignToId },
+        });
+      } else {
+        return NextResponse.json(
+          {
+            error: `Cannot delete category: ${attachedCakesCount} cake(s) are assigned to it. Please reassign or delete these cakes first, or select a category to reassign them to.`,
+            attachedCakesCount,
+          },
+          { status: 400 }
+        );
+      }
     }
 
     await prisma.category.delete({ where: { id } });

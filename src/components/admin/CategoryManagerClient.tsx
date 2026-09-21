@@ -1,19 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import {
   Plus,
   Edit2,
   Trash2,
-  Sparkles,
   FolderTree,
   Check,
   X,
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  Cake,
+  Upload,
+  ImageIcon,
+  AlertCircle,
 } from "lucide-react";
 
 interface CategoryManagerClientProps {
@@ -29,6 +30,7 @@ export default function CategoryManagerClient({
 
   // Form State
   const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
   const [image, setImage] = useState("");
   const [displayOrder, setDisplayOrder] = useState(0);
@@ -36,9 +38,29 @@ export default function CategoryManagerClient({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Media Library Modal
+  const [mediaLibrary, setMediaLibrary] = useState<any[]>([]);
+  const [mediaModalOpen, setMediaModalOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  // Delete & Reassign Modal
+  const [deleteModalCat, setDeleteModalCat] = useState<any | null>(null);
+  const [reassignTargetId, setReassignTargetId] = useState<string>("");
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/images")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.images) setMediaLibrary(data.images);
+      })
+      .catch(console.error);
+  }, []);
+
   const openCreateModal = () => {
     setEditingCategory(null);
     setName("");
+    setSlug("");
     setDescription("");
     setImage("");
     setDisplayOrder(categories.length + 1);
@@ -50,12 +72,44 @@ export default function CategoryManagerClient({
   const openEditModal = (cat: any) => {
     setEditingCategory(cat);
     setName(cat.name);
+    setSlug(cat.slug || "");
     setDescription(cat.description || "");
     setImage(cat.image || "");
     setDisplayOrder(cat.displayOrder || 0);
     setActive(cat.active ?? true);
     setError(null);
     setModalOpen(true);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploading(true);
+    setError(null);
+    try {
+      const formData = new FormData();
+      for (let i = 0; i < files.length; i++) {
+        formData.append("files", files[i]);
+      }
+
+      const res = await fetch("/api/images", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Upload failed");
+
+      setMediaLibrary((prev) => [...data.images, ...prev]);
+      if (data.images[0]) {
+        setImage(data.images[0].url);
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to upload image");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleToggleActive = async (catId: string, currentVal: boolean) => {
@@ -95,18 +149,15 @@ export default function CategoryManagerClient({
     setCategories(reordered);
 
     try {
-      await Promise.all([
-        fetch(`/api/categories/${itemA.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ displayOrder: targetIndex + 1 }),
-        }),
-        fetch(`/api/categories/${itemB.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ displayOrder: index + 1 }),
-        }),
-      ]);
+      await Promise.all(
+        reordered.map((cat) =>
+          fetch(`/api/categories/${cat.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ displayOrder: cat.displayOrder }),
+          })
+        )
+      );
     } catch (e) {
       console.error("Failed to reorder categories", e);
     }
@@ -134,26 +185,52 @@ export default function CategoryManagerClient({
     }
   };
 
-  const handleDelete = async (catId: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete category "${name}"?`)) {
-      return;
+  const initiateDelete = (cat: any) => {
+    const cakeCount = cat._count?.cakes || 0;
+    if (cakeCount > 0) {
+      // Find default target category (first active category that is not this one)
+      const otherActive = categories.find((c) => c.id !== cat.id && c.active);
+      setReassignTargetId(otherActive?.id || "");
+      setDeleteModalCat(cat);
+    } else {
+      if (confirm(`Are you sure you want to delete category "${cat.name}"?`)) {
+        executeDelete(cat.id);
+      }
     }
+  };
 
+  const executeDelete = async (catId: string, reassignToId?: string) => {
+    setDeleting(true);
     try {
-      const res = await fetch(`/api/categories/${catId}`, {
-        method: "DELETE",
-      });
+      const url = reassignToId
+        ? `/api/categories/${catId}?reassignToId=${reassignToId}`
+        : `/api/categories/${catId}`;
 
+      const res = await fetch(url, { method: "DELETE" });
       const data = await res.json().catch(() => ({}));
 
       if (res.ok) {
-        setCategories((prev) => prev.filter((c) => c.id !== catId));
+        setCategories((prev) => {
+          const filtered = prev.filter((c) => c.id !== catId);
+          if (reassignToId && deleteModalCat) {
+            const movedCount = deleteModalCat._count?.cakes || 0;
+            return filtered.map((c) =>
+              c.id === reassignToId
+                ? { ...c, _count: { cakes: (c._count?.cakes || 0) + movedCount } }
+                : c
+            );
+          }
+          return filtered;
+        });
+        setDeleteModalCat(null);
       } else {
         alert(data.error || "Failed to delete category");
       }
     } catch (e) {
       console.error(e);
       alert("Error deleting category");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -169,9 +246,10 @@ export default function CategoryManagerClient({
     setSubmitting(true);
     try {
       const payload = {
-        name,
-        description,
-        image: image || null,
+        name: name.trim(),
+        slug: slug.trim() || undefined,
+        description: description.trim() || null,
+        image: image.trim() || null,
         displayOrder: Number(displayOrder) || 0,
         active,
       };
@@ -330,13 +408,15 @@ export default function CategoryManagerClient({
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() => openEditModal(cat)}
-                  className="rounded-lg border border-gold-500/30 bg-luxury-800 px-2.5 py-1 text-gold-300 hover:bg-gold-500 hover:text-luxury-950 text-[11px] font-semibold transition-colors"
+                  className="rounded-lg border border-gold-500/30 bg-luxury-800 px-2.5 py-1 text-gold-300 hover:bg-gold-500 hover:text-luxury-950 text-[11px] font-semibold transition-colors flex items-center gap-1"
                 >
-                  Edit
+                  <Edit2 className="h-3 w-3" />
+                  <span>Edit</span>
                 </button>
                 <button
-                  onClick={() => handleDelete(cat.id, cat.name)}
+                  onClick={() => initiateDelete(cat)}
                   className="rounded-lg border border-luxury-700 bg-luxury-950 p-1 text-luxury-400 hover:text-red-400 transition-colors"
+                  title="Delete category"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
@@ -346,7 +426,7 @@ export default function CategoryManagerClient({
         ))}
       </div>
 
-      {/* Modal for Add / Edit */}
+      {/* Modal for Add / Edit Category */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-luxury-950/80 p-4 backdrop-blur-sm">
           <div className="w-full max-w-lg rounded-3xl border border-gold-500/30 bg-luxury-900 p-6 shadow-2xl">
@@ -360,24 +440,40 @@ export default function CategoryManagerClient({
             </div>
 
             {error && (
-              <div className="mt-4 rounded-xl border border-red-500/40 bg-red-950/40 p-3 text-xs text-red-400">
-                {error}
+              <div className="mt-4 flex items-center gap-2 rounded-xl border border-red-500/40 bg-red-950/40 p-3 text-xs text-red-400">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                <span>{error}</span>
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-              <div className="space-y-1">
-                <label className="block text-xs font-semibold text-cream-200">
-                  Category Name <span className="text-gold-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Belgian Chocolate"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full rounded-xl border border-luxury-700 bg-luxury-950 p-2.5 text-xs text-cream-100 focus:border-gold-500 focus:outline-none"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-cream-200">
+                    Category Name <span className="text-gold-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Belgian Chocolate"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full rounded-xl border border-luxury-700 bg-luxury-950 p-2.5 text-xs text-cream-100 focus:border-gold-500 focus:outline-none"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-cream-200">
+                    Custom Slug <span className="text-luxury-400 font-normal">(Optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. belgian-chocolate"
+                    value={slug}
+                    onChange={(e) => setSlug(e.target.value)}
+                    className="w-full rounded-xl border border-luxury-700 bg-luxury-950 p-2.5 text-xs text-cream-100 focus:border-gold-500 focus:outline-none font-mono"
+                  />
+                </div>
               </div>
 
               <div className="space-y-1">
@@ -421,17 +517,45 @@ export default function CategoryManagerClient({
                 </div>
               </div>
 
-              <div className="space-y-1">
+              {/* Banner Image URL + Media Selector */}
+              <div className="space-y-1.5">
                 <label className="block text-xs font-semibold text-cream-200">
-                  Banner Image URL (Optional)
+                  Banner Image
                 </label>
-                <input
-                  type="url"
-                  placeholder="https://images.unsplash.com/..."
-                  value={image}
-                  onChange={(e) => setImage(e.target.value)}
-                  className="w-full rounded-xl border border-luxury-700 bg-luxury-950 p-2.5 text-xs text-cream-100 focus:border-gold-500 focus:outline-none"
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    placeholder="https://images.unsplash.com/... or choose media"
+                    value={image}
+                    onChange={(e) => setImage(e.target.value)}
+                    className="flex-1 rounded-xl border border-luxury-700 bg-luxury-950 p-2.5 text-xs text-cream-100 focus:border-gold-500 focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setMediaModalOpen(true)}
+                    className="inline-flex items-center gap-1 rounded-xl border border-gold-500/40 bg-gold-500/15 px-3 py-2.5 text-xs font-semibold text-gold-300 hover:bg-gold-500/25 transition-colors shrink-0"
+                  >
+                    <ImageIcon className="h-3.5 w-3.5" />
+                    <span>Media</span>
+                  </button>
+                  <label className="inline-flex items-center gap-1 cursor-pointer rounded-xl border border-luxury-700 bg-luxury-800 px-3 py-2.5 text-xs font-semibold text-cream-200 hover:border-luxury-600 transition-colors shrink-0">
+                    <Upload className="h-3.5 w-3.5 text-gold-400" />
+                    <span>Upload</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={uploading}
+                      onChange={handleFileUpload}
+                    />
+                  </label>
+                </div>
+
+                {image && (
+                  <div className="relative h-16 w-full overflow-hidden rounded-xl border border-luxury-700 bg-luxury-950 mt-2">
+                    <Image src={image} alt="Preview" fill className="object-cover" />
+                  </div>
+                )}
               </div>
 
               <div className="mt-6 flex justify-end space-x-3 border-t border-luxury-800 pt-4">
@@ -452,6 +576,115 @@ export default function CategoryManagerClient({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Media Library Selector Modal */}
+      {mediaModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-luxury-950/80 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-2xl rounded-3xl border border-gold-500/30 bg-luxury-900 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-luxury-800 pb-3">
+              <h3 className="font-serif text-lg font-bold text-cream-50">Select Banner Image</h3>
+              <button onClick={() => setMediaModalOpen(false)} className="text-luxury-400 hover:text-cream-100">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {mediaLibrary.length === 0 ? (
+              <p className="text-xs text-luxury-400 text-center py-8">
+                No images uploaded yet. Use the Upload button above.
+              </p>
+            ) : (
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 max-h-72 overflow-y-auto pr-1">
+                {mediaLibrary.map((img) => (
+                  <button
+                    key={img.id}
+                    type="button"
+                    onClick={() => {
+                      setImage(img.url);
+                      setMediaModalOpen(false);
+                    }}
+                    className={`relative aspect-video overflow-hidden rounded-xl border transition-all ${
+                      image === img.url
+                        ? "border-gold-500 ring-2 ring-gold-500/50"
+                        : "border-luxury-700 hover:border-gold-500/40"
+                    }`}
+                  >
+                    <Image src={img.url} alt={img.filename || "Media"} fill className="object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="flex justify-end pt-2 border-t border-luxury-800">
+              <button
+                type="button"
+                onClick={() => setMediaModalOpen(false)}
+                className="rounded-xl border border-luxury-700 bg-luxury-800 px-4 py-2 text-xs font-semibold text-cream-200"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete & Reassign Modal */}
+      {deleteModalCat && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-luxury-950/80 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl border border-gold-500/40 bg-luxury-900 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-luxury-800 pb-3">
+              <h3 className="font-serif text-lg font-bold text-cream-50 flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-amber-400" />
+                <span>Reassign Cakes &amp; Delete</span>
+              </h3>
+              <button onClick={() => setDeleteModalCat(null)} className="text-luxury-400 hover:text-cream-100">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-cream-200 leading-relaxed">
+              Category <span className="font-bold text-gold-300">&quot;{deleteModalCat.name}&quot;</span> has{" "}
+              <span className="font-bold text-amber-400">{deleteModalCat._count?.cakes || 0} cake(s)</span> assigned to it.
+            </p>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-cream-200">
+                Reassign all {deleteModalCat._count?.cakes || 0} cakes to:
+              </label>
+              <select
+                value={reassignTargetId}
+                onChange={(e) => setReassignTargetId(e.target.value)}
+                className="w-full rounded-xl border border-luxury-700 bg-luxury-950 p-2.5 text-xs text-cream-100 focus:border-gold-500 focus:outline-none"
+              >
+                {categories
+                  .filter((c) => c.id !== deleteModalCat.id && c.active)
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} ({c._count?.cakes || 0} cakes)
+                    </option>
+                  ))}
+              </select>
+            </div>
+
+            <div className="flex justify-end space-x-3 pt-3 border-t border-luxury-800">
+              <button
+                type="button"
+                onClick={() => setDeleteModalCat(null)}
+                className="rounded-xl border border-luxury-700 bg-luxury-800 px-4 py-2 text-xs font-semibold text-cream-200"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={deleting || !reassignTargetId}
+                onClick={() => executeDelete(deleteModalCat.id, reassignTargetId)}
+                className="rounded-xl bg-red-900/80 hover:bg-red-800 border border-red-500/50 px-4 py-2 text-xs font-bold text-red-100 transition-colors"
+              >
+                {deleting ? "Reassigning & Deleting..." : "Reassign & Delete"}
+              </button>
+            </div>
           </div>
         </div>
       )}

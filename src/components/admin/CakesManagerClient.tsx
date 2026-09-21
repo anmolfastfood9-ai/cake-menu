@@ -176,12 +176,12 @@ export default function CakesManagerClient({
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-luxury-800 bg-luxury-950/60 text-luxury-400">
-                <th className="py-3.5 px-4 font-semibold">Cake Details</th>
-                <th className="py-3.5 px-4 font-semibold">Category</th>
-                <th className="py-3.5 px-4 font-semibold">Weight Pricing Tiers</th>
-                <th className="py-3.5 px-4 font-semibold">Badges & Spotlight</th>
-                <th className="py-3.5 px-4 font-semibold">Visibility</th>
-                <th className="py-3.5 px-4 text-right font-semibold">Actions</th>
+                <th className="py-4 px-4 font-semibold min-w-[240px]">Cake Details</th>
+                <th className="py-4 px-4 font-semibold min-w-[170px] w-[180px]">Category</th>
+                <th className="py-4 px-4 font-semibold min-w-[200px] w-[210px]">Weight Pricing Tiers</th>
+                <th className="py-4 px-4 font-semibold min-w-[170px] w-[180px]">Badges & Spotlight</th>
+                <th className="py-4 px-4 font-semibold min-w-[120px] w-[130px]">Visibility</th>
+                <th className="py-4 px-4 text-right font-semibold min-w-[100px] w-[110px]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-luxury-800/60">
@@ -191,8 +191,8 @@ export default function CakesManagerClient({
                   return (
                     <tr key={cake.id} className="hover:bg-luxury-800/40 transition-colors">
                       {/* Name & Photo */}
-                      <td className="py-3.5 px-4">
-                        <div className="flex items-center space-x-3">
+                      <td className="py-4 px-4 min-w-[240px]">
+                        <div className="flex items-center space-x-3.5">
                           <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-gold-500/30 bg-luxury-950">
                             <Image
                               src={cake.coverImage}
@@ -202,21 +202,21 @@ export default function CakesManagerClient({
                               className="object-cover"
                             />
                           </div>
-                          <div>
+                          <div className="min-w-0 flex-1 space-y-0.5">
                             <div className="flex items-center space-x-2">
-                              <span className="font-sans text-sm font-bold text-cream-100">
+                              <span className="font-sans text-sm font-bold text-cream-100 truncate">
                                 {cake.name}
                               </span>
                               <Link
                                 href={`/menu/cake/${cake.slug}`}
                                 target="_blank"
-                                className="text-luxury-500 hover:text-gold-400"
+                                className="text-luxury-500 hover:text-gold-400 shrink-0"
                                 title="View on Customer Menu"
                               >
                                 <ExternalLink className="h-3 w-3" />
                               </Link>
                             </div>
-                            <span className="text-[11px] text-luxury-400 line-clamp-1">
+                            <span className="text-[11px] text-luxury-400 line-clamp-1 leading-relaxed">
                               {cake.description}
                             </span>
                           </div>
@@ -224,16 +224,16 @@ export default function CakesManagerClient({
                       </td>
 
                       {/* Category */}
-                      <td className="py-3.5 px-4">
-                        <span className="rounded-md bg-luxury-950 border border-luxury-700 px-2 py-1 text-[11px] font-medium text-gold-300">
+                      <td className="py-4 px-4 min-w-[170px] w-[180px] align-middle">
+                        <span className="inline-block rounded-md bg-luxury-950 border border-luxury-700 px-2.5 py-1 text-[11px] font-medium text-gold-300 leading-normal whitespace-normal">
                           {cake.category?.name || "Unassigned"}
                         </span>
                       </td>
 
                       {/* Weight Pricing */}
-                      <td className="py-3.5 px-4">
-                        <div className="space-y-1">
-                          <span className="font-price font-bold text-gold-400">
+                      <td className="py-4 px-4 min-w-[200px] w-[210px] align-middle">
+                        <div className="space-y-1.5">
+                          <span className="font-price font-bold text-gold-400 block">
                             {sorted[0]?.price != null
                               ? `₹${sorted[0].price.toLocaleString("en-IN")}`
                               : "Custom Quote"}
@@ -245,7 +245,7 @@ export default function CakesManagerClient({
                             {sorted.map((p, idx) => (
                               <span
                                 key={idx}
-                                className="rounded border border-luxury-700 bg-luxury-950 px-1 py-0.2 text-[9px] text-luxury-300"
+                                className="rounded border border-luxury-700 bg-luxury-950 px-1.5 py-0.5 text-[9.5px] text-luxury-300 font-mono whitespace-nowrap"
                               >
                                 {p.weight}: {p.price != null ? `₹${p.price}` : "Quote"}
                               </span>
@@ -255,12 +255,12 @@ export default function CakesManagerClient({
                       </td>
 
                       {/* Badges Toggles */}
-                      <td className="py-3.5 px-4">
+                      <td className="py-4 px-4 min-w-[170px] w-[180px] align-middle">
                         <div className="flex flex-wrap gap-1.5">
                           {/* Bestseller Toggle */}
                           <button
                             onClick={() => handleToggleFlag(cake.id, "bestseller", cake.bestseller)}
-                            className={`flex items-center space-x-1 rounded px-2 py-0.5 text-[10px] font-semibold transition-all ${
+                            className={`flex items-center space-x-1 rounded px-2 py-1 text-[10px] font-semibold transition-all ${
                               cake.bestseller
                                 ? "bg-gold-500/20 text-gold-300 border border-gold-500/40"
                                 : "bg-luxury-950 text-luxury-500 border border-luxury-800 hover:text-cream-200"
@@ -274,7 +274,7 @@ export default function CakesManagerClient({
                           {/* Featured / Signature Toggle */}
                           <button
                             onClick={() => handleToggleFlag(cake.id, "featured", cake.featured)}
-                            className={`flex items-center space-x-1 rounded px-2 py-0.5 text-[10px] font-semibold transition-all ${
+                            className={`flex items-center space-x-1 rounded px-2 py-1 text-[10px] font-semibold transition-all ${
                               cake.featured
                                 ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
                                 : "bg-luxury-950 text-luxury-500 border border-luxury-800 hover:text-cream-200"
@@ -288,7 +288,7 @@ export default function CakesManagerClient({
                           {/* New Arrival Toggle */}
                           <button
                             onClick={() => handleToggleFlag(cake.id, "isNew", cake.isNew)}
-                            className={`rounded px-1.5 py-0.5 text-[10px] font-semibold transition-all ${
+                            className={`rounded px-1.5 py-1 text-[10px] font-semibold transition-all ${
                               cake.isNew
                                 ? "bg-amber-900 text-amber-300 border border-amber-500/40"
                                 : "bg-luxury-950 text-luxury-500 border border-luxury-800"
@@ -301,7 +301,7 @@ export default function CakesManagerClient({
                       </td>
 
                       {/* Active Visibility Switch */}
-                      <td className="py-3.5 px-4">
+                      <td className="py-4 px-4 min-w-[120px] w-[130px] align-middle">
                         <button
                           onClick={() => handleToggleFlag(cake.id, "available", cake.available)}
                           className={`flex items-center space-x-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-all ${
@@ -320,7 +320,7 @@ export default function CakesManagerClient({
                       </td>
 
                       {/* Actions */}
-                      <td className="py-3.5 px-4 text-right">
+                      <td className="py-4 px-4 text-right min-w-[100px] w-[110px] align-middle">
                         <div className="flex items-center justify-end space-x-2">
                           <Link
                             href={`/admin/cakes/${cake.id}/edit`}
@@ -380,17 +380,17 @@ export default function CakesManagerClient({
                         className="object-cover"
                       />
                     </div>
-                    <div className="min-w-0 flex-1 space-y-1">
-                      <div className="flex items-center space-x-1.5">
-                        <span className="font-price font-bold text-luxury-500 text-[11px]">
+                    <div className="min-w-0 flex-1 space-y-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="rounded bg-gold-500/20 border border-gold-500/30 px-1.5 py-0.5 text-[10px] font-bold text-gold-300 font-mono shrink-0">
                           #{index + 1}
                         </span>
-                        <span className="font-sans text-sm font-bold text-cream-100 truncate block">
+                        <span className="font-sans text-sm font-bold text-cream-100 leading-snug min-w-0 flex-1">
                           {cake.name}
                         </span>
                       </div>
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="rounded bg-luxury-950 border border-luxury-700 px-2 py-0.5 text-[10px] font-medium text-gold-300">
+                      <div>
+                        <span className="inline-block rounded bg-luxury-950 border border-luxury-700 px-2 py-0.5 text-[10px] font-medium text-gold-300 leading-tight">
                           {cake.category?.name || "Unassigned"}
                         </span>
                       </div>
@@ -398,13 +398,13 @@ export default function CakesManagerClient({
                   </div>
 
                   <div className="text-right shrink-0">
-                    <span className="font-price text-sm font-bold text-gold-400 block">
+                    <span className="font-price text-xs sm:text-sm font-bold text-gold-400 block bg-luxury-950 border border-gold-500/30 px-2 py-1 rounded-lg">
                       {sorted[0]?.price != null
                         ? `₹${sorted[0].price.toLocaleString("en-IN")}`
                         : "Custom Quote"}
                     </span>
                     {sorted.length > 1 && sorted[sorted.length - 1]?.price != null && (
-                      <span className="text-[10px] text-luxury-400 block">
+                      <span className="text-[9.5px] text-luxury-400 block mt-0.5">
                         up to ₹{sorted[sorted.length - 1].price!.toLocaleString("en-IN")}
                       </span>
                     )}
