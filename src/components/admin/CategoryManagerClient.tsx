@@ -428,9 +428,9 @@ export default function CategoryManagerClient({
 
       {/* Modal for Add / Edit Category */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-luxury-950/80 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg rounded-3xl border border-gold-500/30 bg-luxury-900 p-6 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-luxury-800 pb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-luxury-950/80 p-3 sm:p-4 backdrop-blur-sm overflow-y-auto">
+          <div className="w-full max-w-lg rounded-3xl border border-gold-500/30 bg-luxury-900 p-5 sm:p-6 shadow-2xl max-h-[90vh] overflow-y-auto my-auto space-y-4">
+            <div className="flex items-center justify-between border-b border-luxury-800 pb-3 sm:pb-4">
               <h3 className="font-serif text-lg font-bold text-cream-50">
                 {editingCategory ? `Edit Category: ${editingCategory.name}` : "Create New Category"}
               </h3>
@@ -582,8 +582,8 @@ export default function CategoryManagerClient({
 
       {/* Media Library Selector Modal */}
       {mediaModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-luxury-950/80 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-2xl rounded-3xl border border-gold-500/30 bg-luxury-900 p-6 shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-luxury-950/80 p-3 sm:p-4 backdrop-blur-sm overflow-y-auto">
+          <div className="w-full max-w-2xl rounded-3xl border border-gold-500/30 bg-luxury-900 p-5 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto my-auto">
             <div className="flex items-center justify-between border-b border-luxury-800 pb-3">
               <h3 className="font-serif text-lg font-bold text-cream-50">Select Banner Image</h3>
               <button onClick={() => setMediaModalOpen(false)} className="text-luxury-400 hover:text-cream-100">
@@ -632,8 +632,8 @@ export default function CategoryManagerClient({
 
       {/* Delete & Reassign Modal */}
       {deleteModalCat && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-luxury-950/80 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-3xl border border-gold-500/40 bg-luxury-900 p-6 shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-luxury-950/80 p-3 sm:p-4 backdrop-blur-sm overflow-y-auto">
+          <div className="w-full max-w-md rounded-3xl border border-gold-500/40 bg-luxury-900 p-5 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto my-auto">
             <div className="flex items-center justify-between border-b border-luxury-800 pb-3">
               <h3 className="font-serif text-lg font-bold text-cream-50 flex items-center gap-2">
                 <AlertCircle className="h-5 w-5 text-amber-400" />
