@@ -51,20 +51,23 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
     const targetSlug = slug || (name ? name.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/[\s_-]+/g, "-").replace(/^-+|-+$/g, "") : undefined);
     if (targetSlug) {
-      const formattedSlug = targetSlug.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/[\s_-]+/g, "-").replace(/^-+|-+$/g, "");
-      const existingSlug = await prisma.category.findFirst({
-        where: {
-          slug: formattedSlug,
-          NOT: { id },
-        },
-      });
-      if (existingSlug) {
-        return NextResponse.json(
-          { error: `Category slug "${formattedSlug}" is already in use by category "${existingSlug.name}". Please use a unique category name or slug.` },
-          { status: 400 }
-        );
+      const baseSlug = targetSlug.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/[\s_-]+/g, "-").replace(/^-+|-+$/g, "");
+      if (baseSlug) {
+        let finalSlug = baseSlug;
+        let counter = 1;
+        while (true) {
+          const existingSlug = await prisma.category.findFirst({
+            where: {
+              slug: finalSlug,
+              NOT: { id },
+            },
+          });
+          if (!existingSlug) break;
+          counter++;
+          finalSlug = `${baseSlug}-${counter}`;
+        }
+        updateData.slug = finalSlug;
       }
-      updateData.slug = formattedSlug;
     }
 
     const category = await prisma.category.update({

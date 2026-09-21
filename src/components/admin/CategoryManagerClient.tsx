@@ -31,6 +31,7 @@ export default function CategoryManagerClient({
   // Form State
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
+  const [isSlugTouched, setIsSlugTouched] = useState(false);
   const [description, setDescription] = useState("");
   const [image, setImage] = useState("");
   const [displayOrder, setDisplayOrder] = useState(0);
@@ -61,6 +62,7 @@ export default function CategoryManagerClient({
     setEditingCategory(null);
     setName("");
     setSlug("");
+    setIsSlugTouched(false);
     setDescription("");
     setImage("");
     setDisplayOrder(categories.length + 1);
@@ -73,6 +75,7 @@ export default function CategoryManagerClient({
     setEditingCategory(cat);
     setName(cat.name);
     setSlug(cat.slug || "");
+    setIsSlugTouched(false);
     setDescription(cat.description || "");
     setImage(cat.image || "");
     setDisplayOrder(cat.displayOrder || 0);
@@ -457,20 +460,35 @@ export default function CategoryManagerClient({
                     required
                     placeholder="e.g. Belgian Chocolate"
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setName(val);
+                      if (!isSlugTouched) {
+                        const autoSlug = val
+                          .toLowerCase()
+                          .trim()
+                          .replace(/[^\w\s-]/g, "")
+                          .replace(/[\s_-]+/g, "-")
+                          .replace(/^-+|-+$/g, "");
+                        setSlug(autoSlug);
+                      }
+                    }}
                     className="w-full rounded-xl border border-luxury-700 bg-luxury-950 p-2.5 text-xs text-cream-100 focus:border-gold-500 focus:outline-none"
                   />
                 </div>
 
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-cream-200">
-                    Custom Slug <span className="text-luxury-400 font-normal">(Optional)</span>
+                    Custom Slug <span className="text-luxury-400 font-normal">(Auto-Generated)</span>
                   </label>
                   <input
                     type="text"
                     placeholder="e.g. belgian-chocolate"
                     value={slug}
-                    onChange={(e) => setSlug(e.target.value)}
+                    onChange={(e) => {
+                      setSlug(e.target.value);
+                      setIsSlugTouched(true);
+                    }}
                     className="w-full rounded-xl border border-luxury-700 bg-luxury-950 p-2.5 text-xs text-cream-100 focus:border-gold-500 focus:outline-none font-mono"
                   />
                 </div>
