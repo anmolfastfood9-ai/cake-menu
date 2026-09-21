@@ -12,6 +12,7 @@ import {
   ExternalLink,
   Crown,
   Leaf,
+  ImageIcon,
 } from "lucide-react";
 
 interface CakesManagerClientProps {
@@ -193,14 +194,18 @@ export default function CakesManagerClient({
                       {/* Name & Photo */}
                       <td className="py-4 px-4 min-w-[240px]">
                         <div className="flex items-center space-x-3.5">
-                          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-gold-500/30 bg-luxury-950">
-                            <Image
-                              src={cake.coverImage}
-                              alt={cake.name}
-                              fill
-                              sizes="56px"
-                              className="object-cover"
-                            />
+                          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-gold-500/30 bg-luxury-950 flex items-center justify-center">
+                            {cake.coverImage ? (
+                              <Image
+                                src={cake.coverImage}
+                                alt={cake.name}
+                                fill
+                                sizes="56px"
+                                className="object-cover"
+                              />
+                            ) : (
+                              <ImageIcon className="h-6 w-6 text-luxury-600" />
+                            )}
                           </div>
                           <div className="min-w-0 flex-1 space-y-0.5">
                             <div className="flex items-center space-x-2">
@@ -371,14 +376,18 @@ export default function CakesManagerClient({
                 {/* Top: Image, Name, Category & Price */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start space-x-3 min-w-0 flex-1">
-                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-gold-500/30 bg-luxury-950">
-                      <Image
-                        src={cake.coverImage}
-                        alt={cake.name}
-                        fill
-                        sizes="56px"
-                        className="object-cover"
-                      />
+                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-gold-500/30 bg-luxury-950 flex items-center justify-center">
+                      {cake.coverImage ? (
+                        <Image
+                          src={cake.coverImage}
+                          alt={cake.name}
+                          fill
+                          sizes="56px"
+                          className="object-cover"
+                        />
+                      ) : (
+                        <ImageIcon className="h-6 w-6 text-luxury-600" />
+                      )}
                     </div>
                     <div className="min-w-0 flex-1 space-y-1.5">
                       <div className="flex items-center gap-1.5 flex-wrap">

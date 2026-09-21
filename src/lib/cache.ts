@@ -55,6 +55,7 @@ export function invalidateAppCache() {
     revalidatePath("/", "layout");
     revalidatePath("/menu");
     revalidatePath("/menu/cakes");
+    revalidatePath("/menu/category/[slug]", "page");
     revalidatePath("/menu/cake/[slug]", "page");
     revalidatePath("/menu/occasion/[slug]", "page");
     revalidatePath("/admin");
@@ -226,14 +227,34 @@ export async function getCachedWhatsAppSetting() {
   return whatsappSetting;
 }
 
+const LEGACY_CAKE_SLUG_MAP: Record<string, string> = {
+  "belgian-dark-chocolate-ganache": "belgian-chocolate-truffle",
+  "ferrero-rocher": "ferrero-rocher-chocolate-cake",
+  "lotus-biscoff-salted-caramel": "lotus-biscoff-caramel",
+  "wild-berry-madagascar-vanilla": "mixed-berry-vanilla",
+  "velvet-rose-raspberry-lychee": "rose-lychee-delight",
+  "red-velvet-romance": "red-velvet",
+  "sicilian-pistachio-mousse": "pistachio-cardamom",
+  "ferrero-rocher-praline": "ferrero-hazelnut-praline",
+  "24k-royal-gold-truffle": "royal-gold-chocolate-truffle",
+  "custom-bespoke-photo-cake": "custom-edible-photo-cake",
+  "butterscotch": "butterscotch-cake",
+};
+
 /**
  * Superfast in-memory cached single cake by slug or ID
  */
 export async function getCachedCake(slugOrId: string) {
   if (!slugOrId) return null;
   const now = Date.now();
-  const rawKey = slugOrId.trim();
-  const lowerKey = rawKey.toLowerCase();
+  let rawKey = slugOrId.trim();
+  let lowerKey = rawKey.toLowerCase();
+
+  // If a legacy slug was requested directly, resolve to target canonical slug
+  if (LEGACY_CAKE_SLUG_MAP[lowerKey]) {
+    lowerKey = LEGACY_CAKE_SLUG_MAP[lowerKey];
+    rawKey = lowerKey;
+  }
 
   // 1. Check direct hit in cakeBySlug
   const cached = memoryStore.cakeBySlug.get(rawKey) || memoryStore.cakeBySlug.get(lowerKey);
