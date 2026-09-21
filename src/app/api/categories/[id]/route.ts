@@ -43,12 +43,29 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
     const updateData: any = {};
     if (name !== undefined) updateData.name = name;
-    if (slug !== undefined) updateData.slug = slug;
     if (description !== undefined) updateData.description = description;
     if (image !== undefined) updateData.image = image;
     if (icon !== undefined) updateData.icon = icon;
     if (displayOrder !== undefined) updateData.displayOrder = displayOrder;
     if (active !== undefined) updateData.active = Boolean(active);
+
+    const targetSlug = slug || (name ? name.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/[\s_-]+/g, "-").replace(/^-+|-+$/g, "") : undefined);
+    if (targetSlug) {
+      const formattedSlug = targetSlug.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/[\s_-]+/g, "-").replace(/^-+|-+$/g, "");
+      const existingSlug = await prisma.category.findFirst({
+        where: {
+          slug: formattedSlug,
+          NOT: { id },
+        },
+      });
+      if (existingSlug) {
+        return NextResponse.json(
+          { error: `Category slug "${formattedSlug}" is already in use by category "${existingSlug.name}". Please use a unique category name or slug.` },
+          { status: 400 }
+        );
+      }
+      updateData.slug = formattedSlug;
+    }
 
     const category = await prisma.category.update({
       where: { id },
@@ -64,6 +81,12 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   } catch (error: any) {
     if (error?.code === "P2025") {
       return NextResponse.json({ error: "Category not found" }, { status: 404 });
+    }
+    if (error?.code === "P2002") {
+      return NextResponse.json(
+        { error: "A category with this name or slug already exists. Please enter a unique name or slug." },
+        { status: 400 }
+      );
     }
     console.error("Update category error:", error);
     return NextResponse.json(

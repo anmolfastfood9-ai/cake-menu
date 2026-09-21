@@ -216,6 +216,12 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     if (error?.code === "P2025") {
       return NextResponse.json({ error: "Cake not found" }, { status: 404 });
     }
+    if (error?.code === "P2002") {
+      return NextResponse.json(
+        { error: "A cake product with this name or slug already exists. Please choose a unique cake name or slug." },
+        { status: 400 }
+      );
+    }
     console.error("Update cake error:", error);
     return NextResponse.json(
       { error: "An internal server error occurred" },
