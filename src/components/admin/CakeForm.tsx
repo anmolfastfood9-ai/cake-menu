@@ -727,10 +727,13 @@ export default function CakeForm({ categories = [], initialData, isEditing = fal
                               key={imgIdx}
                               className="group relative aspect-square rounded-xl border border-luxury-700 bg-luxury-900/90 overflow-hidden shadow-md flex flex-col justify-between p-1"
                             >
-                              <img
+                              <Image
                                 src={imgUrl}
                                 alt={`${row.weight} photo ${imgIdx + 1}`}
-                                className="h-full w-full object-contain rounded-lg"
+                                fill
+                                sizes="(max-width: 640px) 33vw, 150px"
+                                className="object-contain rounded-lg p-1"
+                                unoptimized={Boolean(imgUrl && (imgUrl.startsWith("data:") || imgUrl.startsWith("blob:")))}
                               />
 
                               {/* Number Badge [1] [2] ... */}

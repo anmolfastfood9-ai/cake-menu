@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Sparkles,
   Calendar,
@@ -708,13 +709,13 @@ export default function AdminOccasionsPage() {
               </span>
             </div>
             <div className="relative aspect-[16/4.5] w-full overflow-hidden rounded-2xl border border-gold-500/60 bg-[#0B0806] shadow-xl group">
-              <img
+              <Image
                 src={defaultBannerImage || "/images/festivals/generic-luxury-banner.jpg"}
                 alt="Default Banner Live Preview"
-                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.01]"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = "/images/festivals/generic-luxury-banner.jpg";
-                }}
+                fill
+                sizes="(max-width: 1024px) 100vw, 800px"
+                className="object-cover transition-transform duration-500 group-hover:scale-[1.01]"
+                unoptimized={Boolean(defaultBannerImage && (defaultBannerImage.startsWith("data:") || defaultBannerImage.startsWith("blob:")))}
               />
               {/* Center Radial Overlay: Only rendered when banner does NOT have text */}
               {/* Center Radial Overlay: Rendered when bannerHasText is true (Show Overlay mode) */}
@@ -914,13 +915,13 @@ export default function AdminOccasionsPage() {
 
                     {/* Middle/Banner Preview */}
                     <div className="relative w-full sm:w-36 h-16 sm:h-12 aspect-auto sm:aspect-[16/5] rounded-xl overflow-hidden border border-gold-500/30 bg-black/80 shadow-sm group shrink-0">
-                      <img
+                      <Image
                         src={getOccasionBannerUrl(occ.slug, occ.bannerImage)}
                         alt={occ.name}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = "/images/festivals/generic-luxury-banner.jpg";
-                        }}
+                        fill
+                        sizes="144px"
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        unoptimized={Boolean(occ.bannerImage && (occ.bannerImage.startsWith("data:") || occ.bannerImage.startsWith("blob:")))}
                       />
                       <span className={`absolute bottom-1 right-1 rounded px-1.5 py-0.5 text-[8.5px] font-medium backdrop-blur-md ${
                         occ.bannerImage ? "bg-amber-950/80 text-amber-300 border border-amber-500/40" : "bg-black/70 text-gold-300 border border-gold-500/20"
@@ -1175,13 +1176,13 @@ export default function AdminOccasionsPage() {
 
                 {/* Interactive Live Preview */}
                 <div className="relative aspect-[16/4.5] w-full overflow-hidden rounded-xl border border-gold-500/60 bg-[#0B0806] shadow-lg group">
-                  <img
+                  <Image
                     src={getOccasionBannerUrl(editingOccasion.slug, editForm.bannerImage)}
                     alt="Banner Live Preview"
-                    className="h-full w-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = "/images/festivals/generic-luxury-banner.jpg";
-                    }}
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 800px"
+                    className="object-cover"
+                    unoptimized={Boolean(editForm.bannerImage && (editForm.bannerImage.startsWith("data:") || editForm.bannerImage.startsWith("blob:")))}
                   />
                   {editBannerHasText ? (
                     <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center p-2">
@@ -1371,11 +1372,16 @@ export default function AdminOccasionsPage() {
                                 className="h-4 w-4 rounded accent-gold-500 shrink-0"
                               />
                               {cake.coverImage && (
-                                <img
-                                  src={cake.coverImage}
-                                  alt={cake.name}
-                                  className="h-7 w-7 rounded-lg object-cover shrink-0"
-                                />
+                                <div className="relative h-7 w-7 rounded-lg overflow-hidden shrink-0">
+                                  <Image
+                                    src={cake.coverImage}
+                                    alt={cake.name}
+                                    fill
+                                    sizes="28px"
+                                    className="object-cover rounded-lg"
+                                    unoptimized={Boolean(cake.coverImage.startsWith("data:") || cake.coverImage.startsWith("blob:"))}
+                                  />
+                                </div>
                               )}
                               <span className="truncate font-medium">{cake.name}</span>
                             </div>
@@ -1617,10 +1623,13 @@ export default function AdminOccasionsPage() {
 
                 {/* Interactive Live Preview */}
                 <div className="relative aspect-[16/4.5] w-full overflow-hidden rounded-xl border border-gold-500/60 bg-[#0B0806] shadow-lg group">
-                  <img
+                  <Image
                     src={createForm.bannerImage || "/images/festivals/generic-luxury-banner.jpg"}
                     alt="Banner Live Preview"
-                    className="h-full w-full object-cover"
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 800px"
+                    className="object-cover"
+                    unoptimized={Boolean(createForm.bannerImage && (createForm.bannerImage.startsWith("data:") || createForm.bannerImage.startsWith("blob:")))}
                   />
                   {createBannerHasText ? (
                     <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center p-2">
@@ -1810,11 +1819,16 @@ export default function AdminOccasionsPage() {
                                 className="h-4 w-4 rounded accent-gold-500 shrink-0"
                               />
                               {cake.coverImage && (
-                                <img
-                                  src={cake.coverImage}
-                                  alt={cake.name}
-                                  className="h-7 w-7 rounded-lg object-cover shrink-0"
-                                />
+                                <div className="relative h-7 w-7 rounded-lg overflow-hidden shrink-0">
+                                  <Image
+                                    src={cake.coverImage}
+                                    alt={cake.name}
+                                    fill
+                                    sizes="28px"
+                                    className="object-cover rounded-lg"
+                                    unoptimized={Boolean(cake.coverImage.startsWith("data:") || cake.coverImage.startsWith("blob:"))}
+                                  />
+                                </div>
                               )}
                               <span className="truncate font-medium">{cake.name}</span>
                             </div>

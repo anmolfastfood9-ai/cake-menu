@@ -341,10 +341,13 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
             <div className="flex flex-col items-center shrink-0">
               <div className="relative h-28 w-28 rounded-full overflow-hidden border-2 border-[#D4AF37]/60 bg-[#12100C] shadow-[0_0_30px_rgba(212,175,55,0.25)] flex items-center justify-center">
                 {logo ? (
-                  <img
+                  <Image
                     src={logo}
                     alt="Brand Logo"
-                    className="h-full w-full object-cover rounded-full"
+                    fill
+                    sizes="112px"
+                    className="object-cover rounded-full"
+                    unoptimized={Boolean(logo.startsWith("data:") || logo.startsWith("blob:"))}
                   />
                 ) : (
                   <Store className="h-10 w-10 text-gold-400/50" />
@@ -447,10 +450,13 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
             {/* Live Favicon Preview Box */}
             <div className="flex flex-col items-center shrink-0">
               <div className="relative h-20 w-20 rounded-2xl overflow-hidden border-2 border-[#D4AF37]/60 bg-[#12100C] shadow-[0_0_25px_rgba(212,175,55,0.2)] flex items-center justify-center p-2.5">
-                <img
+                <Image
                   src={favicon || "/images/logo_emblem.png"}
                   alt="Browser Favicon Preview"
-                  className="h-full w-full object-contain"
+                  fill
+                  sizes="80px"
+                  className="object-contain p-2.5"
+                  unoptimized={Boolean(favicon && (favicon.startsWith("data:") || favicon.startsWith("blob:")))}
                 />
                 {uploadingFavicon && (
                   <div className="absolute inset-0 bg-black/75 flex flex-col items-center justify-center text-[10px] text-gold-400 font-bold backdrop-blur-xs">
@@ -461,11 +467,16 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
               </div>
               {/* Browser Tab Simulation Badge */}
               <div className="mt-2.5 flex items-center gap-1.5 rounded-xl border border-luxury-700/80 bg-[#1D1A15] px-2.5 py-1 text-[10px] text-cream-200 shadow">
-                <img
-                  src={favicon || logo || "/images/logo_emblem.png"}
-                  alt="Tab Icon"
-                  className="h-3.5 w-3.5 rounded-xs object-contain"
-                />
+                <div className="relative h-3.5 w-3.5 shrink-0">
+                  <Image
+                    src={favicon || logo || "/images/logo_emblem.png"}
+                    alt="Tab Icon"
+                    fill
+                    sizes="14px"
+                    className="rounded-xs object-contain"
+                    unoptimized={Boolean((favicon || logo) && ((favicon || logo)!.startsWith("data:") || (favicon || logo)!.startsWith("blob:")))}
+                  />
+                </div>
                 <span className="font-medium text-gold-300 truncate max-w-[120px]">
                   {restaurantName || "Bakery"} Tab
                 </span>
@@ -623,13 +634,13 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
                 const isBakedInArtwork = checkHasBakedInText(heroImage, heroTitle);
                 return (
                   <div className="relative aspect-[16/5.5] w-full overflow-hidden rounded-2xl border border-gold-500/40 bg-[#0B0806] shadow-lg group">
-                    <img
+                    <Image
                       src={heroImage || "/images/festivals/generic-luxury-banner.jpg"}
                       alt="Hero Showcase Preview"
-                      className="h-full w-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = "/images/festivals/generic-luxury-banner.jpg";
-                      }}
+                      fill
+                      sizes="(max-width: 1024px) 100vw, 800px"
+                      className="object-cover"
+                      unoptimized={Boolean(heroImage && (heroImage.startsWith("data:") || heroImage.startsWith("blob:")))}
                     />
                     {/* Visual Overlay Preview */}
                     {isBakedInArtwork ? (
@@ -950,10 +961,13 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
                           : "border-luxury-800 hover:border-gold-500/50"
                       }`}
                     >
-                      <img
+                      <Image
                         src={img.url}
-                        alt={img.filename}
-                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        alt={img.filename || "Media asset"}
+                        fill
+                        sizes="(max-width: 768px) 50vw, 200px"
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        unoptimized={Boolean(img.url && (img.url.startsWith("data:") || img.url.startsWith("blob:")))}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
                         <span className="text-[10px] text-cream-100 font-medium truncate">

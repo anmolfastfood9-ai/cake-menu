@@ -1,9 +1,60 @@
 import type { Metadata } from "next";
+import {
+  Plus_Jakarta_Sans,
+  Inter,
+  Playfair_Display,
+  Great_Vibes,
+  Caveat,
+  Montserrat,
+} from "next/font/google";
 import "./globals.css";
 import NavigationProgress from "@/components/NavigationProgress";
 import { Suspense } from "react";
 import { getAppUrl } from "@/lib/appUrl";
 import { getCachedWebsiteSettings } from "@/lib/cache";
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-plus-jakarta",
+  display: "swap",
+  weight: ["300", "400", "500", "600", "700", "800"],
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+  weight: ["300", "400", "500", "600", "700", "800"],
+});
+
+const playfairDisplay = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair",
+  display: "swap",
+  weight: ["400", "500", "600", "700", "800", "900"],
+  style: ["normal", "italic"],
+});
+
+const greatVibes = Great_Vibes({
+  subsets: ["latin"],
+  variable: "--font-script",
+  display: "swap",
+  weight: ["400"],
+});
+
+const caveat = Caveat({
+  subsets: ["latin"],
+  variable: "--font-caveat",
+  display: "swap",
+  weight: ["600", "700"],
+});
+
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  variable: "--font-montserrat",
+  display: "swap",
+  weight: ["400", "500", "600", "700", "800", "900"],
+});
 
 const appUrl = getAppUrl();
 
@@ -72,19 +123,16 @@ export default async function RootLayout({
   const faviconUrl = resolveFaviconUrl(settings?.favicon);
 
   return (
-    <html lang="en" className="dark scroll-smooth">
+    <html
+      lang="en"
+      className={`dark scroll-smooth ${plusJakartaSans.variable} ${inter.variable} ${playfairDisplay.variable} ${greatVibes.variable} ${caveat.variable} ${montserrat.variable}`}
+    >
       <head>
         <link rel="icon" href={faviconUrl} />
         <link rel="shortcut icon" href={faviconUrl} />
         <link rel="apple-touch-icon" href={faviconUrl} />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Caveat:wght@600;700&family=Great+Vibes&family=Inter:wght@300;400;500;600;700;800&family=Montserrat:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
-          rel="stylesheet"
-        />
       </head>
-      <body className="min-h-screen bg-luxury-950 text-cream-100 antialiased selection:bg-gold-500 selection:text-luxury-950">
+      <body className="min-h-screen bg-luxury-950 text-cream-100 antialiased selection:bg-gold-500 selection:text-luxury-950 font-sans">
         <Suspense fallback={null}>
           <NavigationProgress />
         </Suspense>

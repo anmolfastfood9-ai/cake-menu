@@ -378,7 +378,7 @@ export default function OccasionShowcase({
     }, 5000);
 
     return () => clearInterval(timer);
-  }, [safeSlidesLength, isPaused]);
+  }, [slides.length, safeSlidesLength, isPaused]);
 
   const activeIndex = slides.length > 0 ? ((currentIndex % slides.length) + slides.length) % slides.length : 0;
   const currentSlide = slides[activeIndex] || slides[0] || {

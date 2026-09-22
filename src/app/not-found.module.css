@@ -1,9 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Arvo:ital,wght@0,400;0,700;1,400&display=swap');
-
 .page_404 {
   padding: 40px 0;
   background: #ffffff;
-  font-family: 'Arvo', serif;
+  font-family: var(--font-playfair), Georgia, serif;
   min-height: 100vh;
   width: 100%;
   display: flex;
