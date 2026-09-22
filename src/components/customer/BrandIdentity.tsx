@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -66,6 +66,11 @@ export function BrandLogo({
   priority?: boolean;
 }) {
   const [imgError, setImgError] = useState(false);
+
+  // Reset error state when logo prop updates
+  useEffect(() => {
+    setImgError(false);
+  }, [logo]);
 
   const cleanLogoSrc =
     !imgError && logo && logo.trim() && !logo.includes("placeholder")
