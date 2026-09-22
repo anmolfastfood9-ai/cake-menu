@@ -788,8 +788,8 @@ export default function QrGeneratorClient({
                               src: QR_CENTER_LOGO,
                               x: undefined,
                               y: undefined,
-                              height: 36,
-                              width: 36,
+                              height: 42,
+                              width: 42,
                               excavate: true,
                             }
                           : undefined

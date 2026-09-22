@@ -95,8 +95,8 @@ export const CakeMenuPremiumStandee = forwardRef<
                   src: QR_CENTER_LOGO,
                   x: undefined,
                   y: undefined,
-                  height: 34,
-                  width: 34,
+                  height: size === "print" ? 54 : 36,
+                  width: size === "print" ? 54 : 36,
                   excavate: true,
                 }
                 : undefined

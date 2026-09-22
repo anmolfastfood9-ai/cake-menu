@@ -860,8 +860,8 @@ export default function AdminDashboardClient({
                     src: QR_CENTER_LOGO,
                     x: undefined,
                     y: undefined,
-                    height: 28,
-                    width: 28,
+                    height: 32,
+                    width: 32,
                     excavate: true,
                   }}
                 />
