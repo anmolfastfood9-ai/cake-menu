@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { QRCodeSVG } from "qrcode.react";
+import { QR_CENTER_LOGO } from "./constants/qrLogo";
 import {
   Cake,
   FolderTree,
@@ -855,6 +856,14 @@ export default function AdminDashboardClient({
                   fgColor="#090807"
                   bgColor="#FFFFFF"
                   includeMargin={false}
+                  imageSettings={{
+                    src: QR_CENTER_LOGO,
+                    x: undefined,
+                    y: undefined,
+                    height: 28,
+                    width: 28,
+                    excavate: true,
+                  }}
                 />
               </div>
 

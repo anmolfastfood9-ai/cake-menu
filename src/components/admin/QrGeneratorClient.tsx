@@ -21,6 +21,7 @@ import {
 import { getAppUrl, PRODUCTION_APP_URL } from "@/lib/appUrl";
 
 import { CakeMenuPremiumStandee } from "./templates/CakeMenuPremiumStandee";
+import { QR_CENTER_LOGO } from "./constants/qrLogo";
 
 interface QrGeneratorClientProps {
   settings?: any;
@@ -784,7 +785,7 @@ export default function QrGeneratorClient({
                       imageSettings={
                         includeLogo
                           ? {
-                              src: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23C59B27' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m20 21-8-8-8 8'/><path d='M4 21v-7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v7'/><path d='M12 3a2 2 0 1 0 0 4 2 2 0 0 0 0-4z'/></svg>",
+                              src: QR_CENTER_LOGO,
                               x: undefined,
                               y: undefined,
                               height: 36,

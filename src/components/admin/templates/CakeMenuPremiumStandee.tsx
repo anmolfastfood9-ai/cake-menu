@@ -2,6 +2,7 @@
 
 import React, { forwardRef } from "react";
 import { QRCodeSVG } from "qrcode.react";
+import { QR_CENTER_LOGO } from "../constants/qrLogo";
 
 export interface CakeMenuPremiumStandeeProps {
   restaurantName?: string;
@@ -91,12 +92,11 @@ export const CakeMenuPremiumStandee = forwardRef<
             imageSettings={
               includeLogo
                 ? {
-                  src:
-                    "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'><circle cx='24' cy='24' r='23' fill='%232C170E'/><path d='M19 18C17 18 16 16 16 14C16 12 18 11 20 11C21 9 23 8 25 8C27 8 29 9 30 11C32 11 34 12 34 14C34 16 32 18 31 18Z' fill='none' stroke='%23FAF6F0' stroke-width='1.8' stroke-linejoin='round'/><path d='M18 18H32V20H18Z' fill='%23FAF6F0'/><text x='24' y='34' font-family='serif' font-size='14' font-weight='bold' fill='%23FAF6F0' text-anchor='middle'>R</text></svg>",
+                  src: QR_CENTER_LOGO,
                   x: undefined,
                   y: undefined,
-                  height: 32,
-                  width: 32,
+                  height: 34,
+                  width: 34,
                   excavate: true,
                 }
                 : undefined
