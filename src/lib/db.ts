@@ -7,7 +7,7 @@ const globalForPrisma = globalThis as unknown as {
 let client = globalForPrisma.prisma;
 if (!client || !(client as any).occasionCategory) {
   client = new PrismaClient({
-    log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"],
+    log: ["error"],
   });
 }
 
